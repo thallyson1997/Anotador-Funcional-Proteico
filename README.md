@@ -248,7 +248,3 @@ Essa pequena sequência artificial é suficiente apenas para testar o fluxo de c
 - `outputs/` – criada em tempo de execução pelos notebooks para armazenar CSVs, figuras e relatórios.
 
 ---
-
-## 6. Licença
-
-(Adicione aqui a licença do projeto, por exemplo MIT, GPL, etc., conforme sua preferência.)
