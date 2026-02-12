@@ -1,0 +1,95 @@
+## 🔄 **ADEQUAÇÕES SUGERIDAS:**
+
+1. **Recuperação automática de sequências via UniProt**
+   - Implementar função Python para buscar e baixar sequências FASTA a partir de IDs UniProt, usando requests ou biblioteca biopython.
+
+2. **Integração futura com BLAST local**
+   - Automatizar execução do BLAST+ standalone via subprocess em Python, para busca de similaridade local.
+
+3. **Visualização/anotação manual (Artemis)**
+   - Sugerir exportação de arquivos GenBank/FASTA para uso manual no Artemis, se desejado.
+
+Essas etapas podem ser adicionadas como funções ou módulos Python, facilitando a automação e reprodutibilidade do pipeline.
+Analisando seu notebook atual em comparação com seu projeto de pesquisa:
+
+
+## ✅ **O QUE JÁ FOI FEITO (COMPLETO):**
+
+### Implementado no notebook (antiSMASH Edition):
+1. **Integração com antiSMASH** - ✅ COMPLETO
+   - Aceita resultados do antiSMASH (arquivos .regionXXX.gbk ou JSON)
+   - Extrai informações de BGCs (Biosynthetic Gene Clusters)
+   - Identifica tipos de clusters (PKS, NRPS, terpenos, etc.)
+
+2. **Identificação de proteínas hipotéticas** - ✅ COMPLETO
+   - Extrai proteínas hipotéticas **dentro de clusters BGC**
+   - Mantém contexto do tipo de cluster para cada proteína
+   - Gera arquivo FASTA/CSV com metadados BGC
+
+3. **Categorização funcional e análise de domínios** - ✅ COMPLETO
+   - Predição de domínios/famílias (InterProScan: Pfam, SMART, PROSITE, PANTHER, CDD, etc.)
+   - Classificação em alta/média/baixa confiabilidade (≥5, 3-4, 1-2 bancos)
+   - Relatórios e visualizações por tipo de cluster
+
+4. **Hélices transmembranares e topologia** - ✅ COMPLETO
+   - Predição de regiões transmembrana (TMHMM, PHOBIUS, SIGNALP)
+   - Integração das anotações topológicas no relatório final
+
+5. **Automação completa para Colab** - ✅ COMPLETO
+   - Instalação automática de pacotes
+   - Opção de montagem do Google Drive
+   - Interface interativa para upload de resultados antiSMASH
+   - Diagnóstico detalhado de IDs e resultados
+   - Download dos arquivos de resultados
+
+---
+
+
+## ❌ **O QUE AINDA NÃO FOI FEITO:**
+
+### Metodologia do projeto que falta:
+
+1. **Propriedades físico-químicas** - ❌ **NÃO FEITO**
+   - ExPASy's Protparam
+   - Massa molecular, ponto isoelétrico, índice de instabilidade, etc.
+
+2. **Localização subcelular** - ❌ **NÃO FEITO**
+   - PSORTb (citoplasma, periplasma, membranas, extracelular)
+   - PSLpred
+   - SecretomeP (secreção não-clássica)
+
+3. **Comparação entre múltiplos organismos** - ❌ **NÃO FEITO**
+   - Script para comparar vias biossintéticas entre diferentes genomas
+   - Análise comparativa de BGCs similares entre organismos
+   - Integração com lsaBGC/MultiSmash
+
+---
+
+
+## 📊 **ARQUIVOS GERADOS ATUALMENTE:**
+
+- `proteinas_hipoteticas.csv` - Lista completa com metadados BGC (região, tipo de cluster)
+- `proteinas_hipoteticas.fasta` - Sequências com descrições incluindo contexto BGC
+- `output_log.txt` - Log detalhado do processamento
+- `outputs/proteinas_com_dominios_anotadas.csv` - Proteínas hipotéticas anotadas com domínios e topologia
+- `outputs/output_all_domains_consolidated.csv` - Domínios identificados em todas as proteínas
+- `outputs/output_<BANCO>_domains.csv` - Domínios identificados por banco (Pfam, SMART, etc.)
+- `outputs/domain_analysis_complete.png` - Gráficos de análise de domínios e topologia
+- `outputs/relatorio_dominios_lichen.txt` - Relatório textual detalhado das anotações
+
+---
+
+
+## 🎯 **PRÓXIMOS PASSOS RECOMENDADOS:**
+
+1. Análise de propriedades físico-químicas (NÃO FEITO)
+2. Predição de localização subcelular (NÃO FEITO)
+3. Módulo de comparação multi-organismos (NÃO FEITO)
+
+---
+
+**Já implementado:**
+- Predição de domínios (CDD, InterPro, etc.)
+- Análise de topologia e hélices transmembranares
+
+---
