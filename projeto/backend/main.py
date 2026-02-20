@@ -1,0 +1,179 @@
+"""
+Backend FastAPI para Anotador Proteico
+Processa análise de domínios em proteínas
+"""
+
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+import os
+
+from models import (
+    Protein, Domain, 
+    SequenceAnalysisRequest, 
+    SequenceAnalysisResponse,
+    AntismashAnalysisResponse,
+    HealthResponse
+)
+from utils import (
+    search_interproscan,
+    clean_sequence,
+    validate_protein_sequence,
+    domains_to_protein,
+    get_placeholder_proteins,
+)
+
+# ===== INICIALIZAR FASTAPI =====
+app = FastAPI(
+    title="Anotador Proteico API",
+    description="API para análise de domínios em proteínas",
+    version="1.0.0"
+)
+
+# ===== CORS MIDDLEWARE =====
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permitir requisições do frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ===== ENDPOINTS =====
+
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    """
+    Health check para verificar se a API está funcionando
+    """
+    return HealthResponse(
+        status="ok",
+        version="1.0.0"
+    )
+
+@app.post("/api/upload-antismash", response_model=AntismashAnalysisResponse)
+async def upload_antismash(file: UploadFile = File(...)):
+    """
+    Recebe arquivo antiSMASH (.gbk ou .zip)
+    Extrai proteínas hipotéticas e retorna dados placeholder para análise
+    
+    Fluxo:
+    1. Validar tamanho do arquivo
+    2. Extrair proteínas hipotéticas
+    3. Retornar dados para análise
+    """
+    try:
+        # Validar tamanho (máximo 500 MB)
+        MAX_SIZE = 500 * 1024 * 1024
+        file_contents = await file.read()
+        
+        if len(file_contents) > MAX_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail="Arquivo muito grande (máximo 500 MB)"
+            )
+        
+        if not file.filename.endswith(('.gbk', '.zip')):
+            raise HTTPException(
+                status_code=400,
+                detail="Arquivo deve ser .gbk ou .zip"
+            )
+        
+        # ===== PLACEHOLDER: Gerar dados de resultado =====
+        # Simula 5 proteínas encontradas
+        num_proteins = 5
+        placeholder_proteins = get_placeholder_proteins(num_proteins)
+        
+        return AntismashAnalysisResponse(
+            file_name=file.filename,
+            proteins_analyzed=num_proteins,
+            proteins_with_domains=len([p for p in placeholder_proteins if p.domain_count > 0]),
+            proteins=placeholder_proteins
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Erro ao processar arquivo: {str(e)}"
+        )
+
+@app.post("/api/predict-domains", response_model=SequenceAnalysisResponse)
+async def predict_domains(request: SequenceAnalysisRequest):
+    """
+    Analisa uma sequência proteica
+    
+    Fluxo:
+    1. Validar sequência
+    2. Chamar InterProScan (EBI) para buscar domínios
+    3. Classificar confiança baseado no número de bancos
+    4. Retornar resultados
+    """
+    try:
+        # Validar entrada
+        if not request.sequence:
+            raise HTTPException(
+                status_code=400,
+                detail="Sequência vazia"
+            )
+        
+        # Limpar sequência
+        clean_seq = clean_sequence(request.sequence)
+        
+        if len(clean_seq) < 10:
+            raise HTTPException(
+                status_code=400,
+                detail="Sequência muito curta (mínimo 10 aminoácidos)"
+            )
+        
+        if not validate_protein_sequence(clean_seq):
+            raise HTTPException(
+                status_code=400,
+                detail="Sequência contém caracteres inválidos"
+            )
+        
+        # Buscar no InterProScan (EBI)
+        print(f"\n🔍 Analisando sequência {request.seq_id or 'unknown'}...")
+        raw_domains = search_interproscan(
+            sequence=clean_seq,
+            seq_id=request.seq_id or "sequence_001",
+            email=request.email,
+            timeout=600
+        )
+        
+        # Converter para modelo Protein
+        protein = domains_to_protein(
+            seq_id=request.seq_id or "sequence_001",
+            raw_domains=raw_domains if raw_domains else []
+        )
+        
+        return SequenceAnalysisResponse(proteins=[protein])
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao processar sequência: {str(e)}"
+        )
+
+# ===== SERVIR FRONTEND ESTÁTICO (DEVE SER O ÚLTIMO!) =====
+# Mount StaticFiles por último para não interceptar as rotas da API
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(frontend_path):
+    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+else:
+    print(f"⚠️ Pasta frontend não encontrada em: {frontend_path}")
+
+# ===== MAIN =====
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=8000,
+        log_level="info",
+        reload=True
+    )

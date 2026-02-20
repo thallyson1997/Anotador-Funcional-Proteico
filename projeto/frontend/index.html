@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anotador Proteico - Análise de Domínios em Proteínas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ===== PÁGINA 1: HOME/INICIAL ===== -->
+    <div id="page-home" class="page active">
+        <div class="container">
+            <header class="header-hero">
+                <div class="header-content">
+                    <h1 class="title">🧬 Anotador Proteico</h1>
+                    <p class="subtitle">Análise automática de domínios em proteínas</p>
+                </div>
+            </header>
+
+            <main class="main-content">
+                <div class="welcome-section">
+                    <div class="cta-button-container">
+                        <button class="btn btn-primary btn-cta" onclick="goToPage('page-input')">
+                            ▶️ Iniciar Análise
+                        </button>
+                    </div>
+
+                    <h2>Como Funciona</h2>
+                    
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <div class="icon">🔍</div>
+                            <h3>Identifica Domínios</h3>
+                            <p>Analisa sua sequência contra múltiplos bancos de dados (Pfam, SMART, PROSITE, PANTHER, Gene3D) para encontrar domínios e famílias proteicas conservadas</p>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="icon">⚡</div>
+                            <h3>Rápido & Flexível</h3>
+                            <p>Analise uma única sequência proteica ou carrregue arquivo completo do antiSMASH com múltiplas proteínas hipotéticas de clusters de biossíntese</p>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="icon">📈</div>
+                            <h3>Resultados Confiáveis</h3>
+                            <p>Receba relatórios detalhados com nível de confiança calculado automaticamente, localização dos domínios e quais bancos de dados os identificaram</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== PÁGINA 2: INPUT/ENTRADA ===== -->
+    <div id="page-input" class="page">
+        <div class="container">
+            <header class="header-small">
+                <button class="btn-back" onclick="goToPage('page-home')">← Voltar</button>
+                <h1>Escolha o Tipo de Análise</h1>
+            </header>
+
+            <main class="main-content">
+                <div class="input-options">
+                    <!-- OPÇÃO 1: Sequência Única -->
+                    <div class="option-section active" id="option-sequence">
+                        <div class="option-header">
+                            <input type="radio" name="input-type" value="sequence" id="radio-sequence" checked onchange="switchOption('sequence')">
+                            <label for="radio-sequence">
+                                <h2>⚡ Análise Rápida - Uma Sequência</h2>
+                                <p>Perfeito para análise de uma única proteína conhecida ou isolada</p>
+                            </label>
+                        </div>
+
+                        <div class="option-content">
+                            <div class="form-group">
+                                <label for="seq-id">ID da Proteína (opcional)</label>
+                                <input 
+                                    type="text" 
+                                    id="seq-id" 
+                                    placeholder="Ex: MEG4_ASPNID, minha_proteina_1, etc."
+                                    class="input-text"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="protein-sequence">Sequência Proteica (aminoácidos)</label>
+                                <textarea 
+                                    id="protein-sequence" 
+                                    placeholder="Cole aqui a sequência de aminoácidos. Pode ser em uma linha ou múltiplas linhas.&#10;&#10;Exemplo: MFSLYDKFKC LLFCLTLSIA YVALGLPDPD AAAAGEHLQH LQAKDQYGCG AASGEQ..."
+                                    class="input-textarea"
+                                    rows="8"
+                                ></textarea>
+                                <small>Aceita formato monolinha ou multilinha (espaços serão ignorados)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email-seq">Email para notificações</label>
+                                <input 
+                                    type="email" 
+                                    id="email-seq" 
+                                    placeholder="seu.email@instituicao.br"
+                                    class="input-text"
+                                    required
+                                >
+                                <small>Necessário para usar a API InterProScan</small>
+                            </div>
+
+                            <button class="btn btn-primary btn-block" onclick="submitSequence()">
+                                Analisar Sequência
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="divider">OU</div>
+
+                    <!-- OPÇÃO 2: Arquivo antiSMASH -->
+                    <div class="option-section" id="option-antismash">
+                        <div class="option-header">
+                            <input type="radio" name="input-type" value="antismash" id="radio-antismash" onchange="switchOption('antismash')">
+                            <label for="radio-antismash">
+                                <h2>📂 Análise Completa - antiSMASH</h2>
+                                <p>Analise múltiplas proteínas hipotéticas de um cluster de biossíntese</p>
+                            </label>
+                        </div>
+
+                        <div class="option-content">
+                            <div class="form-group">
+                                <label for="antismash-file">Arquivo antiSMASH</label>
+                                <div class="file-input-wrapper">
+                                    <input 
+                                        type="file" 
+                                        id="antismash-file" 
+                                        accept=".gbk,.zip"
+                                        class="input-file"
+                                    >
+                                    <label for="antismash-file" class="file-input-label">
+                                        <span class="file-icon">📁</span>
+                                        <span class="file-text">Clique para selecionar arquivo .gbk ou .zip</span>
+                                    </label>
+                                </div>
+                                <small>Aceita arquivos .region*.gbk ou .zip com múltiplos GBK</small>
+                            </div>
+
+                            <div id="file-info" class="file-info hidden"></div>
+
+                            <div class="form-group">
+                                <label for="email-antismash">Email para notificações</label>
+                                <input 
+                                    type="email" 
+                                    id="email-antismash" 
+                                    placeholder="seu.email@instituicao.br"
+                                    class="input-text"
+                                    required
+                                >
+                                <small>Necessário para usar a API InterProScan</small>
+                            </div>
+
+                            <button class="btn btn-primary btn-block" onclick="submitAntismash()">
+                                Carregar e Analisar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== PÁGINA 3: LOADING/PROGRESSO ===== -->
+    <div id="page-loading" class="page">
+        <div class="container">
+            <header class="header-small">
+                <h1>Processando Análise</h1>
+            </header>
+
+            <main class="main-content loading-content">
+                <div class="progress-container">
+                    <div class="progress-title">
+                        <h2>Por favor aguarde...</h2>
+                        <p>Sua análise está sendo processada</p>
+                    </div>
+
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar" id="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text">0%</span>
+                    </div>
+
+                    <div class="steps-progress">
+                        <div class="step-progress" id="step-1">
+                            <div class="step-number">1</div>
+                            <div class="step-info">
+                                <p class="step-label">Processando entrada</p>
+                                <p class="step-description" id="step-1-desc">Carregando arquivo...</p>
+                            </div>
+                            <div class="step-status" id="step-1-status">⏳</div>
+                        </div>
+
+                        <div class="step-progress" id="step-2">
+                            <div class="step-number">2</div>
+                            <div class="step-info">
+                                <p class="step-label">Identificando proteínas hipotéticas</p>
+                                <p class="step-description" id="step-2-desc">Aguardando conclusão da etapa anterior...</p>
+                            </div>
+                            <div class="step-status" id="step-2-status">⏳</div>
+                        </div>
+
+                        <div class="step-progress" id="step-3">
+                            <div class="step-number">3</div>
+                            <div class="step-info">
+                                <p class="step-label">Consultando bancos de dados</p>
+                                <p class="step-description" id="step-3-desc">Aguardando consulta ao InterProScan...</p>
+                            </div>
+                            <div class="step-status" id="step-3-status">⏳</div>
+                        </div>
+
+                        <div class="step-progress" id="step-4">
+                            <div class="step-number">4</div>
+                            <div class="step-info">
+                                <p class="step-label">Montando resultados</p>
+                                <p class="step-description" id="step-4-desc">Aguardando conclusão das análises...</p>
+                            </div>
+                            <div class="step-status" id="step-4-status">⏳</div>
+                        </div>
+                    </div>
+
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== PÁGINA 4: RESULTADOS ===== -->
+    <div id="page-results" class="page">
+        <div class="container">
+            <header class="header-small">
+                <button class="btn-back" onclick="goToPage('page-input')">← Nova Análise</button>
+                <h1>Resultados da Análise</h1>
+            </header>
+
+            <main class="main-content">
+                <div id="results-content">
+                    <!-- Será preenchido por JavaScript -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
