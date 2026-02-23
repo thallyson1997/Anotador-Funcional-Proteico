@@ -1,6 +1,26 @@
 // ===== CONFIGURAÇÃO DA API =====
 const API_BASE_URL = ''; // Usar requisições relativas (mesma porta)
+// ===== NOTIFICAÇÕES =====
+function showNotification(message, type = 'error', duration = 5000) {
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
+    
+    // Atualizar conteúdo e classe
+    notificationMessage.textContent = message;
+    notification.className = `notification active ${type}`;
+    
+    // Auto-fechar após duração (se duration > 0)
+    if (duration > 0) {
+        setTimeout(() => {
+            closeNotification();
+        }, duration);
+    }
+}
 
+function closeNotification() {
+    const notification = document.getElementById('notification');
+    notification.classList.remove('active');
+}
 // ===== NAVIGATION =====
 function goToPage(pageId) {
     // Ocultar todas as páginas
@@ -66,12 +86,12 @@ async function submitSequence() {
     
     // Validação
     if (!sequence) {
-        alert('❌ Por favor, insira uma sequência proteica válida.');
+        showNotification('Por favor, insira uma sequência proteica válida.', 'error');
         return;
     }
     
     if (!email || !validateEmail(email)) {
-        alert('❌ Por favor, insira um email válido.');
+        showNotification('Por favor, insira um email válido.', 'error');
         return;
     }
     
@@ -89,7 +109,7 @@ async function submitSequence() {
         
     } catch (error) {
         console.error('Erro:', error);
-        alert('❌ Erro ao processar sequência: ' + error.message);
+        showNotification('Erro ao processar sequência: ' + error.message, 'error');
         goToPage('page-input');
     } finally {
         btn.disabled = false;
@@ -97,43 +117,200 @@ async function submitSequence() {
     }
 }
 
+// ===== VARIÁVEIS GLOBAIS PARA MODAL =====
+let currentAntismashFile = null;
+let currentAntismashEmail = null;
+let currentProteins = [];
+
+// ===== MODAL FUNCTIONS =====
+function closeProteinModal() {
+    document.getElementById('modal-proteins').classList.remove('active');
+    currentAntismashFile = null;
+    currentAntismashEmail = null;
+    currentProteins = [];
+}
+
+function showProteinModal(proteins, filename) {
+    const modal = document.getElementById('modal-proteins');
+    const countText = document.getElementById('proteins-count-text');
+    const tableContainer = document.getElementById('proteins-table-container');
+    const tableBody = document.getElementById('proteins-tbody');
+    const noMessage = document.getElementById('no-proteins-message');
+    const rangeSelector = document.getElementById('protein-range-selector');
+    const btnAnalyze = document.getElementById('btn-analyze-range');
+    const endIndexInput = document.getElementById('protein-end-index');
+    
+    currentProteins = proteins;
+    
+    if (proteins.length === 0) {
+        countText.textContent = '❌ Nenhuma proteína hipotética foi encontrada.';
+        tableContainer.style.display = 'none';
+        rangeSelector.style.display = 'none';
+        noMessage.style.display = 'block';
+        btnAnalyze.style.display = 'none';
+    } else {
+        countText.textContent = `✅ Encontradas ${proteins.length} proteínas hipotéticas`;
+        tableContainer.style.display = 'block';
+        rangeSelector.style.display = 'block';
+        noMessage.style.display = 'none';
+        btnAnalyze.style.display = 'block';
+        
+        // Preencher tabela
+        tableBody.innerHTML = '';
+        proteins.forEach(protein => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${protein.index}</td>
+                <td>${protein.locus_tag || '-'}</td>
+                <td>${protein.product}</td>
+                <td>${protein.sequence_length}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+        
+        // Configurar inputs de range
+        document.getElementById('protein-start-index').value = 1;
+        endIndexInput.value = proteins.length;
+        endIndexInput.max = proteins.length;
+    }
+    
+    modal.classList.add('active');
+}
+
+async function analyzeProteinRange() {
+    const startIndex = parseInt(document.getElementById('protein-start-index').value);
+    const endIndex = parseInt(document.getElementById('protein-end-index').value);
+    const proteinsLength = currentProteins.length;
+    
+    // Validações
+    if (startIndex < 1) {
+        showNotification('Índice inicial deve ser >= 1', 'error');
+        return;
+    }
+    
+    if (startIndex > endIndex) {
+        showNotification('Índice inicial não pode ser maior que índice final', 'error');
+        return;
+    }
+    
+    if (startIndex > proteinsLength) {
+        showNotification(`Índice inicial (${startIndex}) excede número de proteínas (${proteinsLength})`, 'error');
+        return;
+    }
+    
+    // Guardar valores ANTES de fechar o modal (que zera as variáveis)
+    const fileToAnalyze = currentAntismashFile;
+    const emailToUse = currentAntismashEmail;
+    
+    closeProteinModal();
+    goToPage('page-loading');
+    
+    try {
+        // Chamar endpoint de análise com o intervalo
+        const formData = new FormData();
+        formData.append('file', fileToAnalyze);
+        formData.append('email', emailToUse);
+        formData.append('start_index', String(startIndex));
+        formData.append('end_index', String(Math.min(endIndex, proteinsLength)));
+        
+        // Log para debugging
+        console.log('Enviando para backend:', {
+            file: fileToAnalyze.name,
+            email: emailToUse,
+            start_index: startIndex,
+            end_index: Math.min(endIndex, proteinsLength),
+            proteinsLength: proteinsLength
+        });
+        
+        const response = await fetch(`${API_BASE_URL}/api/analyze-antismash-range`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.log('Erro do backend:', errorData);
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        updateProgress(100, 4, 'Análise concluída com sucesso!', true);
+        await sleep(1000);
+        displayResults(result);
+        goToPage('page-results');
+        
+    } catch (error) {
+        console.error('API Error:', error);
+        updateProgress(0, 4, `Erro: ${error.message}`, false);
+        document.getElementById('step-4-status').textContent = '❌';
+        document.getElementById('step-4-status').classList.add('error');
+        await sleep(2000);
+        goToPage('page-input');
+        showNotification(error.message || 'Erro ao analisar', 'error');
+    }
+}
+
 // ===== SUBMIT ANTISMASH =====
 async function submitAntismash() {
     const file = document.getElementById('antismash-file').files[0];
     const email = document.getElementById('email-antismash').value.trim();
+    const filterByBGC = document.getElementById('filter-by-bgc').checked;
     
     // Validação
     if (!file) {
-        alert('❌ Por favor, selecione um arquivo para upload.');
+        showNotification('Por favor, selecione um arquivo para upload.', 'error');
         return;
     }
     
-    if (file.size > 500 * 1024 * 1024) { // 500 MB
-        alert('❌ Arquivo muito grande (máximo 500 MB).');
+    if (file.size > 500 * 1024 * 1024) {
+        showNotification('Arquivo muito grande (máximo 500 MB).', 'error');
         return;
     }
     
     if (!email || !validateEmail(email)) {
-        alert('❌ Por favor, insira um email válido.');
+        showNotification('Por favor, insira um email válido.', 'error');
         return;
+    }
+    
+    // Mostrar aviso se filtro desativado
+    if (!filterByBGC) {
+        showNotification('⚠️ Filtro BGC desativado - a análise pode demorar bastante tempo!', 'warning');
     }
     
     // Desabilitar botão
     const btn = event.target;
     btn.disabled = true;
-    btn.textContent = 'Carregando...';
+    btn.textContent = 'Contando proteínas...';
     
     try {
-        // Ir para página de loading
-        goToPage('page-loading');
+        // Guardar arquivo e email para uso posterior
+        currentAntismashFile = file;
+        currentAntismashEmail = email;
         
-        // Simular análise (substituir por chamada API real depois)
-        await analyzeAntismash(file, email);
+        // Contar proteínas
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('filter_by_bgc', filterByBGC ? 'true' : 'false');
+        
+        const response = await fetch(`${API_BASE_URL}/api/count-hypothetical-proteins`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // Mostrar modal com contagem
+        showProteinModal(result.proteins || [], file.name);
         
     } catch (error) {
         console.error('Erro:', error);
-        alert('❌ Erro ao processar arquivo: ' + error.message);
-        goToPage('page-input');
+        showNotification('Erro ao contar proteínas: ' + error.message, 'error');
     } finally {
         btn.disabled = false;
         btn.textContent = 'Carregar e Analisar';
@@ -179,7 +356,7 @@ async function analyzeSequence(seqId, sequence, email) {
         document.getElementById('step-3-status').classList.add('error');
         await sleep(2000);
         goToPage('page-input');
-        alert('❌ Erro ao processar sequência. Verifique a conexão com o servidor.');
+        showNotification(error.message || 'Erro ao processar sequência.', 'error');
     }
 }
 
@@ -233,7 +410,7 @@ async function analyzeAntismash(file, email) {
         document.getElementById('step-1-status').classList.add('error');
         await sleep(2000);
         goToPage('page-input');
-        alert('❌ Erro ao processar arquivo. Verifique a conexão com o servidor.');
+        showNotification(error.message || 'Erro ao processar arquivo.', 'error');
     }
 }
 
@@ -485,5 +662,42 @@ async function uploadFile(file) {
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Anotador Proteico Frontend - Inicializado');
+    
+    // Event listeners para modal de proteins
+    const modalProteinBtn = document.getElementById('btn-cancel-proteins');
+    if (modalProteinBtn) {
+        modalProteinBtn.addEventListener('click', closeProteinModal);
+    }
+    
+    const modalAnalyzeBtn = document.getElementById('btn-analyze-range');
+    if (modalAnalyzeBtn) {
+        modalAnalyzeBtn.addEventListener('click', analyzeProteinRange);
+    }
+    
+    const modalCloseBtn = document.querySelector('#modal-proteins .modal-close');
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', closeProteinModal);
+    }
+    
+    // Validação em tempo real para inputs de range
+    const startInput = document.getElementById('protein-start-index');
+    const endInput = document.getElementById('protein-end-index');
+    
+    if (startInput) {
+        startInput.addEventListener('input', function() {
+            const val = parseInt(this.value) || 0;
+            if (val < 1) this.value = 1;
+            if (val > currentProteins.length) this.value = currentProteins.length;
+        });
+    }
+    
+    if (endInput) {
+        endInput.addEventListener('input', function() {
+            const val = parseInt(this.value) || 0;
+            if (val < 1) this.value = 1;
+            if (val > currentProteins.length) this.value = currentProteins.length;
+        });
+    }
+    
     // Página inicial começa com a home (verificar no HTML que page-home tem class active)
 });

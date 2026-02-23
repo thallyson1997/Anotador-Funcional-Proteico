@@ -3,7 +3,7 @@ Backend FastAPI para Anotador Proteico
 Processa análise de domínios em proteínas
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,6 +22,7 @@ from utils import (
     validate_protein_sequence,
     domains_to_protein,
     get_placeholder_proteins,
+    extract_proteins_from_file,
 )
 
 # ===== INICIALIZAR FASTAPI =====
@@ -98,6 +99,202 @@ async def upload_antismash(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=400,
             detail=f"Erro ao processar arquivo: {str(e)}"
+        )
+
+@app.post("/api/count-hypothetical-proteins")
+async def count_hypothetical_proteins(
+    file: UploadFile = File(...),
+    filter_by_bgc: str = Form("true")
+):
+    """
+    Conta proteínas hipotéticas no arquivo GBK/ZIP
+    Retorna lista de proteínas encontradas para o usuário escolher qual intervalo analisar
+    
+    Parâmetros:
+    - file: arquivo GBK/ZIP
+    - filter_by_bgc: se "true", filtra apenas proteínas em clusters BGC (padrão)
+                      se "false", retorna todas as proteínas hipotéticas
+    """
+    try:
+        # Converter filter_by_bgc para boolean
+        filter_bgc = filter_by_bgc.lower() in ('true', '1', 'yes')
+        
+        # Validar tamanho
+        MAX_SIZE = 500 * 1024 * 1024
+        file_contents = await file.read()
+        
+        if len(file_contents) > MAX_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail="Arquivo muito grande (máximo 500 MB)"
+            )
+        
+        if not file.filename.endswith(('.gbk', '.zip')):
+            raise HTTPException(
+                status_code=400,
+                detail="Arquivo deve ser .gbk ou .zip"
+            )
+        
+        # Extrair proteínas
+        proteins = extract_proteins_from_file(file_contents, file.filename)
+        
+        # Filtrar por BGC se necessário
+        if filter_bgc:
+            proteins = [p for p in proteins if p.get("in_bgc", False)]
+        
+        if not proteins:
+            filtered_msg = " em clusters BGC" if filter_bgc else ""
+            return {
+                "file_name": file.filename,
+                "count": 0,
+                "proteins": [],
+                "filter_by_bgc": filter_bgc,
+                "message": f"Nenhuma proteína hipotética foi encontrada{filtered_msg} no arquivo"
+            }
+        
+        return {
+            "file_name": file.filename,
+            "count": len(proteins),
+            "proteins": [
+                {
+                    "index": p["index"],
+                    "locus_tag": p.get("locus_tag", ""),
+                    "product": p.get("product", ""),
+                    "sequence_length": len(p.get("sequence", "")),
+                    "bgc_type": p.get("bgc_cluster_type", "")
+                }
+                for p in proteins
+            ],
+            "filter_by_bgc": filter_bgc
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Erro ao contar proteínas: {str(e)}"
+        )
+
+@app.post("/api/analyze-antismash-range")
+async def analyze_antismash_range(
+    file: UploadFile = File(...),
+    email: str = Form(None),
+    start_index: str = Form(None),
+    end_index: str = Form(None)
+):
+    """
+    Analisa intervalo de proteínas hipotéticas do arquivo
+    
+    Parâmetros:
+    - file: arquivo GBK/ZIP
+    - email: email para InterProScan
+    - start_index: primeira proteína a analisar (1-based)
+    - end_index: última proteína a analisar (1-based)
+    """
+    try:
+        # Validar que todos os parâmetros foram recebidos
+        if not email:
+            raise HTTPException(
+                status_code=400,
+                detail="Email é obrigatório"
+            )
+        
+        if start_index is None or end_index is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Índices inicial e final são obrigatórios"
+            )
+        
+        # Converter índices de string para int
+        try:
+            start_index = int(start_index)
+            end_index = int(end_index)
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=400,
+                detail="Índices inicial e final devem ser números inteiros"
+            )
+        
+        # Validar índices
+        if start_index < 1:
+            raise HTTPException(
+                status_code=400,
+                detail="Índice inicial deve ser >= 1"
+            )
+        
+        if start_index > end_index:
+            raise HTTPException(
+                status_code=400,
+                detail="Índice inicial não pode ser maior que índice final"
+            )
+        
+        # Validar tamanho do arquivo
+        MAX_SIZE = 500 * 1024 * 1024
+        file_contents = await file.read()
+        
+        if len(file_contents) > MAX_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail="Arquivo muito grande"
+            )
+        
+        # Extrair proteínas
+        proteins = extract_proteins_from_file(file_contents, file.filename)
+        
+        if not proteins:
+            raise HTTPException(
+                status_code=400,
+                detail="Nenhuma proteína hipotética encontrada"
+            )
+        
+        # Validar range
+        if start_index > len(proteins):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Índice inicial ({start_index}) excede número de proteínas ({len(proteins)})"
+            )
+        
+        # Ajustar end_index se exceder
+        end_index = min(end_index, len(proteins))
+        
+        # Filtrar proteínas para análise
+        proteins_to_analyze = proteins[start_index-1:end_index]
+        
+        print(f"\n📊 Analisando {len(proteins_to_analyze)} proteínas (de {start_index} a {end_index})...")
+        
+        analyzed_proteins = []
+        for protein_data in proteins_to_analyze:
+            print(f"  → Analisando {protein_data['product']}...")
+            
+            # Buscar domínios
+            raw_domains = search_interproscan(
+                sequence=protein_data['sequence'],
+                seq_id=protein_data.get('locus_tag', f"protein_{protein_data['index']}"),
+                email=email,
+                timeout=600
+            )
+            
+            # Converter para objeto Protein
+            protein = domains_to_protein(
+                seq_id=protein_data.get('locus_tag', f"protein_{protein_data['index']}"),
+                raw_domains=raw_domains if raw_domains else []
+            )
+            analyzed_proteins.append(protein)
+        
+        return AntismashAnalysisResponse(
+            file_name=file.filename,
+            proteins_analyzed=len(analyzed_proteins),
+            proteins_with_domains=len([p for p in analyzed_proteins if p.domain_count > 0]),
+            proteins=analyzed_proteins
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Erro ao analisar: {str(e)}"
         )
 
 @app.post("/api/predict-domains", response_model=SequenceAnalysisResponse)

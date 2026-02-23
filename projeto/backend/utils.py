@@ -6,6 +6,8 @@ Integração com InterProScan (EBI) para busca real de domínios
 from models import Protein, Domain
 import requests
 import time
+import io
+import zipfile
 
 # ===== CONSTANTES DE BANCOS DE DADOS =====
 FUNCTIONAL_DOMAINS = [
@@ -21,6 +23,158 @@ TOPOLOGY = [
     'PHOBIUS', 'TMHMM', 'SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE',
     'SIGNALP_GRAM_NEGATIVE'
 ]
+
+# ===== PARSER GBK =====
+
+def parse_gbk_content(gbk_content: bytes) -> list:
+    """
+    Extrai proteínas hipotéticas de arquivo GBK com detecção de BGC
+    
+    Retorna lista de dicts com informações de cada proteína hipotética:
+    {
+        'index': número sequencial (1-based),
+        'locus_tag': identificador do gene,
+        'product': nome da proteína,
+        'sequence': sequência de aminoácidos,
+        'translation_note': anotações opcionais,
+        'in_bgc': True se está dentro de cluster BGC,
+        'bgc_cluster_type': tipo do cluster (se aplicável)
+    }
+    """
+    proteins = []
+    
+    try:
+        from Bio import SeqIO
+        
+        # Parse usando BioPython
+        try:
+            gbk_string = gbk_content.decode('utf-8') if isinstance(gbk_content, bytes) else gbk_content
+            records = SeqIO.parse(io.StringIO(gbk_string), "genbank")
+            
+            for record in records:
+                # Primeiro, extrair informações sobre regiões BGC
+                bgc_regions = []
+                for feature in record.features:
+                    if feature.type == "region":
+                        cluster_type = feature.qualifiers.get('product', ['Unknown'])[0]
+                        start = int(feature.location.start) if feature.location else 0
+                        end = int(feature.location.end) if feature.location else 0
+                        bgc_regions.append({
+                            'start': start,
+                            'end': end,
+                            'cluster_type': cluster_type
+                        })
+                
+                # Agora processar CDS e marcar se estão em BGC
+                for feature in record.features:
+                    if feature.type == "CDS":
+                        # Verificar se é proteína hipotética
+                        product = feature.qualifiers.get('product', [''])[0]
+                        translation = feature.qualifiers.get('translation', [''])[0]
+                        locus_tag = feature.qualifiers.get('locus_tag', [''])[0]
+                        
+                        if 'hypothetical' in product.lower() and translation:
+                            # Verificar se está em BGC
+                            cds_start = int(feature.location.start) if feature.location else 0
+                            cds_end = int(feature.location.end) if feature.location else 0
+                            
+                            in_bgc = False
+                            bgc_type = ""
+                            for bgc in bgc_regions:
+                                # Verificar se CDS está dentro da região BGC
+                                if bgc['start'] <= cds_start < bgc['end'] or bgc['start'] < cds_end <= bgc['end']:
+                                    in_bgc = True
+                                    bgc_type = bgc['cluster_type']
+                                    break
+                            
+                            proteins.append({
+                                'index': len(proteins) + 1,
+                                'locus_tag': locus_tag,
+                                'product': product,
+                                'sequence': translation,
+                                'translation_note': feature.qualifiers.get('note', [''])[0] if 'note' in feature.qualifiers else '',
+                                'in_bgc': in_bgc,
+                                'bgc_cluster_type': bgc_type
+                            })
+        except Exception as e:
+            print(f"Erro ao parsear com BioPython: {e}")
+            raise
+            
+    except ImportError:
+        # Fallback: parse manual simples se BioPython não estiver instalado
+        print("BioPython não disponível, usando parse manual...")
+        proteins = parse_gbk_manual(gbk_content)
+    
+    return proteins
+
+def parse_gbk_manual(gbk_content: bytes) -> list:
+    """
+    Parse manual de GBK quando BioPython não está disponível
+    (versão simplificada, extrai apenas informações básicas)
+    """
+    proteins = []
+    gbk_text = gbk_content.decode('utf-8') if isinstance(gbk_content, bytes) else gbk_content
+    
+    # Buscar features CDS com produto hipotético
+    lines = gbk_text.split('\n')
+    i = 0
+    while i < len(lines):
+        if 'CDS' in lines[i] and '/product=' in gbk_text[max(0, i*80-500):i*80+500]:
+            # Encontrou uma CDS, procurar product e translation
+            product = ""
+            translation = ""
+            locus_tag = ""
+            
+            # Procurar informações nas próximas linhas
+            for j in range(i, min(i+20, len(lines))):
+                if '/product=' in lines[j]:
+                    product = lines[j].split('/product=')[1].strip().strip('"')
+                if '/translation=' in lines[j]:
+                    translation = lines[j].split('/translation=')[1].strip().strip('"')
+                if '/locus_tag=' in lines[j]:
+                    locus_tag = lines[j].split('/locus_tag=')[1].strip().strip('"')
+            
+            if 'hypothetical' in product.lower() and translation:
+                proteins.append({
+                    'index': len(proteins) + 1,
+                    'locus_tag': locus_tag,
+                    'product': product,
+                    'sequence': translation.replace(' ', ''),
+                    'translation_note': '',
+                    'in_bgc': False,  # Parse manual não detecta BGC, assume False
+                    'bgc_cluster_type': ''
+                })
+        i += 1
+    
+    return proteins
+
+def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
+    """
+    Extrai proteínas hipotéticas de arquivo GBK ou ZIP
+    
+    Se for ZIP, extrai todos os GBK e combina resultados
+    """
+    all_proteins = []
+    
+    try:
+        if filename.endswith('.zip'):
+            # Extrair GBK do ZIP
+            with zipfile.ZipFile(io.BytesIO(file_content)) as zf:
+                gbk_files = [f for f in zf.namelist() if f.endswith('.gbk')]
+                
+                for gbk_name in gbk_files:
+                    gbk_bytes = zf.read(gbk_name)
+                    proteins = parse_gbk_content(gbk_bytes)
+                    all_proteins.extend(proteins)
+        else:
+            # Parse direto do GBK
+            all_proteins = parse_gbk_content(file_content)
+    
+    except Exception as e:
+        print(f"Erro ao extrair proteínas: {e}")
+        return []
+    
+    return all_proteins
 
 # ===== VALIDAÇÃO DE SEQUÊNCIAS =====
 
@@ -227,12 +381,16 @@ def domains_to_protein(seq_id: str, raw_domains: list) -> Protein:
     for d in raw_domains:
         key = (d['accession'], d.get('start'), d.get('end'))
         if key not in unique_domains:
+            # Usar valores padrão se campos forem None
+            name = d.get('name') or d.get('description') or 'Unknown domain'
+            accession = d.get('accession') or 'UNKNOWN'
+            
             unique_domains[key] = Domain(
-                name=d['name'],
-                accession=d['accession'],
+                name=name,
+                accession=accession,
                 databases=[d['database']],
                 confidence=classify_confidence([d]),
-                evalue=str(d.get('evalue', 'N/A')),
+                evalue=str(d.get('evalue') or 'N/A'),
                 start=d.get('start'),
                 end=d.get('end')
             )
