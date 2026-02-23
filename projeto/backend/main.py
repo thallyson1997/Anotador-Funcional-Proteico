@@ -5,7 +5,7 @@ Processa análise de domínios em proteínas
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import os
 
@@ -51,6 +51,26 @@ async def health_check():
     return HealthResponse(
         status="ok",
         version="1.0.0"
+    )
+
+@app.get("/api/download-debug")
+async def download_debug():
+    """
+    Download o arquivo de debug com análise completa de proteínas extraídas
+    Este arquivo é criado durante o processamento de um arquivo ZIP/GBK
+    Contém: total de proteínas, duplicatas, proteínas que aparecem 1x, breakdown por BGC
+    """
+    debug_file = "debug_proteins.txt"
+    if not os.path.exists(debug_file):
+        raise HTTPException(
+            status_code=404,
+            detail="Nenhum arquivo de debug disponível. Faça upload de um arquivo ZIP/GBK primeiro."
+        )
+    
+    return FileResponse(
+        path=debug_file,
+        media_type="text/plain; charset=utf-8",
+        filename="debug_proteins.txt"
     )
 
 @app.post("/api/upload-antismash", response_model=AntismashAnalysisResponse)

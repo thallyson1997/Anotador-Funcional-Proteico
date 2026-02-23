@@ -174,7 +174,136 @@ def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
         print(f"Erro ao extrair proteínas: {e}")
         return []
     
-    return all_proteins
+    
+    # ===== DEBUG: ANÁLISE DE DUPLICATAS (salvar em arquivo) =====
+    debug_output = []
+    debug_output.append("="*70)
+    debug_output.append("🔍 DEBUG: ANÁLISE DE PROTEÍNAS EXTRAÍDAS")
+    debug_output.append("="*70)
+    
+    debug_output.append(f"\n📊 Total de proteínas extraídas (ANTES de deduplicação): {len(all_proteins)}")
+    
+    # Contar locus_tags duplicados
+    from collections import Counter
+    locus_tags = [p.get('locus_tag', '') for p in all_proteins]
+    tag_counts = Counter(locus_tags)
+    duplicated_tags = {tag: count for tag, count in tag_counts.items() if count > 1 and tag}
+    
+    # Encontrar proteínas que aparecem apenas uma vez
+    single_proteins = {tag: count for tag, count in tag_counts.items() if count == 1}
+    
+    if duplicated_tags:
+        debug_output.append(f"\n⚠️ Locus_tags DUPLICADOS encontrados: {len(duplicated_tags)}")
+    else:
+        debug_output.append(f"\n✅ Nenhum locus_tag duplicado encontrado")
+    
+    # CRUCIAL: Mostrar proteínas que aparecem SÓ UMA VEZ
+    if single_proteins:
+        debug_output.append(f"\n⭐ Proteínas que aparecem APENAS 1x (NÃO foram duplicadas): {len(single_proteins)}")
+        for tag in sorted(single_proteins.keys()):
+            protein = next(p for p in all_proteins if p.get('locus_tag') == tag)
+            bgc_type = protein.get('bgc_cluster_type', 'SEM_BGC')
+            seq_size = len(protein.get('sequence', ''))
+            debug_output.append(f"   - {tag}: bgc={bgc_type}, size={seq_size}aa")
+    
+    # Análise por BGC
+    debug_output.append(f"\n📈 BREAKDOWN POR BGC (ANTES DEDUP):")
+    bgc_types = {}
+    for p in all_proteins:
+        bgc_type = p.get('bgc_cluster_type', 'SEM_BGC')
+        if bgc_type not in bgc_types:
+            bgc_types[bgc_type] = 0
+        bgc_types[bgc_type] += 1
+    
+    for bgc_type in sorted(bgc_types.keys()):
+        debug_output.append(f"   - {bgc_type}: {bgc_types[bgc_type]} proteína(s)")
+    
+    # ===== DEDUPLICAÇÃO =====
+    debug_output.append("\n" + "="*70)
+    debug_output.append("🔄 APLICANDO DEDUPLICAÇÃO...")
+    debug_output.append("="*70)
+    
+    seen_tags = set()
+    deduplicated = []
+    
+    for protein in all_proteins:
+        tag = protein.get('locus_tag', '')
+        if tag and tag not in seen_tags:
+            seen_tags.add(tag)
+            deduplicated.append(protein)
+        elif not tag:
+            deduplicated.append(protein)
+    
+    debug_output.append(f"\n✅ Deduplicação concluída:")
+    debug_output.append(f"   Antes: {len(all_proteins)} proteínas")
+    debug_output.append(f"   Depois: {len(deduplicated)} proteínas")
+    debug_output.append(f"   Removido: {len(all_proteins) - len(deduplicated)} duplicatas")
+    
+    # ===== FILTRAGEM: Remover proteínas que aparecem APENAS 1x =====
+    debug_output.append("\n" + "="*70)
+    debug_output.append("🔎 FILTRAGEM: Removendo proteins que aparecem APENAS 1x...")
+    debug_output.append("="*70)
+    
+    # Manter apenas proteínas que FORAM duplicadas (apareceram 2+ vezes)
+    deduplicated_filtered = [
+        p for p in deduplicated 
+        if p.get('locus_tag', '') and tag_counts.get(p.get('locus_tag', ''), 0) > 1
+    ]
+    
+    debug_output.append(f"\n✅ Filtragem concluída:")
+    debug_output.append(f"   Antes (com 1x): {len(deduplicated)} proteínas")
+    debug_output.append(f"   Depois (sem 1x): {len(deduplicated_filtered)} proteínas")
+    debug_output.append(f"   Removido: {len(deduplicated) - len(deduplicated_filtered)} (proteínas que appeareceram 1x)")
+    
+    # Mostrar quais foram removidas
+    removed_proteins = [
+        p for p in deduplicated 
+        if p.get('locus_tag', '') and tag_counts.get(p.get('locus_tag', ''), 0) == 1
+    ]
+    if removed_proteins:
+        debug_output.append(f"\n⚠️ Proteínas removidas (aparecem APENAS 1x):")
+        for p in removed_proteins:
+            tag = p.get('locus_tag', 'N/A')
+            bgc = p.get('bgc_cluster_type', 'SEM_BGC')
+            size = len(p.get('sequence', ''))
+            debug_output.append(f"   - {tag}: bgc={bgc}, size={size}aa")
+    
+    # Novo breakdown após deduplicação E filtragem
+    debug_output.append(f"\n📈 BREAKDOWN POR BGC (FINAL - APÓS DEDUP + FILTRAGEM):")
+    bgc_types_dedup = {}
+    for p in deduplicated_filtered:
+        bgc_type = p.get('bgc_cluster_type', 'SEM_BGC')
+        if bgc_type not in bgc_types_dedup:
+            bgc_types_dedup[bgc_type] = []
+        bgc_types_dedup[bgc_type].append(p.get('locus_tag', 'N/A'))
+    
+    for bgc_type in sorted(bgc_types_dedup.keys()):
+        count = len(bgc_types_dedup[bgc_type])
+        debug_output.append(f"   - {bgc_type}: {count} proteína(s)")
+    
+    debug_output.append(f"\n✨ RESULTADO FINAL: {len(deduplicated_filtered)} proteína(s) (sem duplicatas e sem aparecer apenas 1x)")
+    debug_output.append("="*70)
+    
+    # ===== SALVAR EM ARQUIVO =====
+    debug_filename = "debug_proteins.txt"
+    try:
+        with open(debug_filename, "w", encoding="utf-8") as f:
+            f.write("\n".join(debug_output))
+        
+        # Mostrar resumo no console
+        print("\n" + "="*70)
+        print("🔍 DEBUG RESUMIDO")
+        print("="*70)
+        print(f"📊 Total extraído: {len(all_proteins)}")
+        print(f"⭐ Proteínas que aparecem SÓ 1x: {len(single_proteins)}")
+        print(f"✅ Após dedup: {len(deduplicated)}")
+        print(f"🎯 FINAL (sem 1x): {len(deduplicated_filtered)}")
+        print(f"\n📁 Detalhes COMPLETOS salvo em: {debug_filename}")
+        print("="*70 + "\n")
+    except Exception as e:
+        print(f"⚠️ Erro ao salvar debug: {e}\n")
+    
+    return deduplicated_filtered
 
 # ===== VALIDAÇÃO DE SEQUÊNCIAS =====
 
