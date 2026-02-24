@@ -38,7 +38,9 @@ def parse_gbk_content(gbk_content: bytes) -> list:
         'sequence': sequência de aminoácidos,
         'translation_note': anotações opcionais,
         'in_bgc': True se está dentro de cluster BGC,
-        'bgc_cluster_type': tipo do cluster (se aplicável)
+        'bgc_cluster_type': tipo do cluster (se aplicável),
+        'protein_id': identificador da proteína,
+        'FASTA_ID': ID único para identificação (protein_id ou hyp_{index})
     }
     """
     proteins = []
@@ -72,6 +74,7 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                         product = feature.qualifiers.get('product', [''])[0]
                         translation = feature.qualifiers.get('translation', [''])[0]
                         locus_tag = feature.qualifiers.get('locus_tag', [''])[0]
+                        protein_id = feature.qualifiers.get('protein_id', [''])[0]
                         
                         if 'hypothetical' in product.lower() and translation:
                             # Verificar se está em BGC
@@ -87,14 +90,20 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                                     bgc_type = bgc['cluster_type']
                                     break
                             
+                            # Gerar FASTA_ID: usa protein_id se disponível, senão gera hyp_{índice}
+                            next_index = len(proteins) + 1
+                            fasta_id = protein_id if protein_id else f"hyp_{next_index}"
+                            
                             proteins.append({
-                                'index': len(proteins) + 1,
+                                'index': next_index,
                                 'locus_tag': locus_tag,
                                 'product': product,
                                 'sequence': translation,
                                 'translation_note': feature.qualifiers.get('note', [''])[0] if 'note' in feature.qualifiers else '',
                                 'in_bgc': in_bgc,
-                                'bgc_cluster_type': bgc_type
+                                'bgc_cluster_type': bgc_type,
+                                'protein_id': protein_id,
+                                'FASTA_ID': fasta_id
                             })
         except Exception as e:
             print(f"Erro ao parsear com BioPython: {e}")
@@ -124,6 +133,7 @@ def parse_gbk_manual(gbk_content: bytes) -> list:
             product = ""
             translation = ""
             locus_tag = ""
+            protein_id = ""
             
             # Procurar informações nas próximas linhas
             for j in range(i, min(i+20, len(lines))):
@@ -133,16 +143,23 @@ def parse_gbk_manual(gbk_content: bytes) -> list:
                     translation = lines[j].split('/translation=')[1].strip().strip('"')
                 if '/locus_tag=' in lines[j]:
                     locus_tag = lines[j].split('/locus_tag=')[1].strip().strip('"')
+                if '/protein_id=' in lines[j]:
+                    protein_id = lines[j].split('/protein_id=')[1].strip().strip('"')
             
             if 'hypothetical' in product.lower() and translation:
+                next_index = len(proteins) + 1
+                fasta_id = protein_id if protein_id else f"hyp_{next_index}"
+                
                 proteins.append({
-                    'index': len(proteins) + 1,
+                    'index': next_index,
                     'locus_tag': locus_tag,
                     'product': product,
                     'sequence': translation.replace(' ', ''),
                     'translation_note': '',
                     'in_bgc': False,  # Parse manual não detecta BGC, assume False
-                    'bgc_cluster_type': ''
+                    'bgc_cluster_type': '',
+                    'protein_id': protein_id,
+                    'FASTA_ID': fasta_id
                 })
         i += 1
     

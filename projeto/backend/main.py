@@ -179,6 +179,7 @@ async def count_hypothetical_proteins(
                 {
                     "index": p["index"],
                     "locus_tag": p.get("locus_tag", ""),
+                    "FASTA_ID": p.get("FASTA_ID", ""),
                     "product": p.get("product", ""),
                     "sequence_length": len(p.get("sequence", "")),
                     "bgc_type": p.get("bgc_cluster_type", "")
@@ -317,6 +318,122 @@ async def analyze_antismash_range(
             detail=f"Erro ao analisar: {str(e)}"
         )
 
+@app.post("/api/analyze-antismash-selected")
+async def analyze_antismash_selected(
+    file: UploadFile = File(...),
+    email: str = Form(None),
+    selected_indices: str = Form(None)
+):
+    """
+    Analisa proteínas selecionadas do arquivo antiSMASH
+    
+    Parâmetros:
+    - file: arquivo GBK/ZIP
+    - email: email para InterProScan
+    - selected_indices: JSON string com array de índices (0-based) das proteínas a analisar
+    
+    Exemplo: selected_indices = "[0, 2, 5]"
+    """
+    try:
+        import json
+        
+        # Validar que todos os parâmetros foram recebidos
+        if not email:
+            raise HTTPException(
+                status_code=400,
+                detail="Email é obrigatório"
+            )
+        
+        if selected_indices is None:
+            raise HTTPException(
+                status_code=400,
+                detail="selected_indices é obrigatório"
+            )
+        
+        # Converter JSON string para lista de índices
+        try:
+            indices_list = json.loads(selected_indices)
+            if not isinstance(indices_list, list):
+                raise ValueError("selected_indices deve ser um array JSON")
+            indices_list = [int(i) for i in indices_list]
+        except (ValueError, json.JSONDecodeError) as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Erro ao parsear selected_indices: {str(e)}"
+            )
+        
+        if not indices_list:
+            raise HTTPException(
+                status_code=400,
+                detail="Nenhum índice foi selecionado"
+            )
+        
+        # Validar tamanho do arquivo
+        MAX_SIZE = 500 * 1024 * 1024
+        file_contents = await file.read()
+        
+        if len(file_contents) > MAX_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail="Arquivo muito grande"
+            )
+        
+        # Extrair proteínas
+        proteins = extract_proteins_from_file(file_contents, file.filename)
+        
+        if not proteins:
+            raise HTTPException(
+                status_code=400,
+                detail="Nenhuma proteína hipotética encontrada"
+            )
+        
+        # Validar índices
+        max_valid_index = len(proteins) - 1
+        for idx in indices_list:
+            if idx < 0 or idx > max_valid_index:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Índice {idx} está fora do intervalo válido (0-{max_valid_index})"
+                )
+        
+        # Filtrar proteínas para análise
+        proteins_to_analyze = [proteins[i] for i in indices_list]
+        
+        print(f"\n📊 Analisando {len(proteins_to_analyze)} proteínas selecionadas...")
+        
+        analyzed_proteins = []
+        for protein_data in proteins_to_analyze:
+            print(f"  → Analisando {protein_data['product']}...")
+            
+            # Buscar domínios
+            raw_domains = search_interproscan(
+                sequence=protein_data['sequence'],
+                seq_id=protein_data.get('FASTA_ID', protein_data.get('locus_tag', f"protein_{protein_data['index']}")),
+                email=email,
+                timeout=600
+            )
+            
+            # Converter para objeto Protein
+            protein = domains_to_protein(
+                seq_id=protein_data.get('FASTA_ID', protein_data.get('locus_tag', f"protein_{protein_data['index']}")),
+                raw_domains=raw_domains if raw_domains else []
+            )
+            analyzed_proteins.append(protein)
+        
+        return AntismashAnalysisResponse(
+            file_name=file.filename,
+            proteins_analyzed=len(analyzed_proteins),
+            proteins_with_domains=len([p for p in analyzed_proteins if p.domain_count > 0]),
+            proteins=analyzed_proteins
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Erro ao analisar: {str(e)}"
+        )
 @app.post("/api/predict-domains", response_model=SequenceAnalysisResponse)
 async def predict_domains(request: SequenceAnalysisRequest):
     """

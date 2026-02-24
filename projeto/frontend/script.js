@@ -130,71 +130,59 @@ function closeProteinModal() {
     currentProteins = [];
 }
 
+function toggleAllProteinCheckboxes(checked) {
+    const checkboxes = document.querySelectorAll('.protein-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+    });
+}
+
 function showProteinModal(proteins, filename) {
     const modal = document.getElementById('modal-proteins');
     const countText = document.getElementById('proteins-count-text');
     const tableContainer = document.getElementById('proteins-table-container');
     const tableBody = document.getElementById('proteins-tbody');
     const noMessage = document.getElementById('no-proteins-message');
-    const rangeSelector = document.getElementById('protein-range-selector');
-    const btnAnalyze = document.getElementById('btn-analyze-range');
-    const endIndexInput = document.getElementById('protein-end-index');
+    const btnAnalyze = document.getElementById('btn-analyze-selected');
     
     currentProteins = proteins;
     
     if (proteins.length === 0) {
         countText.textContent = '❌ Nenhuma proteína hipotética foi encontrada.';
         tableContainer.style.display = 'none';
-        rangeSelector.style.display = 'none';
         noMessage.style.display = 'block';
         btnAnalyze.style.display = 'none';
     } else {
         countText.textContent = `✅ Encontradas ${proteins.length} proteínas hipotéticas`;
         tableContainer.style.display = 'block';
-        rangeSelector.style.display = 'block';
         noMessage.style.display = 'none';
         btnAnalyze.style.display = 'block';
         
-        // Preencher tabela
+        // Preencher tabela com checkboxes (desmarcados por padrão)
         tableBody.innerHTML = '';
-        proteins.forEach(protein => {
+        proteins.forEach((protein, idx) => {
             const row = document.createElement('tr');
             row.innerHTML = `
+                <td style="text-align: center;"><input type="checkbox" class="protein-checkbox" data-index="${idx}"></td>
                 <td>${protein.index}</td>
-                <td>${protein.locus_tag || '-'}</td>
+                <td>${protein.FASTA_ID || '-'}</td>
                 <td>${protein.product}</td>
                 <td>${protein.sequence_length}</td>
             `;
             tableBody.appendChild(row);
         });
-        
-        // Configurar inputs de range
-        document.getElementById('protein-start-index').value = 1;
-        endIndexInput.value = proteins.length;
-        endIndexInput.max = proteins.length;
     }
     
     modal.classList.add('active');
 }
 
-async function analyzeProteinRange() {
-    const startIndex = parseInt(document.getElementById('protein-start-index').value);
-    const endIndex = parseInt(document.getElementById('protein-end-index').value);
-    const proteinsLength = currentProteins.length;
+async function analyzeSelectedProteins() {
+    // Coletar índices das proteínas selecionadas
+    const checkboxes = document.querySelectorAll('.protein-checkbox:checked');
+    const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
     
-    // Validações
-    if (startIndex < 1) {
-        showNotification('Índice inicial deve ser >= 1', 'error');
-        return;
-    }
-    
-    if (startIndex > endIndex) {
-        showNotification('Índice inicial não pode ser maior que índice final', 'error');
-        return;
-    }
-    
-    if (startIndex > proteinsLength) {
-        showNotification(`Índice inicial (${startIndex}) excede número de proteínas (${proteinsLength})`, 'error');
+    if (selectedIndices.length === 0) {
+        showNotification('Selecione pelo menos uma proteína para análise', 'error');
         return;
     }
     
@@ -202,27 +190,46 @@ async function analyzeProteinRange() {
     const fileToAnalyze = currentAntismashFile;
     const emailToUse = currentAntismashEmail;
     
+    console.log('Debug analyzeSelectedProteins:', {
+        fileAvailable: !!fileToAnalyze,
+        fileName: fileToAnalyze?.name || 'null',
+        emailAvailable: !!emailToUse,
+        email: emailToUse || 'null',
+        selectedIndicesCount: selectedIndices.length
+    });
+    
+    // Se não temos arquivo/email, notificar mas continuar de qualquer forma
+    // pois a análise pode já estar em andamento no backend
+    if (!fileToAnalyze && emailToUse) {
+        console.warn('Arquivo não disponível, mas email existe. Prosseguindo...');
+    }
+    
     closeProteinModal();
     goToPage('page-loading');
     
     try {
-        // Chamar endpoint de análise com o intervalo
+        // Chamar endpoint de análise com as proteínas selecionadas
         const formData = new FormData();
-        formData.append('file', fileToAnalyze);
-        formData.append('email', emailToUse);
-        formData.append('start_index', String(startIndex));
-        formData.append('end_index', String(Math.min(endIndex, proteinsLength)));
+        if (fileToAnalyze) {
+            formData.append('file', fileToAnalyze);
+        }
+        if (emailToUse) {
+            formData.append('email', emailToUse);
+        }
+        formData.append('selected_indices', JSON.stringify(selectedIndices));
         
         // Log para debugging
         console.log('Enviando para backend:', {
-            file: fileToAnalyze.name,
+            fileAvailable: !!fileToAnalyze,
             email: emailToUse,
-            start_index: startIndex,
-            end_index: Math.min(endIndex, proteinsLength),
-            proteinsLength: proteinsLength
+            selectedIndices: selectedIndices,
+            proteinsCount: selectedIndices.length
         });
         
-        const response = await fetch(`${API_BASE_URL}/api/analyze-antismash-range`, {
+        // Atualizar progresso
+        updateProgress(25, 2, 'Enviando análise para o servidor...');
+        
+        const response = await fetch(`${API_BASE_URL}/api/analyze-antismash-selected`, {
             method: 'POST',
             body: formData
         });
@@ -442,6 +449,85 @@ function updateProgress(percentage, stepNumber, description, isDone = false) {
 }
 
 // ===== DISPLAY RESULTS =====
+// ===== CATEGORIZAÇÃO DE DOMÍNIOS =====
+function getDatabaseCategory(database) {
+    const db = database.toUpperCase().trim();
+    
+    // Domínios Funcionais - AZUL
+    if (['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM'].includes(db)) {
+        return { 
+            emoji: '🔵', 
+            category: 'Domínios Funcionais',
+            color: '#0052cc',
+            bgColor: '#ddf1ff',
+            borderColor: '#0052cc',
+            accentColor: 'rgba(0, 82, 204, 0.1)'
+        };
+    } 
+    // Domínios Estruturais - VERMELHO
+    else if (['GENE3D', 'SUPERFAMILY'].includes(db)) {
+        return { 
+            emoji: '🟢', 
+            category: 'Domínios Estruturais',
+            color: '#cc0000',
+            bgColor: '#ffe6e6',
+            borderColor: '#cc0000',
+            accentColor: 'rgba(204, 0, 0, 0.1)'
+        };
+    } 
+    // Topologia/Localização - VERDE
+    else if (['PHOBIUS', 'TMHMM', 'SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE', 'SIGNALP_GRAM_NEGATIVE'].includes(db)) {
+        return { 
+            emoji: '🔷', 
+            category: 'Topologia/Localização',
+            color: '#009900',
+            bgColor: '#e6ffe6',
+            borderColor: '#009900',
+            accentColor: 'rgba(0, 153, 0, 0.1)'
+        };
+    } 
+    // Características Estruturais - AMARELO
+    else if (['COILS', 'MOBIDB_LITE'].includes(db)) {
+        return { 
+            emoji: '🔶', 
+            category: 'Características Estruturais',
+            color: '#cc9900',
+            bgColor: '#fff9e6',
+            borderColor: '#cc9900',
+            accentColor: 'rgba(204, 153, 0, 0.1)'
+        };
+    } 
+    // Outros/Não Categorizados - BRANCO/CINZA
+    else {
+        return { 
+            emoji: '⚪', 
+            category: 'Outros/Não Categorizados',
+            color: '#333333',
+            bgColor: '#f5f5f5',
+            borderColor: '#999999',
+            accentColor: 'rgba(51, 51, 51, 0.05)'
+        };
+    }
+}
+
+// ===== VERIFICA SE BANCO PERTENCE A DOMÍNIOS FUNCIONAIS OU ESTRUTURAIS =====
+function isFunctionalOrStructuralDomain(database) {
+    const db = database.toUpperCase().trim();
+    const functionalDomains = ['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM'];
+    const structuralDomains = ['GENE3D', 'SUPERFAMILY'];
+    
+    return functionalDomains.includes(db) || structuralDomains.includes(db);
+}
+
+// ===== DETERMINA CATEGORIA PREDOMINANTE DE UM DOMÍNIO =====
+function getDomainPrimaryCategory(databases) {
+    if (!databases || databases.length === 0) {
+        return getDatabaseCategory('OTHER');
+    }
+    // Retorna a categoria do primeiro banco de dados
+    return getDatabaseCategory(databases[0]);
+}
+
 function displayResults(data) {
     const resultsContainer = document.getElementById('results-content');
     let html = '';
@@ -547,16 +633,64 @@ function displayResults(data) {
         
         // Domains
         if (protein.domains && protein.domains.length > 0) {
+            // Calcular estatísticas APENAS para domínios funcionais e estruturais
+            const functionalStructuralDomains = protein.domains.filter(domain => {
+                if (!domain.databases || !Array.isArray(domain.databases) || domain.databases.length === 0) {
+                    return false;
+                }
+                // Verifica se pelo menos um banco pertence a funcionais ou estruturais
+                return domain.databases.some(db => isFunctionalOrStructuralDomain(db));
+            });
+            
+            // Contar domínios ÚNICOS por combinação de (nome + banco de dados)
+            const uniqueDomainsByDatabase = new Set();
+            const functionalStructuralDatabases = new Set();
+            
+            functionalStructuralDomains.forEach(domain => {
+                if (domain.databases && Array.isArray(domain.databases)) {
+                    domain.databases.forEach(db => {
+                        if (isFunctionalOrStructuralDomain(db)) {
+                            functionalStructuralDatabases.add(db);
+                            // Adicionar combinação única de domínio + banco
+                            uniqueDomainsByDatabase.add(`${domain.name}__${db}`);
+                        }
+                    });
+                }
+            });
+            
+            const totalDomains = uniqueDomainsByDatabase.size;
+            const totalDatabases = functionalStructuralDatabases.size;
+            
             html += `
                 <div class="domains-section">
-                    <h4>Domínios Identificados (${protein.domains.length})</h4>
+                    <h4>Resultados Encontrados (${protein.domains.length})</h4>
+                    <div style="background-color: #f8f9fa; padding: 10px 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.95em;">
+                        <span style="color: #555;">📊 <strong>${totalDomains}</strong> resultado${totalDomains !== 1 ? 's' : ''} encontrado${totalDomains !== 1 ? 's' : ''} em <strong>${totalDatabases}</strong> banco${totalDatabases !== 1 ? 's' : ''} de dados.</span>
+                    </div>
                     <div class="domains-list">
             `;
             
             protein.domains.forEach(domain => {
+                const primaryCategory = getDomainPrimaryCategory(domain.databases);
+                
                 html += `
-                    <div class="domain-item">
-                        <div class="domain-name">${domain.name}</div>
+                    <div class="domain-item" style="
+                        background-color: ${primaryCategory.bgColor};
+                        border-left: 5px solid ${primaryCategory.color};
+                        border: 1px solid ${primaryCategory.borderColor};
+                        border-left: 5px solid ${primaryCategory.color};
+                    ">
+                        <div class="domain-name" style="
+                            color: ${primaryCategory.color};
+                            font-weight: 600;
+                            margin-bottom: 8px;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        ">
+                            <span style="font-size: 1.2em;">${primaryCategory.emoji}</span>
+                            ${domain.name}
+                        </div>
                         <div class="domain-details">
                             <div class="domain-details-row">
                                 <span><strong>Accession:</strong> ${domain.accession}</span>
@@ -566,12 +700,29 @@ function displayResults(data) {
                                 <span><strong>Posição:</strong> ${domain.start}-${domain.end}</span>
                             </div>
                             <div style="margin-top: 8px;">
-                                <strong style="font-size: 0.9em;">Encontrado em:</strong>
-                                <div style="margin-top: 4px;">
+                                <strong style="font-size: 0.9em; color: ${primaryCategory.color};">Encontrado em:</strong>
+                                <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px;">
                 `;
                 
                 domain.databases.forEach(db => {
-                    html += `<span class="domain-db">${db}</span>`;
+                    const category = getDatabaseCategory(db);
+                    html += `
+                        <span class="domain-db" style="
+                            background-color: ${category.bgColor};
+                            color: ${category.color};
+                            border: 1px solid ${category.color};
+                            border-radius: 4px;
+                            padding: 4px 10px;
+                            font-size: 0.85em;
+                            font-weight: 500;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 5px;
+                        ">
+                            <span>${category.emoji}</span>
+                            <span title="${category.category}">${db}</span>
+                        </span>
+                    `;
                 });
                 
                 html += `
@@ -669,34 +820,9 @@ document.addEventListener('DOMContentLoaded', function() {
         modalProteinBtn.addEventListener('click', closeProteinModal);
     }
     
-    const modalAnalyzeBtn = document.getElementById('btn-analyze-range');
-    if (modalAnalyzeBtn) {
-        modalAnalyzeBtn.addEventListener('click', analyzeProteinRange);
-    }
-    
     const modalCloseBtn = document.querySelector('#modal-proteins .modal-close');
     if (modalCloseBtn) {
         modalCloseBtn.addEventListener('click', closeProteinModal);
-    }
-    
-    // Validação em tempo real para inputs de range
-    const startInput = document.getElementById('protein-start-index');
-    const endInput = document.getElementById('protein-end-index');
-    
-    if (startInput) {
-        startInput.addEventListener('input', function() {
-            const val = parseInt(this.value) || 0;
-            if (val < 1) this.value = 1;
-            if (val > currentProteins.length) this.value = currentProteins.length;
-        });
-    }
-    
-    if (endInput) {
-        endInput.addEventListener('input', function() {
-            const val = parseInt(this.value) || 0;
-            if (val < 1) this.value = 1;
-            if (val > currentProteins.length) this.value = currentProteins.length;
-        });
     }
     
     // Página inicial começa com a home (verificar no HTML que page-home tem class active)
