@@ -10,19 +10,29 @@ import io
 import zipfile
 
 # ===== CONSTANTES DE BANCOS DE DADOS =====
+# 🔵 Domínios Funcionais (Azul) - 12 tipos
 FUNCTIONAL_DOMAINS = [
     'PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS',
-    'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD'
+    'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM'
 ]
 
+# 🔴 Domínios Estruturais (Vermelho) - 2 tipos
 STRUCTURAL_DOMAINS = ['GENE3D', 'SUPERFAMILY']
 
-DOMAIN_DATABASES = FUNCTIONAL_DOMAINS + STRUCTURAL_DOMAINS
-
+# 🟢 Topologia/Localização (Verde) - 5 tipos
 TOPOLOGY = [
     'PHOBIUS', 'TMHMM', 'SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE',
     'SIGNALP_GRAM_NEGATIVE'
 ]
+
+# 🟡 Características Estruturais (Amarelo) - 2 tipos
+STRUCTURAL_FEATURES = ['COILS', 'MOBIDB_LITE']
+
+# Combinação de todos os bancos de domínios
+DOMAIN_DATABASES = FUNCTIONAL_DOMAINS + STRUCTURAL_DOMAINS
+
+# Combinação de todos os bancos
+ALL_DATABASES = DOMAIN_DATABASES + TOPOLOGY + STRUCTURAL_FEATURES
 
 # ===== PARSER GBK =====
 
