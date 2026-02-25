@@ -299,7 +299,8 @@ async def analyze_antismash_range(
             # Converter para objeto Protein
             protein = domains_to_protein(
                 seq_id=protein_data.get('locus_tag', f"protein_{protein_data['index']}"),
-                raw_domains=raw_domains if raw_domains else []
+                raw_domains=raw_domains if raw_domains else [],
+                cluster_types=protein_data.get('bgc_cluster_types', [])
             )
             analyzed_proteins.append(protein)
         
@@ -416,7 +417,8 @@ async def analyze_antismash_selected(
             # Converter para objeto Protein
             protein = domains_to_protein(
                 seq_id=protein_data.get('FASTA_ID', protein_data.get('locus_tag', f"protein_{protein_data['index']}")),
-                raw_domains=raw_domains if raw_domains else []
+                raw_domains=raw_domains if raw_domains else [],
+                cluster_types=protein_data.get('bgc_cluster_types', [])
             )
             analyzed_proteins.append(protein)
         
@@ -480,7 +482,8 @@ async def predict_domains(request: SequenceAnalysisRequest):
         # Converter para modelo Protein
         protein = domains_to_protein(
             seq_id=request.seq_id or "sequence_001",
-            raw_domains=raw_domains if raw_domains else []
+            raw_domains=raw_domains if raw_domains else [],
+            cluster_types=[]  # Análise de sequência única (sem BGC)
         )
         
         return SequenceAnalysisResponse(proteins=[protein])

@@ -48,7 +48,7 @@ def parse_gbk_content(gbk_content: bytes) -> list:
         'sequence': sequência de aminoácidos,
         'translation_note': anotações opcionais,
         'in_bgc': True se está dentro de cluster BGC,
-        'bgc_cluster_type': tipo do cluster (se aplicável),
+        'bgc_cluster_types': lista de tipos de clusters (se aplicável),
         'protein_id': identificador da proteína,
         'FASTA_ID': ID único para identificação (protein_id ou hyp_{index})
     }
@@ -92,13 +92,15 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                             cds_end = int(feature.location.end) if feature.location else 0
                             
                             in_bgc = False
-                            bgc_type = ""
+                            bgc_types = []
                             for bgc in bgc_regions:
                                 # Verificar se CDS está dentro da região BGC
                                 if bgc['start'] <= cds_start < bgc['end'] or bgc['start'] < cds_end <= bgc['end']:
                                     in_bgc = True
-                                    bgc_type = bgc['cluster_type']
-                                    break
+                                    bgc_types.append(bgc['cluster_type'])
+                            
+                            # Remover duplicatas mantendo ordem
+                            bgc_types = list(dict.fromkeys(bgc_types))
                             
                             # Gerar FASTA_ID: usa protein_id se disponível, senão gera hyp_{índice}
                             next_index = len(proteins) + 1
@@ -111,7 +113,7 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                                 'sequence': translation,
                                 'translation_note': feature.qualifiers.get('note', [''])[0] if 'note' in feature.qualifiers else '',
                                 'in_bgc': in_bgc,
-                                'bgc_cluster_type': bgc_type,
+                                'bgc_cluster_types': bgc_types,
                                 'protein_id': protein_id,
                                 'FASTA_ID': fasta_id
                             })
@@ -167,7 +169,7 @@ def parse_gbk_manual(gbk_content: bytes) -> list:
                     'sequence': translation.replace(' ', ''),
                     'translation_note': '',
                     'in_bgc': False,  # Parse manual não detecta BGC, assume False
-                    'bgc_cluster_type': '',
+                    'bgc_cluster_types': [],  # Lista vazia quando não há BGC
                     'protein_id': protein_id,
                     'FASTA_ID': fasta_id
                 })
@@ -229,18 +231,21 @@ def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
         debug_output.append(f"\n⭐ Proteínas que aparecem APENAS 1x (NÃO foram duplicadas): {len(single_proteins)}")
         for tag in sorted(single_proteins.keys()):
             protein = next(p for p in all_proteins if p.get('locus_tag') == tag)
-            bgc_type = protein.get('bgc_cluster_type', 'SEM_BGC')
+            bgc_types = protein.get('bgc_cluster_types', [])
+            bgc_str = ', '.join(bgc_types) if bgc_types else 'SEM_BGC'
             seq_size = len(protein.get('sequence', ''))
-            debug_output.append(f"   - {tag}: bgc={bgc_type}, size={seq_size}aa")
+            debug_output.append(f"   - {tag}: bgc={bgc_str}, size={seq_size}aa")
     
     # Análise por BGC
     debug_output.append(f"\n📈 BREAKDOWN POR BGC (ANTES DEDUP):")
     bgc_types = {}
     for p in all_proteins:
-        bgc_type = p.get('bgc_cluster_type', 'SEM_BGC')
-        if bgc_type not in bgc_types:
-            bgc_types[bgc_type] = 0
-        bgc_types[bgc_type] += 1
+        bgc_types_list = p.get('bgc_cluster_types', [])
+        # Para cada cluster type (uma proteína pode estar em múltiplos clusters)
+        for bgc_type in (bgc_types_list if bgc_types_list else ['SEM_BGC']):
+            if bgc_type not in bgc_types:
+                bgc_types[bgc_type] = 0
+            bgc_types[bgc_type] += 1
     
     for bgc_type in sorted(bgc_types.keys()):
         debug_output.append(f"   - {bgc_type}: {bgc_types[bgc_type]} proteína(s)")
@@ -291,18 +296,21 @@ def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
         debug_output.append(f"\n⚠️ Proteínas removidas (aparecem APENAS 1x):")
         for p in removed_proteins:
             tag = p.get('locus_tag', 'N/A')
-            bgc = p.get('bgc_cluster_type', 'SEM_BGC')
+            bgc_types_list = p.get('bgc_cluster_types', [])
+            bgc_str = ', '.join(bgc_types_list) if bgc_types_list else 'SEM_BGC'
             size = len(p.get('sequence', ''))
-            debug_output.append(f"   - {tag}: bgc={bgc}, size={size}aa")
+            debug_output.append(f"   - {tag}: bgc={bgc_str}, size={size}aa")
     
     # Novo breakdown após deduplicação E filtragem
     debug_output.append(f"\n📈 BREAKDOWN POR BGC (FINAL - APÓS DEDUP + FILTRAGEM):")
     bgc_types_dedup = {}
     for p in deduplicated_filtered:
-        bgc_type = p.get('bgc_cluster_type', 'SEM_BGC')
-        if bgc_type not in bgc_types_dedup:
-            bgc_types_dedup[bgc_type] = []
-        bgc_types_dedup[bgc_type].append(p.get('locus_tag', 'N/A'))
+        bgc_types_list = p.get('bgc_cluster_types', [])
+        # Para cada cluster type (uma proteína pode estar em múltiplos clusters)
+        for bgc_type in (bgc_types_list if bgc_types_list else ['SEM_BGC']):
+            if bgc_type not in bgc_types_dedup:
+                bgc_types_dedup[bgc_type] = []
+            bgc_types_dedup[bgc_type].append(p.get('locus_tag', 'N/A'))
     
     for bgc_type in sorted(bgc_types_dedup.keys()):
         count = len(bgc_types_dedup[bgc_type])
@@ -519,17 +527,79 @@ def classify_confidence(domains: list) -> str:
     else:
         return "Nenhum"
 
+# ===== EXTRAÇÃO DE CARACTERÍSTICAS DE TOPOLOGIA =====
+
+def extract_topology_features(raw_domains: list) -> dict:
+    """
+    Extrai características topológicas dos domínios (transmembrana, peptídeo sinal, etc)
+    
+    Returns:
+        dict com informações sobre topologia da proteína
+    """
+    topology_info = {
+        'has_transmembrane': False,
+        'has_signal_peptide': False,
+        'has_coils': False,
+        'has_mobidb': False,
+        'topology_annotations': []
+    }
+    
+    if not raw_domains:
+        return topology_info
+    
+    # Processar cada domínio
+    for d in raw_domains:
+        db = d.get('database', '').upper()
+        name = d.get('name', '').lower()
+        
+        # 🟢 TOPOLOGIA/LOCALIZAÇÃO
+        if db in ['PHOBIUS', 'TMHMM']:
+            # Detecção de transmembrana
+            if 'transmembrane' in name or 'tm' in name:
+                topology_info['has_transmembrane'] = True
+                topology_info['topology_annotations'].append(f"Transmembrana detectado ({db})")
+        
+        if db in ['SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE', 'SIGNALP_GRAM_NEGATIVE', 'PHOBIUS']:
+            # Detecção de peptídeo sinal
+            if 'signal' in name or 'signal peptide' in name:
+                topology_info['has_signal_peptide'] = True
+                topology_info['topology_annotations'].append(f"Peptídeo sinal detectado ({db})")
+        
+        # 🟡 CARACTERÍSTICAS ESTRUTURAIS
+        if db == 'COILS':
+            topology_info['has_coils'] = True
+            topology_info['topology_annotations'].append("Regiões desorganizadas (COILS)")
+        
+        if db == 'MOBIDB_LITE':
+            topology_info['has_mobidb'] = True
+            topology_info['topology_annotations'].append("Regiões móveis (MOBIDB_LITE)")
+    
+    # Remover duplicatas mantendo ordem
+    topology_info['topology_annotations'] = list(dict.fromkeys(topology_info['topology_annotations']))
+    
+    return topology_info
+
 # ===== CONVERSÃO PARA MODELO PROTEIN =====
 
-def domains_to_protein(seq_id: str, raw_domains: list) -> Protein:
-    """Converte lista de domínios brutos em objeto Protein"""
+def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = None) -> Protein:
+    """Converte lista de domínios brutos em objeto Protein com análise de topologia e clusters"""
+    
+    if cluster_types is None:
+        cluster_types = []
+    elif isinstance(cluster_types, str):
+        cluster_types = [cluster_types] if cluster_types else []
     
     if not raw_domains:
         return Protein(
             seq_id=seq_id,
             domain_count=0,
             domains=[],
-            confidence_level="Nenhum"
+            confidence_level="Nenhum",
+            has_transmembrane=False,
+            has_signal_peptide=False,
+            has_coils=False,
+            has_mobidb=False,
+            topology_annotations=[]
         )
     
     # Remover duplicatas e gerar objetos Domain
@@ -558,17 +628,26 @@ def domains_to_protein(seq_id: str, raw_domains: list) -> Protein:
     domains_list = list(unique_domains.values())
     confidence = classify_confidence(raw_domains)
     
+    # Extrair características topológicas
+    topology_features = extract_topology_features(raw_domains)
+    
     return Protein(
         seq_id=seq_id,
+        cluster_types=cluster_types,
         domain_count=len(domains_list),
         domains=domains_list,
-        confidence_level=confidence
+        confidence_level=confidence,
+        has_transmembrane=topology_features['has_transmembrane'],
+        has_signal_peptide=topology_features['has_signal_peptide'],
+        has_coils=topology_features['has_coils'],
+        has_mobidb=topology_features['has_mobidb'],
+        topology_annotations=topology_features['topology_annotations']
     )
 
 # ===== DADOS PLACEHOLDER (para teste sem InterProScan) =====
 
 def get_placeholder_proteins(count: int = 5) -> list:
-    """Gera proteínas com dados placeholder para teste rápido"""
+    """Gera proteínas com dados placeholder para teste rápido (incluindo topologia)"""
     proteins_data = [
         {
             'seq_id': 'hyp_1',
@@ -582,35 +661,70 @@ def get_placeholder_proteins(count: int = 5) -> list:
             'seq_id': 'hyp_2',
             'domains': [
                 Domain(name="Transmembrane domain", accession="PF00001", databases=["PFAM", "SMART"], confidence="Alta", evalue="5.4e-45", start=50, end=340),
+                Domain(name="Transmembrane region", accession="TMHMM", databases=["TMHMM"], confidence="Alta", evalue="N/A", start=60, end=78),
             ]
         },
         {
             'seq_id': 'hyp_3',
-            'domains': []
+            'domains': [
+                Domain(name="Signal peptide N-region", accession="SIGNALP", databases=["SIGNALP_EUK"], confidence="Alta", evalue="N/A", start=1, end=25),
+            ]
         },
         {
             'seq_id': 'hyp_4',
             'domains': [
                 Domain(name="Zinc finger", accession="PF00096", databases=["PFAM"], confidence="Baixa", evalue="1.2e-20", start=5, end=50),
                 Domain(name="C2H2 motif", accession="SM00355", databases=["SMART"], confidence="Baixa", evalue="3.4e-18", start=8, end=48),
+                Domain(name="Coil prediction", accession="COILS", databases=["COILS"], confidence="Média", evalue="N/A", start=100, end=140),
             ]
         },
         {
             'seq_id': 'hyp_5',
             'domains': [
                 Domain(name="Helicase domain", accession="PF04851", databases=["PFAM", "GENE3D", "SUPERFAMILY"], confidence="Alta", evalue="2.1e-60", start=100, end=450),
+                Domain(name="Disordered region", accession="MOBIDB_LITE", databases=["MOBIDB_LITE"], confidence="Média", evalue="N/A", start=480, end=520),
             ]
         },
     ]
     
     proteins = []
     for i, data in enumerate(proteins_data[:count]):
-        confidence = classify_confidence([{'database': db} for d in data['domains'] for db in d.databases]) if data['domains'] else "Nenhum"
+        if data['domains']:
+            # Converter Domain objects para dicts para análise de topologia
+            raw_domains_dicts = []
+            for d in data['domains']:
+                raw_domains_dicts.append({
+                    'database': d.databases[0],  # Usar primeiro banco para placeholder
+                    'name': d.name,
+                    'accession': d.accession,
+                    'evalue': d.evalue,
+                    'start': d.start,
+                    'end': d.end
+                })
+            
+            # Extrair características topológicas
+            topology_features = extract_topology_features(raw_domains_dicts)
+            confidence = classify_confidence(raw_domains_dicts)
+        else:
+            topology_features = {
+                'has_transmembrane': False,
+                'has_signal_peptide': False,
+                'has_coils': False,
+                'has_mobidb': False,
+                'topology_annotations': []
+            }
+            confidence = "Nenhum"
+        
         protein = Protein(
             seq_id=data['seq_id'],
             domain_count=len(data['domains']),
             domains=data['domains'],
-            confidence_level=confidence
+            confidence_level=confidence,
+            has_transmembrane=topology_features['has_transmembrane'],
+            has_signal_peptide=topology_features['has_signal_peptide'],
+            has_coils=topology_features['has_coils'],
+            has_mobidb=topology_features['has_mobidb'],
+            topology_annotations=topology_features['topology_annotations']
         )
         proteins.append(protein)
     
