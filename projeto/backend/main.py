@@ -178,7 +178,7 @@ async def count_hypothetical_proteins(
             "proteins": [
                 {
                     "index": p["index"],
-                    "locus_tag": p.get("locus_tag", ""),
+                    "locus_tag": p.get("locus_tag", "") or p.get("protein_id", "") or p.get("FASTA_ID", ""),
                     "FASTA_ID": p.get("FASTA_ID", ""),
                     "product": p.get("product", ""),
                     "sequence_length": len(p.get("sequence", "")),
@@ -300,7 +300,10 @@ async def analyze_antismash_range(
             protein = domains_to_protein(
                 seq_id=protein_data.get('locus_tag', f"protein_{protein_data['index']}"),
                 raw_domains=raw_domains if raw_domains else [],
-                cluster_types=protein_data.get('bgc_cluster_types', [])
+                cluster_types=protein_data.get('bgc_cluster_types', []),
+                bgc_region=protein_data.get('BGC_Region'),
+                start=protein_data.get('start'),
+                end=protein_data.get('end')
             )
             analyzed_proteins.append(protein)
         
@@ -418,8 +421,12 @@ async def analyze_antismash_selected(
             protein = domains_to_protein(
                 seq_id=protein_data.get('FASTA_ID', protein_data.get('locus_tag', f"protein_{protein_data['index']}")),
                 raw_domains=raw_domains if raw_domains else [],
-                cluster_types=protein_data.get('bgc_cluster_types', [])
+                cluster_types=protein_data.get('bgc_cluster_types', []),
+                bgc_region=protein_data.get('BGC_Region'),
+                start=protein_data.get('start'),
+                end=protein_data.get('end')
             )
+            
             analyzed_proteins.append(protein)
         
         return AntismashAnalysisResponse(

@@ -10,13 +10,17 @@ class Domain(BaseModel):
     evalue: str
     start: int
     end: int
+    is_topology: bool = False  # True se for topologia/característica, False se for domínio real
 
 # ===== PROTEIN MODEL =====
 class Protein(BaseModel):
     seq_id: str
     protein_name: Optional[str] = None
     region: Optional[str] = None
+    bgc_region: Optional[int] = None  # Número da região BGC
     cluster_types: List[str] = []  # Múltiplos clusters possíveis
+    start: Optional[int] = None  # Posição inicial no genoma
+    end: Optional[int] = None  # Posição final no genoma
     domain_count: int
     domains: List[Domain]
     confidence_level: str

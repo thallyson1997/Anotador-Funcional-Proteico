@@ -64,18 +64,51 @@ def parse_gbk_content(gbk_content: bytes) -> list:
             records = SeqIO.parse(io.StringIO(gbk_string), "genbank")
             
             for record in records:
-                # Primeiro, extrair informações sobre regiões BGC
-                bgc_regions = []
+                # Primeiro, extrair informações sobre protoclusters (clusters específicos com localização)
+                # Isso é mais preciso que 'region' porque cada protocluster tem boundaries específicas
+                protoclusters = []
                 for feature in record.features:
-                    if feature.type == "region":
-                        cluster_type = feature.qualifiers.get('product', ['Unknown'])[0]
+                    if feature.type == "protocluster":
+                        product = feature.qualifiers.get('product', ['Unknown'])[0] if feature.qualifiers.get('product') else 'Unknown'
                         start = int(feature.location.start) if feature.location else 0
                         end = int(feature.location.end) if feature.location else 0
-                        bgc_regions.append({
+                        protocluster_number = feature.qualifiers.get('protocluster_number', ['0'])[0] if feature.qualifiers.get('protocluster_number') else '0'
+                        
+                        protoclusters.append({
                             'start': start,
                             'end': end,
-                            'cluster_type': cluster_type
+                            'cluster_type': product.strip(),
+                            'protocluster_number': int(protocluster_number)
                         })
+                
+                # Se não encontrar protocluster, tentar region (fallback para versões antigas)
+                if not protoclusters:
+                    region_number = 0
+                    for feature in record.features:
+                        if feature.type == "region":
+                            region_number += 1
+                            # Pegar TODOS os products (pode haver múltiplos)
+                            products = feature.qualifiers.get('product', ['Unknown'])
+                            if isinstance(products, list):
+                                cluster_types = []
+                                for product in products:
+                                    # Cada product pode ter múltiplos tipos separados por vírgula
+                                    types = [t.strip() for t in product.split(',')]
+                                    cluster_types.extend(types)
+                            else:
+                                cluster_types = [products]
+                            
+                            start = int(feature.location.start) if feature.location else 0
+                            end = int(feature.location.end) if feature.location else 0
+                            
+                            # Adicionar cada cluster type como uma entrada separada
+                            for cluster_type in cluster_types:
+                                protoclusters.append({
+                                    'start': start,
+                                    'end': end,
+                                    'cluster_type': cluster_type.strip(),
+                                    'protocluster_number': region_number
+                                })
                 
                 # Agora processar CDS e marcar se estão em BGC
                 for feature in record.features:
@@ -87,20 +120,28 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                         protein_id = feature.qualifiers.get('protein_id', [''])[0]
                         
                         if 'hypothetical' in product.lower() and translation:
-                            # Verificar se está em BGC
+                            # Verificar quais clusters a proteína pertence
                             cds_start = int(feature.location.start) if feature.location else 0
                             cds_end = int(feature.location.end) if feature.location else 0
                             
-                            in_bgc = False
-                            bgc_types = []
-                            for bgc in bgc_regions:
-                                # Verificar se CDS está dentro da região BGC
-                                if bgc['start'] <= cds_start < bgc['end'] or bgc['start'] < cds_end <= bgc['end']:
-                                    in_bgc = True
-                                    bgc_types.append(bgc['cluster_type'])
+                            matching_clusters = []
+                            for protocluster in protoclusters:
+                                # Verificar se CDS está dentro do protocluster
+                                # Uma proteína está no cluster se qualquer parte dela se sobrepõe
+                                if not (cds_end <= protocluster['start'] or cds_start >= protocluster['end']):
+                                    matching_clusters.append({
+                                        'type': protocluster['cluster_type'],
+                                        'number': protocluster['protocluster_number']
+                                    })
                             
-                            # Remover duplicatas mantendo ordem
-                            bgc_types = list(dict.fromkeys(bgc_types))
+                            # Extrair apenas os tipos de cluster (remover duplicatas)
+                            bgc_types = []
+                            for cluster_info in matching_clusters:
+                                if cluster_info['type'] not in bgc_types:
+                                    bgc_types.append(cluster_info['type'])
+                            
+                            in_bgc = len(bgc_types) > 0
+                            region_num = matching_clusters[0]['number'] if matching_clusters else None
                             
                             # Gerar FASTA_ID: usa protein_id se disponível, senão gera hyp_{índice}
                             next_index = len(proteins) + 1
@@ -114,8 +155,11 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                                 'translation_note': feature.qualifiers.get('note', [''])[0] if 'note' in feature.qualifiers else '',
                                 'in_bgc': in_bgc,
                                 'bgc_cluster_types': bgc_types,
+                                'BGC_Region': region_num,  # ← Número do protocluster BGC
                                 'protein_id': protein_id,
-                                'FASTA_ID': fasta_id
+                                'FASTA_ID': fasta_id,
+                                'start': cds_start,
+                                'end': cds_end
                             })
         except Exception as e:
             print(f"Erro ao parsear com BioPython: {e}")
@@ -581,8 +625,8 @@ def extract_topology_features(raw_domains: list) -> dict:
 
 # ===== CONVERSÃO PARA MODELO PROTEIN =====
 
-def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = None) -> Protein:
-    """Converte lista de domínios brutos em objeto Protein com análise de topologia e clusters"""
+def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = None, bgc_region: int = None, start: int = None, end: int = None) -> Protein:
+    """Converte lista de domínios brutos em objeto Protein com suporte a múltiplos clusters e região BGC"""
     
     if cluster_types is None:
         cluster_types = []
@@ -592,6 +636,10 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
     if not raw_domains:
         return Protein(
             seq_id=seq_id,
+            bgc_region=bgc_region,
+            cluster_types=cluster_types if isinstance(cluster_types, list) else ([] if cluster_types is None else [cluster_types]),
+            start=start,
+            end=end,
             domain_count=0,
             domains=[],
             confidence_level="Nenhum",
@@ -602,30 +650,68 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
             topology_annotations=[]
         )
     
-    # Remover duplicatas e gerar objetos Domain
-    unique_domains = {}
+    # Separar domínios reais de topologia/características estruturais
+    topology_only_dbs = set(TOPOLOGY + STRUCTURAL_FEATURES)
+    
+    real_domains = []
+    topology_domains = []
+    
     for d in raw_domains:
+        db = d.get('database', '')
+        if db in topology_only_dbs:
+            topology_domains.append(d)
+        else:
+            real_domains.append(d)
+    
+    # Processar domínios reais - remover duplicatas
+    unique_real_domains = {}
+    for d in real_domains:
         key = (d['accession'], d.get('start'), d.get('end'))
-        if key not in unique_domains:
-            # Usar valores padrão se campos forem None
+        if key not in unique_real_domains:
             name = d.get('name') or d.get('description') or 'Unknown domain'
             accession = d.get('accession') or 'UNKNOWN'
             
-            unique_domains[key] = Domain(
+            unique_real_domains[key] = Domain(
                 name=name,
                 accession=accession,
                 databases=[d['database']],
                 confidence=classify_confidence([d]),
                 evalue=str(d.get('evalue') or 'N/A'),
                 start=d.get('start'),
-                end=d.get('end')
+                end=d.get('end'),
+                is_topology=False
             )
         else:
-            # Adicionar base de dados se não existir
-            if d['database'] not in unique_domains[key].databases:
-                unique_domains[key].databases.append(d['database'])
+            if d['database'] not in unique_real_domains[key].databases:
+                unique_real_domains[key].databases.append(d['database'])
     
-    domains_list = list(unique_domains.values())
+    # Processar itens de topologia - remover duplicatas
+    unique_topology_domains = {}
+    for d in topology_domains:
+        key = (d['accession'], d.get('start'), d.get('end'))
+        if key not in unique_topology_domains:
+            name = d.get('name') or d.get('description') or 'Unknown'
+            accession = d.get('accession') or 'UNKNOWN'
+            
+            unique_topology_domains[key] = Domain(
+                name=name,
+                accession=accession,
+                databases=[d['database']],
+                confidence=classify_confidence([d]),
+                evalue=str(d.get('evalue') or 'N/A'),
+                start=d.get('start'),
+                end=d.get('end'),
+                is_topology=True
+            )
+        else:
+            if d['database'] not in unique_topology_domains[key].databases:
+                unique_topology_domains[key].databases.append(d['database'])
+    
+    # Combinar: domínios reais primeiro, depois topologia
+    real_domains_list = list(unique_real_domains.values())
+    topology_domains_list = list(unique_topology_domains.values())
+    all_domains_list = real_domains_list + topology_domains_list
+    
     confidence = classify_confidence(raw_domains)
     
     # Extrair características topológicas
@@ -633,9 +719,12 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
     
     return Protein(
         seq_id=seq_id,
-        cluster_types=cluster_types,
-        domain_count=len(domains_list),
-        domains=domains_list,
+        bgc_region=bgc_region,
+        cluster_types=cluster_types if isinstance(cluster_types, list) else ([] if cluster_types is None else [cluster_types]),
+        start=start,
+        end=end,
+        domain_count=len(real_domains_list),  # Contar APENAS domínios reais
+        domains=all_domains_list,  # Incluir TODOS (domínios + topologia)
         confidence_level=confidence,
         has_transmembrane=topology_features['has_transmembrane'],
         has_signal_peptide=topology_features['has_signal_peptide'],

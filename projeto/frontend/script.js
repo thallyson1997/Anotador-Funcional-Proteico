@@ -165,7 +165,7 @@ function showProteinModal(proteins, filename) {
             row.innerHTML = `
                 <td style="text-align: center;"><input type="checkbox" class="protein-checkbox" data-index="${idx}"></td>
                 <td>${protein.index}</td>
-                <td>${protein.FASTA_ID || '-'}</td>
+                <td>${protein.locus_tag || '-'}</td>
                 <td>${protein.product}</td>
                 <td>${protein.sequence_length}</td>
             `;
@@ -605,14 +605,43 @@ function displayResults(data) {
             `;
         }
         
-        if (protein.cluster_type) {
-            html += `
-                <div class="protein-info-row">
-                    <div class="protein-info-label">Tipo BGC:</div>
-                    <div class="protein-info-value">${protein.cluster_type}</div>
-                </div>
-            `;
-        }
+        // BGC Region
+        html += `
+            <div class="protein-info-row">
+                <div class="protein-info-label">Região BGC:</div>
+                <div class="protein-info-value">${protein.bgc_region ? `#${protein.bgc_region}` : 'N/A'}</div>
+            </div>
+        `;
+        
+        // Clusters
+        html += `
+            <div class="protein-info-row">
+                <div class="protein-info-label">Cluster(s):</div>
+                <div class="protein-info-value">${protein.cluster_types && protein.cluster_types.length > 0 ? protein.cluster_types.join(', ') : 'Nenhum cluster'}</div>
+            </div>
+        `;
+        
+        // Localização
+        html += `
+            <div class="protein-info-row">
+                <div class="protein-info-label">Localização:</div>
+                <div class="protein-info-value">${(protein.start !== null && protein.start !== undefined && protein.end !== null && protein.end !== undefined) ? `${protein.start} - ${protein.end} pb` : 'N/A'}</div>
+            </div>
+        `;
+        
+        // Topologia
+        const topologyFlags = [];
+        if (protein.has_transmembrane) topologyFlags.push('🧬 Transmembrana');
+        if (protein.has_signal_peptide) topologyFlags.push('📍 Signal Peptide');
+        if (protein.has_coils) topologyFlags.push('🔄 Coils');
+        if (protein.has_mobidb) topologyFlags.push('🔲 Disorder');
+        
+        html += `
+            <div class="protein-info-row">
+                <div class="protein-info-label">Topologia:</div>
+                <div class="protein-info-value">${topologyFlags.length > 0 ? topologyFlags.join(', ') : 'Nenhuma característica detectada'}</div>
+            </div>
+        `;
         
         // Confidence Badge
         const confidenceClass = `confidence-${protein.confidence_level.toLowerCase().replace(' ', '-')}`;
@@ -633,45 +662,44 @@ function displayResults(data) {
         
         // Domains
         if (protein.domains && protein.domains.length > 0) {
-            // Calcular estatísticas APENAS para domínios funcionais e estruturais
-            const functionalStructuralDomains = protein.domains.filter(domain => {
-                if (!domain.databases || !Array.isArray(domain.databases) || domain.databases.length === 0) {
-                    return false;
-                }
-                // Verifica se pelo menos um banco pertence a funcionais ou estruturais
-                return domain.databases.some(db => isFunctionalOrStructuralDomain(db));
-            });
+            // Separar domínios reais de topologia
+            const realDomains = protein.domains.filter(d => !d.is_topology);
+            const topologyDomains = protein.domains.filter(d => d.is_topology);
             
-            // Contar domínios ÚNICOS por combinação de (nome + banco de dados)
-            const uniqueDomainsByDatabase = new Set();
-            const functionalStructuralDatabases = new Set();
-            
-            functionalStructuralDomains.forEach(domain => {
+            // Contar bancos de dados únicos para domínios reais
+            const realDomainsDBs = new Set();
+            realDomains.forEach(domain => {
                 if (domain.databases && Array.isArray(domain.databases)) {
-                    domain.databases.forEach(db => {
-                        if (isFunctionalOrStructuralDomain(db)) {
-                            functionalStructuralDatabases.add(db);
-                            // Adicionar combinação única de domínio + banco
-                            uniqueDomainsByDatabase.add(`${domain.name}__${db}`);
-                        }
-                    });
+                    domain.databases.forEach(db => realDomainsDBs.add(db));
                 }
             });
             
-            const totalDomains = uniqueDomainsByDatabase.size;
-            const totalDatabases = functionalStructuralDatabases.size;
+            const totalResults = protein.domains.length;
+            const totalRealDomains = realDomains.length;
+            const totalRealDatabases = realDomainsDBs.size;
             
             html += `
                 <div class="domains-section">
-                    <h4>Resultados Encontrados (${protein.domains.length})</h4>
-                    <div style="background-color: #f8f9fa; padding: 10px 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.95em;">
-                        <span style="color: #555;">📊 <strong>${totalDomains}</strong> resultado${totalDomains !== 1 ? 's' : ''} encontrado${totalDomains !== 1 ? 's' : ''} em <strong>${totalDatabases}</strong> banco${totalDatabases !== 1 ? 's' : ''} de dados.</span>
+                    <h4>${totalResults} Resultados Encontrados</h4>
+                    <div style="background-color: #f8f9fa; padding: 12px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.95em;">
+            `;
+            
+            if (totalRealDomains > 0) {
+                html += `<div style="color: #555;">🔵 Foram encontrados ${totalRealDomains} domínio${totalRealDomains !== 1 ? 's' : ''} em ${totalRealDatabases} banco${totalRealDatabases !== 1 ? 's' : ''} de dados</div>`;
+            } else {
+                html += `<div style="color: #555;">Nenhum domínio identificado em bancos de dados.</div>`;
+            }
+            
+            html += `
                     </div>
                     <div class="domains-list">
             `;
             
             protein.domains.forEach(domain => {
                 const primaryCategory = getDomainPrimaryCategory(domain.databases);
+                const isTopology = domain.is_topology || false;
+                const categoryLabel = isTopology ? 'Topologia' : 'Domínio';
+                const categoryLabelColor = isTopology ? '#27ae60' : primaryCategory.color;
                 
                 html += `
                     <div class="domain-item" style="
@@ -680,16 +708,29 @@ function displayResults(data) {
                         border: 1px solid ${primaryCategory.borderColor};
                         border-left: 5px solid ${primaryCategory.color};
                     ">
-                        <div class="domain-name" style="
-                            color: ${primaryCategory.color};
-                            font-weight: 600;
-                            margin-bottom: 8px;
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                        ">
-                            <span style="font-size: 1.2em;">${primaryCategory.emoji}</span>
-                            ${domain.name}
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div class="domain-name" style="
+                                color: ${primaryCategory.color};
+                                font-weight: 600;
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                                flex: 1;
+                            ">
+                                <span style="font-size: 1.2em;">${primaryCategory.emoji}</span>
+                                ${domain.name}
+                            </div>
+                            <span style="
+                                background-color: ${categoryLabelColor}20;
+                                color: ${categoryLabelColor};
+                                border: 1px solid ${categoryLabelColor};
+                                border-radius: 4px;
+                                padding: 2px 8px;
+                                font-size: 0.75em;
+                                font-weight: 600;
+                                white-space: nowrap;
+                                margin-left: 8px;
+                            ">${categoryLabel}</span>
                         </div>
                         <div class="domain-details">
                             <div class="domain-details-row">
