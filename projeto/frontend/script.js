@@ -662,15 +662,26 @@ function displayResults(data) {
         
         // Domains
         if (protein.domains && protein.domains.length > 0) {
-            // Separar domínios reais de topologia
-            const realDomains = protein.domains.filter(d => !d.is_topology);
-            const topologyDomains = protein.domains.filter(d => d.is_topology);
+            // Separar domínios reais (apenas funcionais e estruturais, não topologia nem não-categorizados)
+            const functionalDomains = ['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM'];
+            const structuralDomains = ['GENE3D', 'SUPERFAMILY'];
+            const allRealDomains = [...functionalDomains, ...structuralDomains];
+            
+            const realDomains = protein.domains.filter(d => {
+                if (!d.databases || d.databases.length === 0) return false;
+                // Contar apenas se tem pelo menos um banco em domínios funcionais/estruturais
+                return d.databases.some(db => allRealDomains.includes(db.toUpperCase()));
+            });
             
             // Contar bancos de dados únicos para domínios reais
             const realDomainsDBs = new Set();
             realDomains.forEach(domain => {
                 if (domain.databases && Array.isArray(domain.databases)) {
-                    domain.databases.forEach(db => realDomainsDBs.add(db));
+                    domain.databases.forEach(db => {
+                        if (allRealDomains.includes(db.toUpperCase())) {
+                            realDomainsDBs.add(db);
+                        }
+                    });
                 }
             });
             
@@ -692,83 +703,57 @@ function displayResults(data) {
             
             html += `
                     </div>
-                    <div class="domains-list">
+                    <div class="domains-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 12px;">
             `;
             
+            // Agrupar domínios por banco de dados
+            const domainsByDb = {};
             protein.domains.forEach(domain => {
-                const primaryCategory = getDomainPrimaryCategory(domain.databases);
-                const isTopology = domain.is_topology || false;
-                const categoryLabel = isTopology ? 'Topologia' : 'Domínio';
-                const categoryLabelColor = isTopology ? '#27ae60' : primaryCategory.color;
+                if (domain.databases && domain.databases.length > 0) {
+                    const primaryDb = domain.databases[0];
+                    if (!domainsByDb[primaryDb]) {
+                        domainsByDb[primaryDb] = [];
+                    }
+                    domainsByDb[primaryDb].push(domain);
+                }
+            });
+            
+            // Renderizar agrupado por banco de dados
+            Object.entries(domainsByDb).forEach(([dbName, domains]) => {
+                const primaryCategory = getDatabaseCategory(dbName);
                 
                 html += `
-                    <div class="domain-item" style="
+                    <div style="
                         background-color: ${primaryCategory.bgColor};
-                        border-left: 5px solid ${primaryCategory.color};
+                        border-left: 4px solid ${primaryCategory.color};
                         border: 1px solid ${primaryCategory.borderColor};
-                        border-left: 5px solid ${primaryCategory.color};
+                        border-radius: 6px;
+                        padding: 12px;
                     ">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <div class="domain-name" style="
-                                color: ${primaryCategory.color};
-                                font-weight: 600;
-                                display: flex;
-                                align-items: center;
-                                gap: 8px;
-                                flex: 1;
-                            ">
-                                <span style="font-size: 1.2em;">${primaryCategory.emoji}</span>
-                                ${domain.name}
-                            </div>
-                            <span style="
-                                background-color: ${categoryLabelColor}20;
-                                color: ${categoryLabelColor};
-                                border: 1px solid ${categoryLabelColor};
-                                border-radius: 4px;
-                                padding: 2px 8px;
-                                font-size: 0.75em;
-                                font-weight: 600;
-                                white-space: nowrap;
-                                margin-left: 8px;
-                            ">${categoryLabel}</span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid ${primaryCategory.borderColor}; padding-bottom: 8px;">
+                            <span style="font-size: 1.1em;">${primaryCategory.emoji}</span>
+                            <strong style="color: ${primaryCategory.color}; flex: 1;">${dbName}</strong>
+                            <span style="background-color: ${primaryCategory.color}20; color: ${primaryCategory.color}; border: 1px solid ${primaryCategory.color}; border-radius: 4px; padding: 2px 8px; font-size: 0.75em; font-weight: 600;">${primaryCategory.category}</span>
                         </div>
-                        <div class="domain-details">
-                            <div class="domain-details-row">
-                                <span><strong>Accession:</strong> ${domain.accession}</span>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                `;
+                
+                domains.forEach(domain => {
+                    html += `
+                        <div style="padding: 8px; background-color: rgba(255,255,255,0.6); border-radius: 4px; border-left: 2px solid ${primaryCategory.color};">
+                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 4px;">
+                                <strong style="color: ${primaryCategory.color}; word-break: break-word; flex: 1;">${domain.name}</strong>
+                                <span style="font-size: 0.75em; color: #666; white-space: nowrap;">${domain.accession}</span>
                             </div>
-                            <div class="domain-details-row">
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 0.85em; color: #555;">
                                 <span><strong>E-value:</strong> ${domain.evalue}</span>
                                 <span><strong>Posição:</strong> ${domain.start}-${domain.end}</span>
                             </div>
-                            <div style="margin-top: 8px;">
-                                <strong style="font-size: 0.9em; color: ${primaryCategory.color};">Encontrado em:</strong>
-                                <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 8px;">
-                `;
-                
-                domain.databases.forEach(db => {
-                    const category = getDatabaseCategory(db);
-                    html += `
-                        <span class="domain-db" style="
-                            background-color: ${category.bgColor};
-                            color: ${category.color};
-                            border: 1px solid ${category.color};
-                            border-radius: 4px;
-                            padding: 4px 10px;
-                            font-size: 0.85em;
-                            font-weight: 500;
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 5px;
-                        ">
-                            <span>${category.emoji}</span>
-                            <span title="${category.category}">${db}</span>
-                        </span>
+                        </div>
                     `;
                 });
                 
                 html += `
-                                </div>
-                            </div>
                         </div>
                     </div>
                 `;

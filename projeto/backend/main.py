@@ -412,14 +412,14 @@ async def analyze_antismash_selected(
             # Buscar domínios
             raw_domains = search_interproscan(
                 sequence=protein_data['sequence'],
-                seq_id=protein_data.get('FASTA_ID', protein_data.get('locus_tag', f"protein_{protein_data['index']}")),
+                seq_id=protein_data.get('locus_tag', protein_data.get('FASTA_ID', f"protein_{protein_data['index']}")),
                 email=email,
                 timeout=600
             )
             
             # Converter para objeto Protein
             protein = domains_to_protein(
-                seq_id=protein_data.get('FASTA_ID', protein_data.get('locus_tag', f"protein_{protein_data['index']}")),
+                seq_id=protein_data.get('locus_tag', protein_data.get('FASTA_ID', f"protein_{protein_data['index']}")),
                 raw_domains=raw_domains if raw_domains else [],
                 cluster_types=protein_data.get('bgc_cluster_types', []),
                 bgc_region=protein_data.get('BGC_Region'),
