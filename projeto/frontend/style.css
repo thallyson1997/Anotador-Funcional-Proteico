@@ -886,8 +886,8 @@ small {
 
 /* ===== PROTEIN CARDS ===== */
 .proteins-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-lg);
 }
 
@@ -898,6 +898,7 @@ small {
     padding: var(--spacing-lg);
     transition: var(--transition);
     cursor: pointer;
+    width: 100%;
 }
 
 .protein-card:hover {

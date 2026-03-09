@@ -703,7 +703,7 @@ function displayResults(data) {
             
             html += `
                     </div>
-                    <div class="domains-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 12px;">
+                    <div class="domains-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
             `;
             
             // Agrupar domínios por banco de dados
@@ -718,7 +718,7 @@ function displayResults(data) {
                 }
             });
             
-            // Renderizar agrupado por banco de dados
+            // Renderizar agrupado por banco de dados (3 colunas por linha)
             Object.entries(domainsByDb).forEach(([dbName, domains]) => {
                 const primaryCategory = getDatabaseCategory(dbName);
                 

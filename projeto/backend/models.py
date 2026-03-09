@@ -5,11 +5,11 @@ from typing import List, Optional
 class Domain(BaseModel):
     name: str
     accession: str
-    databases: List[str]
+    databases: Optional[List[str]] = None
     confidence: str
     evalue: str
-    start: int
-    end: int
+    start: Optional[int] = None
+    end: Optional[int] = None
     is_topology: bool = False  # True se for topologia/característica, False se for domínio real
 
 # ===== PROTEIN MODEL =====

@@ -137,7 +137,7 @@ async def count_hypothetical_proteins(
     """
     try:
         # Converter filter_by_bgc para boolean
-        filter_bgc = filter_by_bgc.lower() in ('true', '1', 'yes')
+        filter_bgc = filter_by_bgc.lower() in ('true', '1', 'yes') if filter_by_bgc else False
         
         # Validar tamanho
         MAX_SIZE = 500 * 1024 * 1024
@@ -407,27 +407,36 @@ async def analyze_antismash_selected(
         
         analyzed_proteins = []
         for protein_data in proteins_to_analyze:
-            print(f"  → Analisando {protein_data['product']}...")
-            
-            # Buscar domínios
-            raw_domains = search_interproscan(
-                sequence=protein_data['sequence'],
-                seq_id=protein_data.get('locus_tag', protein_data.get('FASTA_ID', f"protein_{protein_data['index']}")),
-                email=email,
-                timeout=600
-            )
-            
-            # Converter para objeto Protein
-            protein = domains_to_protein(
-                seq_id=protein_data.get('locus_tag', protein_data.get('FASTA_ID', f"protein_{protein_data['index']}")),
-                raw_domains=raw_domains if raw_domains else [],
-                cluster_types=protein_data.get('bgc_cluster_types', []),
-                bgc_region=protein_data.get('BGC_Region'),
-                start=protein_data.get('start'),
-                end=protein_data.get('end')
-            )
-            
-            analyzed_proteins.append(protein)
+            try:
+                print(f"  → Analisando {protein_data.get('product', 'UNKNOWN')}...")
+                
+                # Buscar domínios
+                raw_domains = search_interproscan(
+                    sequence=protein_data['sequence'],
+                    seq_id=protein_data.get('locus_tag', protein_data.get('FASTA_ID', f"protein_{protein_data['index']}")),
+                    email=email,
+                    timeout=600
+                )
+                
+                # Converter para objeto Protein
+                protein = domains_to_protein(
+                    seq_id=protein_data.get('locus_tag', protein_data.get('FASTA_ID', f"protein_{protein_data['index']}")),
+                    raw_domains=raw_domains if raw_domains else [],
+                    cluster_types=protein_data.get('bgc_cluster_types', []),
+                    bgc_region=protein_data.get('BGC_Region'),
+                    start=protein_data.get('start'),
+                    end=protein_data.get('end')
+                )
+                
+                analyzed_proteins.append(protein)
+            except Exception as e:
+                import traceback
+                print(f"  ⚠️ Erro ao analisar proteína: {str(e)}")
+                traceback.print_exc()
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Erro ao processar proteína {protein_data.get('product', 'UNKNOWN')}: {str(e)}"
+                )
         
         return AntismashAnalysisResponse(
             file_name=file.filename,

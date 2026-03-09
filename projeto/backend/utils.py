@@ -119,7 +119,7 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                         locus_tag = feature.qualifiers.get('locus_tag', [''])[0]
                         protein_id = feature.qualifiers.get('protein_id', [''])[0]
                         
-                        if 'hypothetical' in product.lower() and translation:
+                        if product and 'hypothetical' in product.lower() and translation:
                             # Verificar quais clusters a proteína pertence
                             cds_start = int(feature.location.start) if feature.location else 0
                             cds_end = int(feature.location.end) if feature.location else 0
@@ -202,7 +202,7 @@ def parse_gbk_manual(gbk_content: bytes) -> list:
                 if '/protein_id=' in lines[j]:
                     protein_id = lines[j].split('/protein_id=')[1].strip().strip('"')
             
-            if 'hypothetical' in product.lower() and translation:
+            if product and 'hypothetical' in product.lower() and translation:
                 next_index = len(proteins) + 1
                 fasta_id = protein_id if protein_id else f"hyp_{next_index}"
                 
@@ -555,12 +555,19 @@ def classify_confidence(domains: list) -> str:
     - Baixa: 1-2 bancos
     - Nenhum: 0 bancos
     """
-    domains_only = [d for d in domains if d.get('database', 'UNKNOWN') in DOMAIN_DATABASES]
+    if not domains:
+        return "Nenhum"
+    
+    domains_only = [
+        d.get('database', 'UNKNOWN') 
+        for d in domains 
+        if isinstance(d, dict) and (d.get('database') or 'UNKNOWN') in DOMAIN_DATABASES
+    ]
     
     if not domains_only:
         return "Nenhum"
     
-    unique_dbs = len(set(d['database'] for d in domains_only))
+    unique_dbs = len(set(filter(None, domains_only)))
     
     if unique_dbs >= 5:
         return "Alta"
@@ -593,8 +600,20 @@ def extract_topology_features(raw_domains: list) -> dict:
     
     # Processar cada domínio
     for d in raw_domains:
-        db = d.get('database', '').upper()
-        name = d.get('name', '').lower()
+        if not d or not isinstance(d, dict):
+            continue
+            
+        db = d.get('database', '')
+        if db:
+            db = str(db).upper()
+        else:
+            db = ''
+            
+        name = d.get('name', '')
+        if name:
+            name = str(name).lower()
+        else:
+            name = ''
         
         # 🟢 TOPOLOGIA/LOCALIZAÇÃO
         if db in ['PHOBIUS', 'TMHMM']:
@@ -657,6 +676,8 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
     topology_domains = []
     
     for d in raw_domains:
+        if not d or not isinstance(d, dict):
+            continue
         db = d.get('database', '')
         if db in topology_only_dbs:
             topology_domains.append(d)
@@ -666,15 +687,20 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
     # Processar domínios reais - remover duplicatas
     unique_real_domains = {}
     for d in real_domains:
-        key = (d['accession'], d.get('start'), d.get('end'))
+        if not d or not isinstance(d, dict):
+            continue
+        accession = d.get('accession') or 'UNKNOWN'
+        key = (accession, d.get('start'), d.get('end'))
         if key not in unique_real_domains:
             name = d.get('name') or d.get('description') or 'Unknown domain'
             accession = d.get('accession') or 'UNKNOWN'
+            db = d.get('database') or 'UNKNOWN'
+            databases = [db] if db else ['UNKNOWN']
             
             unique_real_domains[key] = Domain(
                 name=name,
                 accession=accession,
-                databases=[d['database']],
+                databases=databases,
                 confidence=classify_confidence([d]),
                 evalue=str(d.get('evalue') or 'N/A'),
                 start=d.get('start'),
@@ -682,21 +708,30 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
                 is_topology=False
             )
         else:
-            if d['database'] not in unique_real_domains[key].databases:
-                unique_real_domains[key].databases.append(d['database'])
+            db = d.get('database')
+            if db and db not in unique_real_domains[key].databases:
+                if unique_real_domains[key].databases:
+                    unique_real_domains[key].databases.append(db)
+                else:
+                    unique_real_domains[key].databases = [db]
     
     # Processar itens de topologia - remover duplicatas
     unique_topology_domains = {}
     for d in topology_domains:
-        key = (d['accession'], d.get('start'), d.get('end'))
+        if not d or not isinstance(d, dict):
+            continue
+        accession = d.get('accession') or 'UNKNOWN'
+        key = (accession, d.get('start'), d.get('end'))
         if key not in unique_topology_domains:
             name = d.get('name') or d.get('description') or 'Unknown'
             accession = d.get('accession') or 'UNKNOWN'
+            db = d.get('database') or 'UNKNOWN'
+            databases = [db] if db else ['UNKNOWN']
             
             unique_topology_domains[key] = Domain(
                 name=name,
                 accession=accession,
-                databases=[d['database']],
+                databases=databases,
                 confidence=classify_confidence([d]),
                 evalue=str(d.get('evalue') or 'N/A'),
                 start=d.get('start'),
@@ -704,8 +739,12 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
                 is_topology=True
             )
         else:
-            if d['database'] not in unique_topology_domains[key].databases:
-                unique_topology_domains[key].databases.append(d['database'])
+            db = d.get('database')
+            if db and db not in unique_topology_domains[key].databases:
+                if unique_topology_domains[key].databases:
+                    unique_topology_domains[key].databases.append(db)
+                else:
+                    unique_topology_domains[key].databases = [db]
     
     # Combinar: domínios reais primeiro, depois topologia
     real_domains_list = list(unique_real_domains.values())
