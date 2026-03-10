@@ -205,6 +205,292 @@ body {
     border-top: 1px solid var(--color-border);
 }
 
+/* ===== MODAL DE DETALHES DO DOMÍNIO - REDESIGN ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-domain-container {
+    position: relative;
+    background: #ffffff;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 1400px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.4s ease;
+}
+
+.modal-domain-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.modal-domain-close:hover {
+    background: rgba(255, 0, 0, 0.8);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.modal-domain-body {
+    padding: 40px;
+    overflow-y: auto;
+    max-height: 90vh;
+}
+
+/* Scrollbar customizada */
+.modal-domain-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-domain-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.modal-domain-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.modal-domain-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Header do domínio */
+.domain-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    padding: 30px;
+    border-radius: 12px;
+    color: white;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.domain-header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.domain-icon {
+    font-size: 4em;
+    line-height: 1;
+}
+
+.domain-title {
+    flex: 1;
+}
+
+.domain-title h1 {
+    margin: 0 0 8px 0;
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.domain-title .accession {
+    font-family: monospace;
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+.domain-category-badge {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Grid de informações */
+.domain-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.info-card {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary);
+}
+
+.info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 1em;
+    color: #333;
+}
+
+.info-card-icon {
+    font-size: 1.5em;
+}
+
+.info-card-content {
+    color: #555;
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+/* Cards especiais */
+.info-card-large {
+    grid-column: span 2;
+}
+
+.info-card-full {
+    grid-column: span 3;
+}
+
+.info-card-highlight {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #2196f3;
+}
+
+/* Badges dentro dos cards */
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9em;
+    margin: 4px;
+}
+
+.badge-database {
+    background: #e8eaf6;
+    color: #3f51b5;
+    border: 1px solid #3f51b5;
+}
+
+.badge-position {
+    background: #f3e5f5;
+    color: #9c27b0;
+    font-family: monospace;
+    font-size: 1em;
+}
+
+.badge-stat {
+    background: #e0f2f1;
+    color: #00897b;
+    font-family: monospace;
+}
+
+/* Link InterPro */
+.interpro-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #0066cc;
+    text-decoration: none;
+    font-weight: 600;
+    font-family: monospace;
+    padding: 8px 12px;
+    background: #e3f2fd;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.interpro-link:hover {
+    background: #2196f3;
+    color: white;
+    transform: translateX(3px);
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+    .domain-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .info-card-large,
+    .info-card-full {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-domain-container {
+        width: 98%;
+        max-height: 95vh;
+    }
+    
+    .modal-domain-body {
+        padding: 20px;
+    }
+    
+    .domain-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-card-large,
+    .info-card-full {
+        grid-column: span 1;
+    }
+    
+    .domain-header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .domain-icon {
+        font-size: 3em;
+    }
+    
+    .domain-title h1 {
+        font-size: 1.5em;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 /* Container com scroll para tabela de proteínas */
 .proteins-table-container {
     flex: 1;

@@ -6,11 +6,16 @@ class Domain(BaseModel):
     name: str
     accession: str
     databases: Optional[List[str]] = None
-    confidence: str
     evalue: str
     start: Optional[int] = None
     end: Optional[int] = None
     is_topology: bool = False  # True se for topologia/característica, False se for domínio real
+    # Campos adicionais do InterProScan
+    description: Optional[str] = None
+    type: Optional[str] = None
+    score: Optional[float] = None
+    interpro_accession: Optional[str] = None
+    interpro_name: Optional[str] = None
 
 # ===== PROTEIN MODEL =====
 class Protein(BaseModel):

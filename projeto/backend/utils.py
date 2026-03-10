@@ -701,11 +701,15 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
                 name=name,
                 accession=accession,
                 databases=databases,
-                confidence=classify_confidence([d]),
                 evalue=str(d.get('evalue') or 'N/A'),
                 start=d.get('start'),
                 end=d.get('end'),
-                is_topology=False
+                is_topology=False,
+                description=d.get('description'),
+                type=d.get('type'),
+                score=d.get('score'),
+                interpro_accession=d.get('interpro_accession'),
+                interpro_name=d.get('interpro_name')
             )
         else:
             db = d.get('database')
@@ -732,11 +736,15 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
                 name=name,
                 accession=accession,
                 databases=databases,
-                confidence=classify_confidence([d]),
                 evalue=str(d.get('evalue') or 'N/A'),
                 start=d.get('start'),
                 end=d.get('end'),
-                is_topology=True
+                is_topology=True,
+                description=d.get('description'),
+                type=d.get('type'),
+                score=d.get('score'),
+                interpro_accession=d.get('interpro_accession'),
+                interpro_name=d.get('interpro_name')
             )
         else:
             db = d.get('database')
@@ -780,37 +788,37 @@ def get_placeholder_proteins(count: int = 5) -> list:
         {
             'seq_id': 'hyp_1',
             'domains': [
-                Domain(name="Kinase domain", accession="PF00069", databases=["PFAM", "SMART"], confidence="Alta", evalue="1.2e-45", start=10, end=280),
-                Domain(name="ATP-binding", accession="PF00010", databases=["PFAM"], confidence="Média", evalue="3.4e-30", start=15, end=150),
-                Domain(name="Protein phosphorylation", accession="PANTHER:PTHR24607", databases=["PANTHER"], confidence="Alta", evalue="2.1e-50", start=20, end=300),
+                Domain(name="Kinase domain", accession="PF00069", databases=["PFAM", "SMART"], evalue="1.2e-45", start=10, end=280, description="Protein kinase domain", type="DOMAIN", score=150.5, interpro_accession="IPR000719", interpro_name="Protein kinase domain"),
+                Domain(name="ATP-binding", accession="PF00010", databases=["PFAM"], evalue="3.4e-30", start=15, end=150, description="ATP-binding domain", type="BINDING_SITE", score=95.3),
+                Domain(name="Protein phosphorylation", accession="PANTHER:PTHR24607", databases=["PANTHER"], evalue="2.1e-50", start=20, end=300, description="Protein phosphorylation family", type="FAMILY", score=180.2),
             ]
         },
         {
             'seq_id': 'hyp_2',
             'domains': [
-                Domain(name="Transmembrane domain", accession="PF00001", databases=["PFAM", "SMART"], confidence="Alta", evalue="5.4e-45", start=50, end=340),
-                Domain(name="Transmembrane region", accession="TMHMM", databases=["TMHMM"], confidence="Alta", evalue="N/A", start=60, end=78),
+                Domain(name="Transmembrane domain", accession="PF00001", databases=["PFAM", "SMART"], evalue="5.4e-45", start=50, end=340, description="Transmembrane region", type="DOMAIN"),
+                Domain(name="Transmembrane region", accession="TMHMM", databases=["TMHMM"], evalue="N/A", start=60, end=78, description="Predicted transmembrane helix", type="REGION"),
             ]
         },
         {
             'seq_id': 'hyp_3',
             'domains': [
-                Domain(name="Signal peptide N-region", accession="SIGNALP", databases=["SIGNALP_EUK"], confidence="Alta", evalue="N/A", start=1, end=25),
+                Domain(name="Signal peptide N-region", accession="SIGNALP", databases=["SIGNALP_EUK"], evalue="N/A", start=1, end=25, description="Signal peptide cleavage site prediction", type="SIGNAL_PEPTIDE"),
             ]
         },
         {
             'seq_id': 'hyp_4',
             'domains': [
-                Domain(name="Zinc finger", accession="PF00096", databases=["PFAM"], confidence="Baixa", evalue="1.2e-20", start=5, end=50),
-                Domain(name="C2H2 motif", accession="SM00355", databases=["SMART"], confidence="Baixa", evalue="3.4e-18", start=8, end=48),
-                Domain(name="Coil prediction", accession="COILS", databases=["COILS"], confidence="Média", evalue="N/A", start=100, end=140),
+                Domain(name="Zinc finger", accession="PF00096", databases=["PFAM"], evalue="1.2e-20", start=5, end=50, description="Zinc finger C2H2 type", type="DOMAIN", interpro_accession="IPR007087", interpro_name="Zinc finger, C2H2"),
+                Domain(name="C2H2 motif", accession="SM00355", databases=["SMART"], evalue="3.4e-18", start=8, end=48, description="C2H2-type zinc finger", type="MOTIF"),
+                Domain(name="Coil prediction", accession="COILS", databases=["COILS"], evalue="N/A", start=100, end=140, description="Predicted coiled-coil region", type="COILED_COIL"),
             ]
         },
         {
             'seq_id': 'hyp_5',
             'domains': [
-                Domain(name="Helicase domain", accession="PF04851", databases=["PFAM", "GENE3D", "SUPERFAMILY"], confidence="Alta", evalue="2.1e-60", start=100, end=450),
-                Domain(name="Disordered region", accession="MOBIDB_LITE", databases=["MOBIDB_LITE"], confidence="Média", evalue="N/A", start=480, end=520),
+                Domain(name="Helicase domain", accession="PF04851", databases=["PFAM", "GENE3D", "SUPERFAMILY"], evalue="2.1e-60", start=100, end=450, description="RNA helicase domain", type="DOMAIN", score=225.8, interpro_accession="IPR001650", interpro_name="Helicase, C-terminal domain"),
+                Domain(name="Disordered region", accession="MOBIDB_LITE", databases=["MOBIDB_LITE"], evalue="N/A", start=480, end=520, description="Intrinsically disordered protein region", type="DISORDER"),
             ]
         },
     ]

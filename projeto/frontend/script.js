@@ -739,8 +739,11 @@ function displayResults(data) {
                 `;
                 
                 domains.forEach(domain => {
+                    // Criar um ID único para o domínio
+                    const domainId = `domain-${Math.random().toString(36).substr(2, 9)}`;
+                    
                     html += `
-                        <div style="padding: 8px; background-color: rgba(255,255,255,0.6); border-radius: 4px; border-left: 2px solid ${primaryCategory.color};">
+                        <div class="domain-card-clickable" data-domain-id="${domainId}" style="padding: 8px; background-color: rgba(255,255,255,0.6); border-radius: 4px; border-left: 2px solid ${primaryCategory.color}; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='rgba(255,255,255,1)'; this.style.transform='translateX(2px)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';" onmouseout="this.style.backgroundColor='rgba(255,255,255,0.6)'; this.style.transform='translateX(0)'; this.style.boxShadow='none';">
                             <div style="display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 4px;">
                                 <strong style="color: ${primaryCategory.color}; word-break: break-word; flex: 1;">${domain.name}</strong>
                                 <span style="font-size: 0.75em; color: #666; white-space: nowrap;">${domain.accession}</span>
@@ -749,8 +752,22 @@ function displayResults(data) {
                                 <span><strong>E-value:</strong> ${domain.evalue}</span>
                                 <span><strong>Posição:</strong> ${domain.start}-${domain.end}</span>
                             </div>
+                            <div style="text-align: right; margin-top: 4px; font-size: 0.75em; color: #999;">
+                                👆 Clique para ver detalhes completos
+                            </div>
                         </div>
                     `;
+                    
+                    // Armazenar os dados do domínio para recuperação posterior
+                    // Usar setTimeout para garantir que o elemento existe no DOM
+                    setTimeout(() => {
+                        const domainElement = document.querySelector(`[data-domain-id="${domainId}"]`);
+                        if (domainElement) {
+                            domainElement.addEventListener('click', function() {
+                                showDomainDetailsModal(domain);
+                            });
+                        }
+                    }, 100);
                 });
                 
                 html += `
@@ -851,5 +868,230 @@ document.addEventListener('DOMContentLoaded', function() {
         modalCloseBtn.addEventListener('click', closeProteinModal);
     }
     
+    // Event listener para fechar modal de detalhes ao clicar fora
+    const modalDomainDetails = document.getElementById('modal-domain-details');
+    if (modalDomainDetails) {
+        modalDomainDetails.addEventListener('click', function(e) {
+            if (e.target === modalDomainDetails) {
+                closeDomainDetailsModal();
+            }
+        });
+    }
+    
+    // Fechar modal com ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('modal-domain-details');
+            if (modal && modal.classList.contains('active')) {
+                closeDomainDetailsModal();
+            }
+        }
+    });
+    
     // Página inicial começa com a home (verificar no HTML que page-home tem class active)
 });
+
+// ===== MODAL DE DETALHES DO DOMÍNIO - REDESIGN =====
+function showDomainDetailsModal(domain) {
+    const modal = document.getElementById('modal-domain-details');
+    const body = document.getElementById('domain-details-body');
+    
+    // Determinar a categoria do domínio
+    const category = getDatabaseCategory(domain.databases[0]);
+    
+    // HEADER
+    let html = `
+        <div class="domain-header">
+            <div class="domain-header-content">
+                <div class="domain-icon">${category.emoji}</div>
+                <div class="domain-title">
+                    <h1>${domain.name}</h1>
+                    <div class="accession">${domain.accession}</div>
+                </div>
+                <div class="domain-category-badge">
+                    ${category.category}
+                </div>
+            </div>
+        </div>
+        
+        <div class="domain-info-grid">
+    `;
+    
+    // Card 1: Bancos de Dados
+    html += `
+        <div class="info-card">
+            <div class="info-card-header">
+                <span class="info-card-icon">🗄️</span>
+                Bancos de Dados
+            </div>
+            <div class="info-card-content">
+                ${domain.databases.map(db => `
+                    <span class="badge badge-database">${db}</span>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    // Descrição (se disponível)
+    if (domain.description && domain.description !== 'N/A' && domain.description !== '') {
+        html += `
+            <div class="detail-section">
+                <div class="detail-label">📝 Descrição</div>
+                <div class="detail-value">${domain.description}</div>
+            </div>
+        `;
+    }
+    
+    // Tipo (se disponível)
+    if (domain.type && domain.type !== 'N/A' && domain.type !== '') {
+        html += `
+            <div class="detail-section">
+                <div class="detail-label">🏷️ Tipo</div>
+                <div class="detail-value">${domain.type}</div>
+            </div>
+        `;
+    }
+    
+    // Card 2: Posição
+    html += `
+        <div class="info-card">
+            <div class="info-card-header">
+                <span class="info-card-icon">📍</span>
+                Posição na Sequência
+            </div>
+            <div class="info-card-content">
+                <div style="margin-bottom: 8px;">
+                    <span class="badge badge-position">${domain.start} → ${domain.end}</span>
+                </div>
+                <div style="color: #666;">
+                    <strong>${domain.end - domain.start + 1}</strong> aminoácidos
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Card 4: E-value
+    html += `
+        <div class="info-card">
+            <div class="info-card-header">
+                <span class="info-card-icon">📊</span>
+                E-value
+            </div>
+            <div class="info-card-content">
+                <span class="badge badge-stat" style="font-size: 1.1em; padding: 8px 14px;">
+                    ${domain.evalue}
+                </span>
+            </div>
+        </div>
+    `;
+    
+    // Card 5: Score (se disponível)
+    if (domain.score && domain.score !== 'N/A' && domain.score !== null) {
+        html += `
+            <div class="info-card">
+                <div class="info-card-header">
+                    <span class="info-card-icon">🎯</span>
+                    Score
+                </div>
+                <div class="info-card-content">
+                    <span class="badge badge-stat" style="font-size: 1.1em; padding: 8px 14px;">
+                        ${domain.score}
+                    </span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Card 3: Extensão do domínio
+    const extensao = domain.end - domain.start + 1;
+    html += `
+        <div class="info-card">
+            <div class="info-card-header">
+                <span class="info-card-icon">📏</span>
+                Extensão
+            </div>
+            <div class="info-card-content">
+                <span class="badge badge-stat" style="padding: 10px 20px; font-size: 1.3em;">
+                    ${extensao}
+                </span>
+                <div style="margin-top: 6px; color: #666; font-size: 0.9em;">
+                    aminoácidos
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Card 6: Tipo (se disponível)
+    if (domain.type && domain.type !== 'N/A' && domain.type !== '') {
+        html += `
+            <div class="info-card">
+                <div class="info-card-header">
+                    <span class="info-card-icon">🏷️</span>
+                    Tipo
+                </div>
+                <div class="info-card-content">
+                    <span class="badge" style="background: #f0f0f0; color: #333; font-family: monospace; font-size: 1em; padding: 8px 14px;">
+                        ${domain.type}
+                    </span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Card 7: Descrição (se disponível) - Card grande
+    if (domain.description && domain.description !== 'N/A' && domain.description !== '') {
+        html += `
+            <div class="info-card info-card-large">
+                <div class="info-card-header">
+                    <span class="info-card-icon">📝</span>
+                    Descrição
+                </div>
+                <div class="info-card-content" style="font-size: 1em; line-height: 1.7;">
+                    ${domain.description}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Card 8: InterPro (se disponível) - Card destacado
+    if (domain.interpro_accession && domain.interpro_accession !== 'N/A' && domain.interpro_accession !== '') {
+        const spanClass = domain.type || domain.description ? 'info-card-large' : 'info-card-full';
+        html += `
+            <div class="info-card info-card-highlight ${spanClass}">
+                <div class="info-card-header">
+                    <span class="info-card-icon">🔗</span>
+                    InterPro Entry
+                </div>
+                <div class="info-card-content">
+                    <div style="margin-bottom: 10px;">
+                        <a href="https://www.ebi.ac.uk/interpro/entry/InterPro/${domain.interpro_accession}/" target="_blank" class="interpro-link">
+                            ${domain.interpro_accession}
+                            <span>🔗</span>
+                        </a>
+                    </div>
+        `;
+        
+        if (domain.interpro_name && domain.interpro_name !== 'N/A' && domain.interpro_name !== '') {
+            html += `
+                    <div style="margin-top: 8px; color: #333; font-weight: 500;">
+                        ${domain.interpro_name}
+                    </div>
+            `;
+        }
+        
+        html += `
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `</div>`; // Fechar grid
+    
+    body.innerHTML = html;
+    modal.classList.add('active');
+}
+
+function closeDomainDetailsModal() {
+    const modal = document.getElementById('modal-domain-details');
+    modal.classList.remove('active');
+}
