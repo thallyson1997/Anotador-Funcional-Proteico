@@ -467,7 +467,7 @@ function getDatabaseCategory(database) {
     // Domínios Estruturais - VERMELHO
     else if (['GENE3D', 'SUPERFAMILY'].includes(db)) {
         return { 
-            emoji: '🟢', 
+            emoji: '🔴', 
             category: 'Domínios Estruturais',
             color: '#cc0000',
             bgColor: '#ffe6e6',
@@ -478,7 +478,7 @@ function getDatabaseCategory(database) {
     // Topologia/Localização - VERDE
     else if (['PHOBIUS', 'TMHMM', 'SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE', 'SIGNALP_GRAM_NEGATIVE'].includes(db)) {
         return { 
-            emoji: '🔷', 
+            emoji: '🟢', 
             category: 'Topologia/Localização',
             color: '#009900',
             bgColor: '#e6ffe6',
@@ -489,7 +489,7 @@ function getDatabaseCategory(database) {
     // Características Estruturais - AMARELO
     else if (['COILS', 'MOBIDB_LITE'].includes(db)) {
         return { 
-            emoji: '🔶', 
+            emoji: '🟡', 
             category: 'Características Estruturais',
             color: '#cc9900',
             bgColor: '#fff9e6',
@@ -643,8 +643,16 @@ function displayResults(data) {
             </div>
         `;
         
-        // Confidence Badge
-        const confidenceClass = `confidence-${protein.confidence_level.toLowerCase().replace(' ', '-')}`;
+        // Confidence Badge (legado)
+        const getConfidenceCssClass = (level) => {
+            const normalized = (level || '').toLowerCase();
+            if (normalized.includes('alta')) return 'confidence-high';
+            if (normalized.includes('média') || normalized.includes('media')) return 'confidence-medium';
+            if (normalized.includes('baixa')) return 'confidence-low';
+            return 'confidence-none';
+        };
+
+        const confidenceClass = getConfidenceCssClass(protein.confidence_level);
         html += `
             <div class="protein-info-row">
                 <div class="protein-info-label">Confiança:</div>
@@ -655,6 +663,39 @@ function displayResults(data) {
                 </div>
             </div>
         `;
+
+        // Confidence V2 (nova)
+        if (protein.confidence_level_v2) {
+            const confidenceClassV2 = getConfidenceCssClass(protein.confidence_level_v2);
+            html += `
+                <div class="protein-info-row">
+                    <div class="protein-info-label">Confiança V2:</div>
+                    <div class="protein-info-value">
+                        <span class="confidence-badge ${confidenceClassV2}">
+                            ${protein.confidence_level_v2}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (protein.confidence_score_v2 !== null && protein.confidence_score_v2 !== undefined) {
+            html += `
+                <div class="protein-info-row">
+                    <div class="protein-info-label">Score V2:</div>
+                    <div class="protein-info-value">${protein.confidence_score_v2}/100</div>
+                </div>
+            `;
+        }
+
+        if (protein.confidence_explainer_v2) {
+            html += `
+                <div class="protein-info-row">
+                    <div class="protein-info-label">Detalhes V2:</div>
+                    <div class="protein-info-value">${protein.confidence_explainer_v2}</div>
+                </div>
+            `;
+        }
         
         html += `
                 </div>
@@ -696,7 +737,7 @@ function displayResults(data) {
             `;
             
             if (totalRealDomains > 0) {
-                html += `<div style="color: #555;">🔵 Foram encontrados ${totalRealDomains} domínio${totalRealDomains !== 1 ? 's' : ''} em ${totalRealDatabases} banco${totalRealDatabases !== 1 ? 's' : ''} de dados</div>`;
+                html += `<div style="color: #555;">Foram encontrados ${totalRealDomains} domínio${totalRealDomains !== 1 ? 's' : ''} em ${totalRealDatabases} banco${totalRealDatabases !== 1 ? 's' : ''} de dados</div>`;
             } else {
                 html += `<div style="color: #555;">Nenhum domínio identificado em bancos de dados.</div>`;
             }
@@ -932,26 +973,6 @@ function showDomainDetailsModal(domain) {
         </div>
     `;
     
-    // Descrição (se disponível)
-    if (domain.description && domain.description !== 'N/A' && domain.description !== '') {
-        html += `
-            <div class="detail-section">
-                <div class="detail-label">📝 Descrição</div>
-                <div class="detail-value">${domain.description}</div>
-            </div>
-        `;
-    }
-    
-    // Tipo (se disponível)
-    if (domain.type && domain.type !== 'N/A' && domain.type !== '') {
-        html += `
-            <div class="detail-section">
-                <div class="detail-label">🏷️ Tipo</div>
-                <div class="detail-value">${domain.type}</div>
-            </div>
-        `;
-    }
-    
     // Card 2: Posição
     html += `
         <div class="info-card">
@@ -990,7 +1011,7 @@ function showDomainDetailsModal(domain) {
         html += `
             <div class="info-card">
                 <div class="info-card-header">
-                    <span class="info-card-icon">🎯</span>
+                    <span class="info-card-icon">&#128202;</span>
                     Score
                 </div>
                 <div class="info-card-content">
@@ -1001,25 +1022,6 @@ function showDomainDetailsModal(domain) {
             </div>
         `;
     }
-    
-    // Card 3: Extensão do domínio
-    const extensao = domain.end - domain.start + 1;
-    html += `
-        <div class="info-card">
-            <div class="info-card-header">
-                <span class="info-card-icon">📏</span>
-                Extensão
-            </div>
-            <div class="info-card-content">
-                <span class="badge badge-stat" style="padding: 10px 20px; font-size: 1.3em;">
-                    ${extensao}
-                </span>
-                <div style="margin-top: 6px; color: #666; font-size: 0.9em;">
-                    aminoácidos
-                </div>
-            </div>
-        </div>
-    `;
     
     // Card 6: Tipo (se disponível)
     if (domain.type && domain.type !== 'N/A' && domain.type !== '') {

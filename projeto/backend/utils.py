@@ -578,6 +578,106 @@ def classify_confidence(domains: list) -> str:
     else:
         return "Nenhum"
 
+
+def _parse_evalue(evalue) -> float:
+    """Converte e-value para float; retorna None quando inválido."""
+    if evalue is None:
+        return None
+    try:
+        text = str(evalue).strip().upper()
+        if text in ('', 'N/A', 'NA', 'NONE', 'NULL'):
+            return None
+        return float(text)
+    except Exception:
+        return None
+
+
+def classify_confidence_v2(domains: list) -> tuple:
+    """
+    Classificação V2 (0-100) para reduzir falso "alto" por redundância.
+
+    Componentes:
+    - Diversidade de bancos (0-45)
+    - Qualidade estatística por e-value (0-25)
+    - Suporte InterPro accession (0-20)
+    - Consenso posicional entre bancos (0-10)
+    """
+    if not domains:
+        return "Nenhum", 0.0, "Sem hits funcionais/estruturais"
+
+    real_hits = []
+    for d in domains:
+        if not isinstance(d, dict):
+            continue
+        db = (d.get('database') or '').upper().strip()
+        if db in DOMAIN_DATABASES:
+            real_hits.append(d)
+
+    if not real_hits:
+        return "Nenhum", 0.0, "Sem hits em bancos funcionais/estruturais"
+
+    n_hits = len(real_hits)
+    unique_dbs = len({(d.get('database') or '').upper().strip() for d in real_hits if d.get('database')})
+
+    # Qualidade por e-value
+    good_hits = 0
+    strong_hits = 0
+    for d in real_hits:
+        evalue = _parse_evalue(d.get('evalue'))
+        if evalue is None:
+            continue
+        if evalue <= 1e-5:
+            good_hits += 1
+        if evalue <= 1e-20:
+            strong_hits += 1
+
+    # Suporte InterPro
+    interpro_hits = 0
+    for d in real_hits:
+        ipr = (d.get('interpro_accession') or '').upper().strip()
+        if ipr.startswith('IPR'):
+            interpro_hits += 1
+
+    # Consenso posicional aproximado entre bancos
+    bucket_to_dbs = {}
+    for d in real_hits:
+        start = d.get('start')
+        end = d.get('end')
+        db = (d.get('database') or '').upper().strip() or 'UNKNOWN'
+        if isinstance(start, int) and isinstance(end, int):
+            key = (start // 25, end // 25)
+        else:
+            key = ('NA', 'NA')
+        if key not in bucket_to_dbs:
+            bucket_to_dbs[key] = set()
+        bucket_to_dbs[key].add(db)
+
+    multi_support_buckets = sum(1 for dbs in bucket_to_dbs.values() if len(dbs) >= 2)
+    consensus_ratio = multi_support_buckets / max(1, len(bucket_to_dbs))
+
+    db_score = min(unique_dbs / 7.0, 1.0) * 45.0
+    quality_ratio = (strong_hits + 0.5 * max(good_hits - strong_hits, 0)) / max(1, n_hits)
+    quality_score = min(quality_ratio, 1.0) * 25.0
+    interpro_score = (interpro_hits / max(1, n_hits)) * 20.0
+    consensus_score = consensus_ratio * 10.0
+
+    final_score = round(db_score + quality_score + interpro_score + consensus_score, 1)
+
+    if final_score >= 75:
+        level = "Alta"
+    elif final_score >= 50:
+        level = "Média"
+    elif final_score > 0:
+        level = "Baixa"
+    else:
+        level = "Nenhum"
+
+    explainer = (
+        f"dbs={unique_dbs}, hits={n_hits}, e<=1e-5={good_hits}, "
+        f"IPR={interpro_hits}, consenso={round(consensus_ratio * 100, 1)}%"
+    )
+    return level, final_score, explainer
+
 # ===== EXTRAÇÃO DE CARACTERÍSTICAS DE TOPOLOGIA =====
 
 def extract_topology_features(raw_domains: list) -> dict:
@@ -662,6 +762,9 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
             domain_count=0,
             domains=[],
             confidence_level="Nenhum",
+            confidence_level_v2="Nenhum",
+            confidence_score_v2=0.0,
+            confidence_explainer_v2="Sem hits funcionais/estruturais",
             has_transmembrane=False,
             has_signal_peptide=False,
             has_coils=False,
@@ -760,6 +863,7 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
     all_domains_list = real_domains_list + topology_domains_list
     
     confidence = classify_confidence(raw_domains)
+    confidence_v2, score_v2, explainer_v2 = classify_confidence_v2(raw_domains)
     
     # Extrair características topológicas
     topology_features = extract_topology_features(raw_domains)
@@ -773,6 +877,9 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
         domain_count=len(real_domains_list),  # Contar APENAS domínios reais
         domains=all_domains_list,  # Incluir TODOS (domínios + topologia)
         confidence_level=confidence,
+        confidence_level_v2=confidence_v2,
+        confidence_score_v2=score_v2,
+        confidence_explainer_v2=explainer_v2,
         has_transmembrane=topology_features['has_transmembrane'],
         has_signal_peptide=topology_features['has_signal_peptide'],
         has_coils=topology_features['has_coils'],

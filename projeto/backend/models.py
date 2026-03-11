@@ -29,6 +29,9 @@ class Protein(BaseModel):
     domain_count: int
     domains: List[Domain]
     confidence_level: str
+    confidence_level_v2: Optional[str] = None
+    confidence_score_v2: Optional[float] = None
+    confidence_explainer_v2: Optional[str] = None
     # 🟢 Topologia/Localização
     has_transmembrane: bool = False
     has_signal_peptide: bool = False
