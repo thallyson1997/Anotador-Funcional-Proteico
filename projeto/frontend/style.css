@@ -1215,9 +1215,134 @@ small {
     color: var(--color-text-light);
 }
 
+.protein-info-label-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .protein-info-value {
     color: var(--color-text);
     word-break: break-word;
+}
+
+.confidence-info-button {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: #e65100;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(230, 81, 0, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.confidence-info-button:hover {
+    transform: translateY(-1px);
+    background: #bf360c;
+    box-shadow: 0 6px 14px rgba(191, 54, 12, 0.3);
+}
+
+.confidence-info-button:focus-visible {
+    outline: 2px solid #ffcc80;
+    outline-offset: 2px;
+}
+
+.modal-confidence-container {
+    max-width: 980px;
+}
+
+.modal-confidence-body {
+    padding: 32px;
+}
+
+.confidence-modal-header {
+    background: linear-gradient(135deg, #ffedd5 0%, #ffe0b2 100%);
+    border: 1px solid #ffcc80;
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.confidence-modal-header h2 {
+    margin: 0 0 8px 0;
+    color: #8a2d00;
+}
+
+.confidence-modal-header p {
+    margin: 0;
+    color: #7a4b2b;
+}
+
+.confidence-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.confidence-modal-card {
+    background: #fffaf3;
+    border: 1px solid #f3d3aa;
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.confidence-modal-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: #8a2d00;
+}
+
+.confidence-modal-card p {
+    margin: 0;
+    color: #5f5142;
+    line-height: 1.55;
+}
+
+.confidence-formula-list {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.confidence-formula-item {
+    background: #f8f8f8;
+    border-left: 4px solid #e65100;
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.confidence-formula-item strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #4a2c14;
+}
+
+.confidence-formula-item code {
+    display: block;
+    white-space: normal;
+    word-break: break-word;
+    color: #5f5142;
+    background: transparent;
+    padding: 0;
+    font-family: Consolas, Monaco, monospace;
+}
+
+.confidence-modal-note {
+    background: #eef6ff;
+    border: 1px solid #c9def7;
+    border-radius: 12px;
+    padding: 18px;
+    color: #1b4e81;
+    line-height: 1.6;
 }
 
 .confidence-badge {

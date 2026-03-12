@@ -3,11 +3,15 @@ Funções utilitárias para análise de proteínas
 Integração com InterProScan (EBI) para busca real de domínios
 """
 
-from models import Protein, Domain
+from models import Protein, Domain, ConfidenceV2Breakdown
 import requests
 import time
 import io
 import zipfile
+
+
+class InterProScanServiceError(Exception):
+    """Erro ao comunicar ou obter resposta valida do InterProScan."""
 
 # ===== CONSTANTES DE BANCOS DE DADOS =====
 # 🔵 Domínios Funcionais (Azul) - 12 tipos
@@ -440,7 +444,9 @@ def search_interproscan(sequence: str, seq_id: str, email: str, timeout: int = 6
         response = requests.post(submit_url, data=params, timeout=30)
         if response.status_code != 200:
             print(f" ⚠️ HTTP {response.status_code}")
-            return []
+            raise InterProScanServiceError(
+                "Falha ao iniciar a analise no InterProScan. Tente novamente em instantes."
+            )
 
         job_id = response.text.strip()
         print(f" Job ID: {job_id[:8]}...", end="", flush=True)
@@ -475,7 +481,9 @@ def search_interproscan(sequence: str, seq_id: str, email: str, timeout: int = 6
                     )
                 except requests.Timeout:
                     print(" ⚠️ Timeout ao baixar resultado")
-                    return []
+                    raise InterProScanServiceError(
+                        "O InterProScan demorou demais para responder. Tente novamente em instantes."
+                    )
 
                 if result.status_code == 200:
                     data = result.json()
@@ -525,23 +533,45 @@ def search_interproscan(sequence: str, seq_id: str, email: str, timeout: int = 6
                     return domains
                 else:
                     print(f" ⚠️ HTTP {result.status_code}")
-                    return []
+                    raise InterProScanServiceError(
+                        "O InterProScan retornou uma resposta invalida. Tente novamente em instantes."
+                    )
 
             elif status in ['FAILED', 'ERROR', 'NOT_FOUND']:
                 print(f" ⚠️ Status {status}")
-                return []
+                raise InterProScanServiceError(
+                    "O InterProScan nao conseguiu concluir a analise. Tente novamente em instantes."
+                )
             elif attempt % 10 == 0 and attempt > 0:
                 print(".", end="", flush=True)
 
         print(f" ⏱ Timeout após {max_attempts * poll_interval}s")
-        return []
+        raise InterProScanServiceError(
+            "O InterProScan excedeu o tempo limite da analise. Tente novamente em instantes."
+        )
 
     except requests.Timeout:
         print(" ⚠️ Timeout HTTP")
-        return []
+        raise InterProScanServiceError(
+            "Nao foi possivel conectar ao InterProScan no tempo esperado. Tente novamente em instantes."
+        )
+    except requests.ConnectionError:
+        print(" ⚠️ ConnectionError")
+        raise InterProScanServiceError(
+            "Falha de conexao com o InterProScan. Tente novamente em instantes."
+        )
+    except requests.RequestException as e:
+        print(f" ⚠️ {type(e).__name__}: {str(e)[:50]}")
+        raise InterProScanServiceError(
+            "Erro de comunicacao com o InterProScan. Tente novamente em instantes."
+        )
+    except InterProScanServiceError:
+        raise
     except Exception as e:
         print(f" ⚠️ {type(e).__name__}: {str(e)[:50]}")
-        return []
+        raise InterProScanServiceError(
+            "Erro inesperado ao consultar o InterProScan. Tente novamente em instantes."
+        )
 
 # ===== CLASSIFICAÇÃO POR CONFIANÇA =====
 
@@ -579,6 +609,20 @@ def classify_confidence(domains: list) -> str:
         return "Nenhum"
 
 
+def count_confidence_databases(domains: list) -> int:
+    """Conta quantos bancos funcionais/estruturais distintos sustentam a proteína."""
+    if not domains:
+        return 0
+
+    domains_only = [
+        d.get('database', 'UNKNOWN')
+        for d in domains
+        if isinstance(d, dict) and (d.get('database') or 'UNKNOWN') in DOMAIN_DATABASES
+    ]
+
+    return len(set(filter(None, domains_only))) if domains_only else 0
+
+
 def _parse_evalue(evalue) -> float:
     """Converte e-value para float; retorna None quando inválido."""
     if evalue is None:
@@ -602,8 +646,10 @@ def classify_confidence_v2(domains: list) -> tuple:
     - Suporte InterPro accession (0-20)
     - Consenso posicional entre bancos (0-10)
     """
+    empty_breakdown = ConfidenceV2Breakdown()
+
     if not domains:
-        return "Nenhum", 0.0, "Sem hits funcionais/estruturais"
+        return "Nenhum", 0.0, "Sem hits funcionais/estruturais", empty_breakdown
 
     real_hits = []
     for d in domains:
@@ -614,7 +660,7 @@ def classify_confidence_v2(domains: list) -> tuple:
             real_hits.append(d)
 
     if not real_hits:
-        return "Nenhum", 0.0, "Sem hits em bancos funcionais/estruturais"
+        return "Nenhum", 0.0, "Sem hits em bancos funcionais/estruturais", empty_breakdown
 
     n_hits = len(real_hits)
     unique_dbs = len({(d.get('database') or '').upper().strip() for d in real_hits if d.get('database')})
@@ -676,7 +722,21 @@ def classify_confidence_v2(domains: list) -> tuple:
         f"dbs={unique_dbs}, hits={n_hits}, e<=1e-5={good_hits}, "
         f"IPR={interpro_hits}, consenso={round(consensus_ratio * 100, 1)}%"
     )
-    return level, final_score, explainer
+    breakdown = ConfidenceV2Breakdown(
+        unique_databases=unique_dbs,
+        total_hits=n_hits,
+        good_hits=good_hits,
+        strong_hits=strong_hits,
+        interpro_hits=interpro_hits,
+        bucket_count=len(bucket_to_dbs),
+        multi_support_buckets=multi_support_buckets,
+        consensus_percent=round(consensus_ratio * 100, 1),
+        db_score=round(db_score, 1),
+        quality_score=round(quality_score, 1),
+        interpro_score=round(interpro_score, 1),
+        consensus_score=round(consensus_score, 1)
+    )
+    return level, final_score, explainer, breakdown
 
 # ===== EXTRAÇÃO DE CARACTERÍSTICAS DE TOPOLOGIA =====
 
@@ -762,9 +822,11 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
             domain_count=0,
             domains=[],
             confidence_level="Nenhum",
+            confidence_score=0,
             confidence_level_v2="Nenhum",
             confidence_score_v2=0.0,
             confidence_explainer_v2="Sem hits funcionais/estruturais",
+            confidence_breakdown_v2=ConfidenceV2Breakdown(),
             has_transmembrane=False,
             has_signal_peptide=False,
             has_coils=False,
@@ -863,7 +925,8 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
     all_domains_list = real_domains_list + topology_domains_list
     
     confidence = classify_confidence(raw_domains)
-    confidence_v2, score_v2, explainer_v2 = classify_confidence_v2(raw_domains)
+    confidence_score = count_confidence_databases(raw_domains)
+    confidence_v2, score_v2, explainer_v2, breakdown_v2 = classify_confidence_v2(raw_domains)
     
     # Extrair características topológicas
     topology_features = extract_topology_features(raw_domains)
@@ -877,9 +940,11 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
         domain_count=len(real_domains_list),  # Contar APENAS domínios reais
         domains=all_domains_list,  # Incluir TODOS (domínios + topologia)
         confidence_level=confidence,
+        confidence_score=confidence_score,
         confidence_level_v2=confidence_v2,
         confidence_score_v2=score_v2,
         confidence_explainer_v2=explainer_v2,
+        confidence_breakdown_v2=breakdown_v2,
         has_transmembrane=topology_features['has_transmembrane'],
         has_signal_peptide=topology_features['has_signal_peptide'],
         has_coils=topology_features['has_coils'],

@@ -21,6 +21,32 @@ function closeNotification() {
     const notification = document.getElementById('notification');
     notification.classList.remove('active');
 }
+
+let currentDisplayedProteins = [];
+
+function normalizeApiErrorMessage(error) {
+    const message = String(error?.message || error || '').trim();
+    const lowerMessage = message.toLowerCase();
+
+    if (
+        lowerMessage.includes('failed to fetch') ||
+        lowerMessage.includes('networkerror') ||
+        lowerMessage.includes('load failed')
+    ) {
+        return 'Nao foi possivel conectar a API no momento. Tente novamente.';
+    }
+
+    if (
+        lowerMessage.includes('interproscan') ||
+        lowerMessage.includes('conexao') ||
+        lowerMessage.includes('timeout') ||
+        lowerMessage.includes('503')
+    ) {
+        return 'Falha temporaria ao consultar o InterProScan. Tente novamente.';
+    }
+
+    return message || 'Erro ao processar a solicitacao. Tente novamente.';
+}
 // ===== NAVIGATION =====
 function goToPage(pageId) {
     // Ocultar todas as páginas
@@ -109,7 +135,7 @@ async function submitSequence() {
         
     } catch (error) {
         console.error('Erro:', error);
-        showNotification('Erro ao processar sequência: ' + error.message, 'error');
+        showNotification(normalizeApiErrorMessage(error), 'error');
         goToPage('page-input');
     } finally {
         btn.disabled = false;
@@ -358,12 +384,13 @@ async function analyzeSequence(seqId, sequence, email) {
         goToPage('page-results');
     } catch (error) {
         console.error('API Error:', error);
-        updateProgress(0, 3, `Erro na consulta: ${error.message}`, false);
+        const friendlyMessage = normalizeApiErrorMessage(error);
+        updateProgress(0, 3, `Erro na consulta: ${friendlyMessage}`, false);
         document.getElementById('step-3-status').textContent = '❌';
         document.getElementById('step-3-status').classList.add('error');
         await sleep(2000);
         goToPage('page-input');
-        showNotification(error.message || 'Erro ao processar sequência.', 'error');
+        showNotification(friendlyMessage, 'error');
     }
 }
 
@@ -531,6 +558,7 @@ function getDomainPrimaryCategory(databases) {
 function displayResults(data) {
     const resultsContainer = document.getElementById('results-content');
     let html = '';
+    currentDisplayedProteins = Array.isArray(data?.proteins) ? data.proteins : [];
     
     // Header
     html += `
@@ -579,7 +607,7 @@ function displayResults(data) {
     // Proteins
     html += '<div class="proteins-list">';
     
-    data.proteins.forEach(protein => {
+    data.proteins.forEach((protein, proteinIndex) => {
         html += `
             <div class="protein-card">
                 <h3>${protein.seq_id}</h3>
@@ -664,6 +692,15 @@ function displayResults(data) {
             </div>
         `;
 
+        if (protein.confidence_score !== null && protein.confidence_score !== undefined) {
+            html += `
+                <div class="protein-info-row">
+                    <div class="protein-info-label">Score original:</div>
+                    <div class="protein-info-value">${protein.confidence_score} banco(s)</div>
+                </div>
+            `;
+        }
+
         // Confidence V2 (nova)
         if (protein.confidence_level_v2) {
             const confidenceClassV2 = getConfidenceCssClass(protein.confidence_level_v2);
@@ -682,17 +719,17 @@ function displayResults(data) {
         if (protein.confidence_score_v2 !== null && protein.confidence_score_v2 !== undefined) {
             html += `
                 <div class="protein-info-row">
-                    <div class="protein-info-label">Score V2:</div>
+                    <div class="protein-info-label protein-info-label-inline">
+                        <span>Score V2:</span>
+                        <button
+                            type="button"
+                            class="confidence-info-button"
+                            title="Explicar Score V2"
+                            aria-label="Explicar Score V2"
+                            onclick="showConfidenceV2Modal(${proteinIndex})"
+                        >!</button>
+                    </div>
                     <div class="protein-info-value">${protein.confidence_score_v2}/100</div>
-                </div>
-            `;
-        }
-
-        if (protein.confidence_explainer_v2) {
-            html += `
-                <div class="protein-info-row">
-                    <div class="protein-info-label">Detalhes V2:</div>
-                    <div class="protein-info-value">${protein.confidence_explainer_v2}</div>
                 </div>
             `;
         }
@@ -868,7 +905,7 @@ async function callAPI(endpoint, method = 'GET', data = null) {
         return await response.json();
     } catch (error) {
         console.error('API Error:', error);
-        throw error;
+        throw new Error(normalizeApiErrorMessage(error));
     }
 }
 
@@ -918,6 +955,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    const modalConfidenceV2 = document.getElementById('modal-confidence-v2');
+    if (modalConfidenceV2) {
+        modalConfidenceV2.addEventListener('click', function(e) {
+            if (e.target === modalConfidenceV2) {
+                closeConfidenceV2Modal();
+            }
+        });
+    }
     
     // Fechar modal com ESC
     document.addEventListener('keydown', function(e) {
@@ -925,6 +971,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('modal-domain-details');
             if (modal && modal.classList.contains('active')) {
                 closeDomainDetailsModal();
+            }
+
+            const confidenceModal = document.getElementById('modal-confidence-v2');
+            if (confidenceModal && confidenceModal.classList.contains('active')) {
+                closeConfidenceV2Modal();
             }
         }
     });
@@ -1095,5 +1146,89 @@ function showDomainDetailsModal(domain) {
 
 function closeDomainDetailsModal() {
     const modal = document.getElementById('modal-domain-details');
+    modal.classList.remove('active');
+}
+
+function showConfidenceV2Modal(proteinIndex) {
+    const protein = currentDisplayedProteins[proteinIndex];
+    const breakdown = protein?.confidence_breakdown_v2;
+
+    if (!protein || !breakdown) {
+        showNotification('Nao foi possivel carregar os detalhes do Score V2.', 'error');
+        return;
+    }
+
+    const totalHits = breakdown.total_hits || 0;
+    const uniqueDatabases = breakdown.unique_databases || 0;
+    const goodHits = breakdown.good_hits || 0;
+    const strongHits = breakdown.strong_hits || 0;
+    const interproHits = breakdown.interpro_hits || 0;
+    const bucketCount = breakdown.bucket_count || 0;
+    const multiSupportBuckets = breakdown.multi_support_buckets || 0;
+    const consensusPercent = breakdown.consensus_percent || 0;
+    const dbScore = breakdown.db_score || 0;
+    const qualityScore = breakdown.quality_score || 0;
+    const interproScore = breakdown.interpro_score || 0;
+    const consensusScore = breakdown.consensus_score || 0;
+    const finalScore = protein.confidence_score_v2 || 0;
+    const level = protein.confidence_level_v2 || 'Nenhum';
+
+    const body = document.getElementById('confidence-v2-body');
+    const modal = document.getElementById('modal-confidence-v2');
+
+    body.innerHTML = `
+        <div class="confidence-modal-header">
+            <h2>Score V2 de ${protein.seq_id}</h2>
+            <p>Nota final: <strong>${finalScore}/100</strong> (${level}). O calculo usa um heuristico interno sobre os resultados do InterProScan, combinando diversidade de bancos, qualidade estatistica, suporte InterPro e consenso posicional.</p>
+        </div>
+
+        <div class="confidence-modal-grid">
+            <div class="confidence-modal-card">
+                <h3>Valores usados</h3>
+                <p>dbs=${uniqueDatabases}, hits=${totalHits}, e&lt;=1e-5=${goodHits}, e&lt;=1e-20=${strongHits}, IPR=${interproHits}, consenso=${consensusPercent}%.</p>
+            </div>
+            <div class="confidence-modal-card">
+                <h3>Base do calculo</h3>
+                <p>O score nao vem do InterPro como nota oficial. Ele e derivado de um heuristico local para reduzir falso positivo por redundancia entre bancos e destacar sinais mais robustos.</p>
+            </div>
+            <div class="confidence-modal-card">
+                <h3>Leitura rapida</h3>
+                <p>Diversidade vale ate 45 pontos, qualidade estatistica ate 25, suporte InterPro ate 20 e consenso posicional ate 10.</p>
+            </div>
+        </div>
+
+        <div class="confidence-formula-list">
+            <div class="confidence-formula-item">
+                <strong>1. Diversidade de bancos</strong>
+                <code>min(dbs / 7, 1) x 45 = min(${uniqueDatabases} / 7, 1) x 45 = ${dbScore}</code>
+            </div>
+            <div class="confidence-formula-item">
+                <strong>2. Qualidade por e-value</strong>
+                <code>min((strong_hits + 0.5 x (good_hits - strong_hits)) / hits, 1) x 25 = min((${strongHits} + 0.5 x (${goodHits} - ${strongHits})) / ${Math.max(totalHits, 1)}, 1) x 25 = ${qualityScore}</code>
+            </div>
+            <div class="confidence-formula-item">
+                <strong>3. Suporte InterPro</strong>
+                <code>(IPR / hits) x 20 = (${interproHits} / ${Math.max(totalHits, 1)}) x 20 = ${interproScore}</code>
+            </div>
+            <div class="confidence-formula-item">
+                <strong>4. Consenso posicional</strong>
+                <code>(buckets com suporte multiplo / total de buckets) x 10 = (${multiSupportBuckets} / ${Math.max(bucketCount, 1)}) x 10 = ${consensusScore}</code>
+            </div>
+            <div class="confidence-formula-item">
+                <strong>5. Nota final</strong>
+                <code>${dbScore} + ${qualityScore} + ${interproScore} + ${consensusScore} = ${finalScore}</code>
+            </div>
+        </div>
+
+        <div class="confidence-modal-note">
+            Este score foi baseado em quatro perguntas: quantos bancos independentes concordam, quao fortes sao os e-values, quantos hits tem integracao InterPro e quanto as posicoes dos hits convergem entre bancos. Quanto maior a diversidade, a qualidade estatistica e o suporte InterPro, melhor. Quanto menor a concordancia posicional, menor a parcela de consenso.
+        </div>
+    `;
+
+    modal.classList.add('active');
+}
+
+function closeConfidenceV2Modal() {
+    const modal = document.getElementById('modal-confidence-v2');
     modal.classList.remove('active');
 }

@@ -17,6 +17,21 @@ class Domain(BaseModel):
     interpro_accession: Optional[str] = None
     interpro_name: Optional[str] = None
 
+
+class ConfidenceV2Breakdown(BaseModel):
+    unique_databases: int = 0
+    total_hits: int = 0
+    good_hits: int = 0
+    strong_hits: int = 0
+    interpro_hits: int = 0
+    bucket_count: int = 0
+    multi_support_buckets: int = 0
+    consensus_percent: float = 0.0
+    db_score: float = 0.0
+    quality_score: float = 0.0
+    interpro_score: float = 0.0
+    consensus_score: float = 0.0
+
 # ===== PROTEIN MODEL =====
 class Protein(BaseModel):
     seq_id: str
@@ -29,9 +44,11 @@ class Protein(BaseModel):
     domain_count: int
     domains: List[Domain]
     confidence_level: str
+    confidence_score: Optional[int] = None
     confidence_level_v2: Optional[str] = None
     confidence_score_v2: Optional[float] = None
     confidence_explainer_v2: Optional[str] = None
+    confidence_breakdown_v2: Optional[ConfidenceV2Breakdown] = None
     # 🟢 Topologia/Localização
     has_transmembrane: bool = False
     has_signal_peptide: bool = False

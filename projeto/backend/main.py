@@ -5,7 +5,7 @@ Processa análise de domínios em proteínas
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 
@@ -18,12 +18,26 @@ from models import (
 )
 from utils import (
     search_interproscan,
+    InterProScanServiceError,
     clean_sequence,
     validate_protein_sequence,
     domains_to_protein,
     get_placeholder_proteins,
     extract_proteins_from_file,
 )
+
+
+def run_interproscan_or_raise(sequence: str, seq_id: str, email: str, timeout: int = 600):
+    """Executa consulta ao InterProScan e converte falhas externas em HTTP 503."""
+    try:
+        return search_interproscan(
+            sequence=sequence,
+            seq_id=seq_id,
+            email=email,
+            timeout=timeout
+        )
+    except InterProScanServiceError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 # ===== INICIALIZAR FASTAPI =====
 app = FastAPI(
@@ -52,6 +66,27 @@ async def health_check():
         status="ok",
         version="1.0.0"
     )
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """
+    Retorna o favicon do frontend quando disponível.
+    Se não existir, responde sem conteúdo para evitar 404 no log.
+    """
+    favicon_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "favicon.ico")
+    if os.path.exists(favicon_path):
+        return FileResponse(path=favicon_path, media_type="image/x-icon")
+
+    return Response(status_code=204)
+
+
+@app.get("/.well-known/appspecific/com.chrome.devtools.json", include_in_schema=False)
+async def chrome_devtools_metadata():
+    """
+    Responde à sondagem automática do Chrome DevTools sem gerar 404 no log.
+    """
+    return Response(status_code=204)
 
 @app.get("/api/download-debug")
 async def download_debug():
@@ -289,7 +324,7 @@ async def analyze_antismash_range(
             print(f"  → Analisando {protein_data['product']}...")
             
             # Buscar domínios
-            raw_domains = search_interproscan(
+            raw_domains = run_interproscan_or_raise(
                 sequence=protein_data['sequence'],
                 seq_id=protein_data.get('locus_tag', f"protein_{protein_data['index']}"),
                 email=email,
@@ -411,7 +446,7 @@ async def analyze_antismash_selected(
                 print(f"  → Analisando {protein_data.get('product', 'UNKNOWN')}...")
                 
                 # Buscar domínios
-                raw_domains = search_interproscan(
+                raw_domains = run_interproscan_or_raise(
                     sequence=protein_data['sequence'],
                     seq_id=protein_data.get('locus_tag', protein_data.get('FASTA_ID', f"protein_{protein_data['index']}")),
                     email=email,
@@ -488,7 +523,7 @@ async def predict_domains(request: SequenceAnalysisRequest):
         
         # Buscar no InterProScan (EBI)
         print(f"\n🔍 Analisando sequência {request.seq_id or 'unknown'}...")
-        raw_domains = search_interproscan(
+        raw_domains = run_interproscan_or_raise(
             sequence=clean_seq,
             seq_id=request.seq_id or "sequence_001",
             email=request.email,
