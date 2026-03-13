@@ -24,6 +24,8 @@ class ConfidenceV2Breakdown(BaseModel):
     good_hits: int = 0
     strong_hits: int = 0
     interpro_hits: int = 0
+    cluster_count: int = 0
+    clustered_hits: int = 0
     bucket_count: int = 0
     multi_support_buckets: int = 0
     consensus_percent: float = 0.0

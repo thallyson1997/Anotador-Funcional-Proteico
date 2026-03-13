@@ -8,6 +8,7 @@ import requests
 import time
 import io
 import zipfile
+import re
 
 
 class InterProScanServiceError(Exception):
@@ -38,9 +39,47 @@ DOMAIN_DATABASES = FUNCTIONAL_DOMAINS + STRUCTURAL_DOMAINS
 # Combinação de todos os bancos
 ALL_DATABASES = DOMAIN_DATABASES + TOPOLOGY + STRUCTURAL_FEATURES
 
+
+def _first_qualifier(feature, keys, default=''):
+    """Retorna o primeiro qualifier encontrado em uma lista de chaves."""
+    qualifiers = getattr(feature, 'qualifiers', {}) or {}
+    for key in keys:
+        values = qualifiers.get(key)
+        if values:
+            value = str(values[0]).strip()
+            if value:
+                return value
+    return default
+
+
+def _extract_main_region_number(raw_value: str, fallback: str) -> str:
+    """Extrai o numero principal de regiao (X) de strings como 'Region 11.2'."""
+    text = str(raw_value or '').strip()
+    if not text:
+        return str(fallback)
+
+    match = re.search(r'(\d+)', text)
+    if match:
+        return match.group(1)
+
+    return str(fallback)
+
+
+def _extract_region_number_from_source_name(source_name: str) -> str:
+    """Extrai o numero global da regiao a partir do nome do arquivo antiSMASH."""
+    text = str(source_name or '')
+    if not text:
+        return ''
+
+    match = re.search(r'region0*(\d+)', text, flags=re.IGNORECASE)
+    if match:
+        return match.group(1)
+
+    return ''
+
 # ===== PARSER GBK =====
 
-def parse_gbk_content(gbk_content: bytes) -> list:
+def parse_gbk_content(gbk_content: bytes, source_name: str = '') -> list:
     """
     Extrai proteínas hipotéticas de arquivo GBK com detecção de BGC
     
@@ -61,6 +100,7 @@ def parse_gbk_content(gbk_content: bytes) -> list:
     
     try:
         from Bio import SeqIO
+        source_region_number = _extract_region_number_from_source_name(source_name)
         
         # Parse usando BioPython
         try:
@@ -68,21 +108,88 @@ def parse_gbk_content(gbk_content: bytes) -> list:
             records = SeqIO.parse(io.StringIO(gbk_string), "genbank")
             
             for record in records:
+                contig_id = str(getattr(record, 'id', '') or '').strip()
+                region_windows = []
+                region_counter = 0
+                for feature in record.features:
+                    if feature.type == "region":
+                        region_counter += 1
+                        start = int(feature.location.start) if feature.location else 0
+                        end = int(feature.location.end) if feature.location else 0
+                        raw_region = _first_qualifier(
+                            feature,
+                            ['region_number', 'candidate_cluster_number', 'record_number'],
+                            default=''
+                        )
+
+                        if not raw_region:
+                            note_region = _first_qualifier(feature, ['note'], default='')
+                            raw_region = note_region
+
+                        region_number = _extract_main_region_number(raw_region, str(region_counter))
+                        region_windows.append({
+                            'start': start,
+                            'end': end,
+                            'region_number': region_number
+                        })
+
                 # Primeiro, extrair informações sobre protoclusters (clusters específicos com localização)
                 # Isso é mais preciso que 'region' porque cada protocluster tem boundaries específicas
                 protoclusters = []
+                region_cluster_counter = {}
                 for feature in record.features:
                     if feature.type == "protocluster":
                         product = feature.qualifiers.get('product', ['Unknown'])[0] if feature.qualifiers.get('product') else 'Unknown'
                         start = int(feature.location.start) if feature.location else 0
                         end = int(feature.location.end) if feature.location else 0
-                        protocluster_number = feature.qualifiers.get('protocluster_number', ['0'])[0] if feature.qualifiers.get('protocluster_number') else '0'
+                        raw_proto_number = _first_qualifier(
+                            feature,
+                            ['protocluster_number', 'candidate_cluster_number'],
+                            default=''
+                        )
+                        raw_parent_region = _first_qualifier(
+                            feature,
+                            ['region_number', 'record_number'],
+                            default=''
+                        )
+
+                        matched_region = None
+                        for region in region_windows:
+                            if not (end <= region['start'] or start >= region['end']):
+                                matched_region = region['region_number']
+                                break
+
+                        region_label = None
+                        proto_text = str(raw_proto_number).strip()
+                        parent_region_main = _extract_main_region_number(raw_parent_region, '') if raw_parent_region else ''
+                        matched_region_main = _extract_main_region_number(matched_region, '') if matched_region else ''
+
+                        if re.fullmatch(r'\d+\.\d+', proto_text):
+                            region_label = f"Region {proto_text}"
+                        elif parent_region_main:
+                            proto_suffix = _extract_main_region_number(proto_text, '') if proto_text else ''
+                            if proto_suffix:
+                                region_label = f"Region {parent_region_main}.{proto_suffix}"
+                            else:
+                                region_cluster_counter[parent_region_main] = region_cluster_counter.get(parent_region_main, 0) + 1
+                                region_label = f"Region {parent_region_main}.{region_cluster_counter[parent_region_main]}"
+                        elif matched_region_main:
+                            proto_suffix = _extract_main_region_number(proto_text, '') if proto_text else ''
+                            if proto_suffix:
+                                region_label = f"Region {matched_region_main}.{proto_suffix}"
+                            else:
+                                region_cluster_counter[matched_region_main] = region_cluster_counter.get(matched_region_main, 0) + 1
+                                region_label = f"Region {matched_region_main}.{region_cluster_counter[matched_region_main]}"
+                        elif proto_text:
+                            region_label = f"Region {proto_text}"
                         
                         protoclusters.append({
                             'start': start,
                             'end': end,
                             'cluster_type': product.strip(),
-                            'protocluster_number': int(protocluster_number)
+                            'protocluster_number': int(proto_text) if str(proto_text).isdigit() else 0,
+                            'region_label': region_label,
+                            'region_main_local': parent_region_main or matched_region_main or ''
                         })
                 
                 # Se não encontrar protocluster, tentar region (fallback para versões antigas)
@@ -106,12 +213,15 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                             end = int(feature.location.end) if feature.location else 0
                             
                             # Adicionar cada cluster type como uma entrada separada
+                            region_label_number = str(region_number)
                             for cluster_type in cluster_types:
                                 protoclusters.append({
                                     'start': start,
                                     'end': end,
                                     'cluster_type': cluster_type.strip(),
-                                    'protocluster_number': region_number
+                                    'protocluster_number': int(region_label_number) if str(region_label_number).isdigit() else region_number,
+                                    'region_label': f"Region {region_label_number}",
+                                    'region_main_local': region_label_number
                                 })
                 
                 # Agora processar CDS e marcar se estão em BGC
@@ -135,7 +245,9 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                                 if not (cds_end <= protocluster['start'] or cds_start >= protocluster['end']):
                                     matching_clusters.append({
                                         'type': protocluster['cluster_type'],
-                                        'number': protocluster['protocluster_number']
+                                        'number': protocluster['protocluster_number'],
+                                        'region_label': protocluster.get('region_label'),
+                                        'region_main_local': protocluster.get('region_main_local')
                                     })
                             
                             # Extrair apenas os tipos de cluster (remover duplicatas)
@@ -146,6 +258,16 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                             
                             in_bgc = len(bgc_types) > 0
                             region_num = matching_clusters[0]['number'] if matching_clusters else None
+                            region_label = matching_clusters[0].get('region_label') if matching_clusters else None
+                            region_main_local = (matching_clusters[0].get('region_main_local') or '').strip() if matching_clusters else ''
+                            if not region_main_local and region_label:
+                                region_main_local = _extract_main_region_number(region_label, '')
+
+                            region_display_label = None
+                            if contig_id and region_main_local:
+                                region_display_label = f"{contig_id} - Region {region_main_local}"
+                            elif contig_id and region_label:
+                                region_display_label = f"{contig_id} - {region_label}"
                             
                             # Gerar FASTA_ID: usa protein_id se disponível, senão gera hyp_{índice}
                             next_index = len(proteins) + 1
@@ -160,6 +282,8 @@ def parse_gbk_content(gbk_content: bytes) -> list:
                                 'in_bgc': in_bgc,
                                 'bgc_cluster_types': bgc_types,
                                 'BGC_Region': region_num,  # ← Número do protocluster BGC
+                                'BGC_Region_Label': region_label,
+                                'BGC_Region_Display_Label': region_display_label,
                                 'protein_id': protein_id,
                                 'FASTA_ID': fasta_id,
                                 'start': cds_start,
@@ -172,11 +296,11 @@ def parse_gbk_content(gbk_content: bytes) -> list:
     except ImportError:
         # Fallback: parse manual simples se BioPython não estiver instalado
         print("BioPython não disponível, usando parse manual...")
-        proteins = parse_gbk_manual(gbk_content)
+        proteins = parse_gbk_manual(gbk_content, source_name)
     
     return proteins
 
-def parse_gbk_manual(gbk_content: bytes) -> list:
+def parse_gbk_manual(gbk_content: bytes, source_name: str = '') -> list:
     """
     Parse manual de GBK quando BioPython não está disponível
     (versão simplificada, extrai apenas informações básicas)
@@ -241,11 +365,11 @@ def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
                 
                 for gbk_name in gbk_files:
                     gbk_bytes = zf.read(gbk_name)
-                    proteins = parse_gbk_content(gbk_bytes)
+                    proteins = parse_gbk_content(gbk_bytes, gbk_name)
                     all_proteins.extend(proteins)
         else:
             # Parse direto do GBK
-            all_proteins = parse_gbk_content(file_content)
+            all_proteins = parse_gbk_content(file_content, filename)
     
     except Exception as e:
         print(f"Erro ao extrair proteínas: {e}")
@@ -636,15 +760,88 @@ def _parse_evalue(evalue) -> float:
         return None
 
 
+def _intervals_are_concentrated(a_start: int, a_end: int, b_start: int, b_end: int) -> bool:
+    """Define se dois intervalos pertencem ao mesmo agrupamento posicional."""
+    return abs(a_start - b_start) <= 9 and abs(a_end - b_end) <= 9
+
+
+def _cluster_position_hits(real_hits: list) -> tuple:
+    """Agrupa intervalos semelhantes e retorna (qtd_agrupamentos_validos, hits_agrupados)."""
+    positioned = []
+    for hit in real_hits:
+        start = hit.get('start')
+        end = hit.get('end')
+        if isinstance(start, int) and isinstance(end, int) and start <= end:
+            positioned.append({
+                'start': start,
+                'end': end,
+                'name': hit.get('name') or hit.get('description') or 'UNKNOWN'
+            })
+
+    n = len(positioned)
+    if n == 0:
+        return 0, 0
+
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra = find(a)
+        rb = find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    for i in range(n):
+        a_start = positioned[i]['start']
+        a_end = positioned[i]['end']
+        for j in range(i + 1, n):
+            b_start = positioned[j]['start']
+            b_end = positioned[j]['end']
+            if _intervals_are_concentrated(a_start, a_end, b_start, b_end):
+                union(i, j)
+
+    clusters = {}
+    for i in range(n):
+        root = find(i)
+        if root not in clusters:
+            clusters[root] = []
+        clusters[root].append(positioned[i]['name'])
+
+    valid_clusters = [names for names in clusters.values() if len(names) >= 2]
+    singleton_hits = [names[0] for names in clusters.values() if len(names) == 1]
+    valid_clusters.sort(key=len, reverse=True)
+
+    if valid_clusters:
+        print(f"\n🔗 Agrupamentos posicionais (nomes): {valid_clusters}")
+    else:
+        print("\n🔗 Agrupamentos posicionais (nomes): []")
+
+    if singleton_hits:
+        print(f"🪶 Hits soltos (nomes): {singleton_hits}")
+    else:
+        print("🪶 Hits soltos (nomes): []")
+
+    valid_cluster_sizes = [len(names) for names in valid_clusters]
+    cluster_count = len(valid_cluster_sizes)
+    clustered_hits = sum(valid_cluster_sizes)
+
+    return cluster_count, clustered_hits
+
+
 def classify_confidence_v2(domains: list) -> tuple:
     """
     Classificação V2 (0-100) para reduzir falso "alto" por redundância.
 
     Componentes:
-    - Diversidade de bancos (0-45)
+    - Diversidade de bancos (0-25)
     - Qualidade estatística por e-value (0-25)
-    - Suporte InterPro accession (0-20)
-    - Consenso posicional entre bancos (0-10)
+    - Suporte InterPro accession (0-25)
+    - Consenso posicional entre bancos (0-25)
     """
     empty_breakdown = ConfidenceV2Breakdown()
 
@@ -684,28 +881,16 @@ def classify_confidence_v2(domains: list) -> tuple:
         if ipr.startswith('IPR'):
             interpro_hits += 1
 
-    # Consenso posicional aproximado entre bancos
-    bucket_to_dbs = {}
-    for d in real_hits:
-        start = d.get('start')
-        end = d.get('end')
-        db = (d.get('database') or '').upper().strip() or 'UNKNOWN'
-        if isinstance(start, int) and isinstance(end, int):
-            key = (start // 25, end // 25)
-        else:
-            key = ('NA', 'NA')
-        if key not in bucket_to_dbs:
-            bucket_to_dbs[key] = set()
-        bucket_to_dbs[key].add(db)
+    # Consenso posicional por agrupamentos de intervalos semelhantes.
+    # Hits soltos (clusters de tamanho 1) não entram no numerador.
+    cluster_count, clustered_hits = _cluster_position_hits(real_hits)
+    consensus_ratio = clustered_hits / max(1, n_hits)
 
-    multi_support_buckets = sum(1 for dbs in bucket_to_dbs.values() if len(dbs) >= 2)
-    consensus_ratio = multi_support_buckets / max(1, len(bucket_to_dbs))
-
-    db_score = min(unique_dbs / 7.0, 1.0) * 45.0
+    db_score = min(unique_dbs / 5.0, 1.0) * 25.0
     quality_ratio = (strong_hits + 0.5 * max(good_hits - strong_hits, 0)) / max(1, n_hits)
     quality_score = min(quality_ratio, 1.0) * 25.0
-    interpro_score = (interpro_hits / max(1, n_hits)) * 20.0
-    consensus_score = consensus_ratio * 10.0
+    interpro_score = (interpro_hits / max(1, n_hits)) * 25.0
+    consensus_score = consensus_ratio * 25.0
 
     final_score = round(db_score + quality_score + interpro_score + consensus_score, 1)
 
@@ -728,8 +913,10 @@ def classify_confidence_v2(domains: list) -> tuple:
         good_hits=good_hits,
         strong_hits=strong_hits,
         interpro_hits=interpro_hits,
-        bucket_count=len(bucket_to_dbs),
-        multi_support_buckets=multi_support_buckets,
+        cluster_count=cluster_count,
+        clustered_hits=clustered_hits,
+        bucket_count=cluster_count,
+        multi_support_buckets=clustered_hits,
         consensus_percent=round(consensus_ratio * 100, 1),
         db_score=round(db_score, 1),
         quality_score=round(quality_score, 1),

@@ -171,28 +171,47 @@ function showProteinModal(proteins, filename) {
     const noMessage = document.getElementById('no-proteins-message');
     const btnAnalyze = document.getElementById('btn-analyze-selected');
     
-    currentProteins = proteins;
+    const sortedProteins = [...proteins].sort((a, b) => {
+        const locusA = (a?.locus_tag || '').trim();
+        const locusB = (b?.locus_tag || '').trim();
+
+        if (!locusA && !locusB) return 0;
+        if (!locusA) return 1;
+        if (!locusB) return -1;
+
+        return locusA.localeCompare(locusB, 'pt-BR', { sensitivity: 'base' });
+    });
+
+    currentProteins = sortedProteins;
     
-    if (proteins.length === 0) {
+    if (sortedProteins.length === 0) {
         countText.textContent = '❌ Nenhuma proteína hipotética foi encontrada.';
         tableContainer.style.display = 'none';
         noMessage.style.display = 'block';
         btnAnalyze.style.display = 'none';
     } else {
-        countText.textContent = `✅ Encontradas ${proteins.length} proteínas hipotéticas`;
+        countText.textContent = `✅ Encontradas ${sortedProteins.length} proteínas hipotéticas`;
         tableContainer.style.display = 'block';
         noMessage.style.display = 'none';
         btnAnalyze.style.display = 'block';
         
         // Preencher tabela com checkboxes (desmarcados por padrão)
         tableBody.innerHTML = '';
-        proteins.forEach((protein, idx) => {
+        sortedProteins.forEach((protein) => {
+            const sourceIndex = Number.isInteger(protein.source_index)
+                ? protein.source_index
+                : Math.max((parseInt(protein.index, 10) || 1) - 1, 0);
+            const regionText = protein.bgc_region_display_label || protein.bgc_region_label || (protein.bgc_region ? `Region ${protein.bgc_region}` : 'N/A');
+            const typeText = Array.isArray(protein.cluster_types) && protein.cluster_types.length > 0
+                ? protein.cluster_types.join(', ')
+                : (protein.bgc_type || '-');
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td style="text-align: center;"><input type="checkbox" class="protein-checkbox" data-index="${idx}"></td>
-                <td>${protein.index}</td>
+                <td style="text-align: center;"><input type="checkbox" class="protein-checkbox" data-index="${sourceIndex}"></td>
                 <td>${protein.locus_tag || '-'}</td>
-                <td>${protein.product}</td>
+                <td>${regionText}</td>
+                <td>${typeText}</td>
+                <td>${protein.product || '-'}</td>
                 <td>${protein.sequence_length}</td>
             `;
             tableBody.appendChild(row);
@@ -1163,8 +1182,8 @@ function showConfidenceV2Modal(proteinIndex) {
     const goodHits = breakdown.good_hits || 0;
     const strongHits = breakdown.strong_hits || 0;
     const interproHits = breakdown.interpro_hits || 0;
-    const bucketCount = breakdown.bucket_count || 0;
-    const multiSupportBuckets = breakdown.multi_support_buckets || 0;
+    const clusterCount = breakdown.cluster_count ?? breakdown.bucket_count ?? 0;
+    const clusteredHits = breakdown.clustered_hits ?? breakdown.multi_support_buckets ?? 0;
     const consensusPercent = breakdown.consensus_percent || 0;
     const dbScore = breakdown.db_score || 0;
     const qualityScore = breakdown.quality_score || 0;
@@ -1185,22 +1204,22 @@ function showConfidenceV2Modal(proteinIndex) {
         <div class="confidence-modal-grid">
             <div class="confidence-modal-card">
                 <h3>Valores usados</h3>
-                <p>dbs=${uniqueDatabases}, hits=${totalHits}, e&lt;=1e-5=${goodHits}, e&lt;=1e-20=${strongHits}, IPR=${interproHits}, consenso=${consensusPercent}%.</p>
+                <p>dbs=${uniqueDatabases}, hits=${totalHits}, e&lt;=1e-5=${goodHits}, e&lt;=1e-20=${strongHits}, IPR=${interproHits}, agrupamentos=${clusterCount}, hits agrupados=${clusteredHits}, consenso=${consensusPercent}%.</p>
             </div>
             <div class="confidence-modal-card">
                 <h3>Base do calculo</h3>
-                <p>O score nao vem do InterPro como nota oficial. Ele e derivado de um heuristico local para reduzir falso positivo por redundancia entre bancos e destacar sinais mais robustos.</p>
+                <p>O score nao vem do InterPro como nota oficial. Ele e derivado de um heuristico local para reduzir falso positivo por redundancia entre bancos e destacar sinais mais robustos. No consenso posicional, dois hits entram no mesmo agrupamento apenas quando start e end diferem no maximo em 3 aminoacidos.</p>
             </div>
             <div class="confidence-modal-card">
                 <h3>Leitura rapida</h3>
-                <p>Diversidade vale ate 45 pontos, qualidade estatistica ate 25, suporte InterPro ate 20 e consenso posicional ate 10.</p>
+                <p>Cada criterio vale ate 25 pontos: diversidade de bancos, qualidade estatistica, suporte InterPro e consenso posicional.</p>
             </div>
         </div>
 
         <div class="confidence-formula-list">
             <div class="confidence-formula-item">
                 <strong>1. Diversidade de bancos</strong>
-                <code>min(dbs / 7, 1) x 45 = min(${uniqueDatabases} / 7, 1) x 45 = ${dbScore}</code>
+                <code>min(dbs / 5, 1) x 25 = min(${uniqueDatabases} / 5, 1) x 25 = ${dbScore}</code>
             </div>
             <div class="confidence-formula-item">
                 <strong>2. Qualidade por e-value</strong>
@@ -1208,11 +1227,11 @@ function showConfidenceV2Modal(proteinIndex) {
             </div>
             <div class="confidence-formula-item">
                 <strong>3. Suporte InterPro</strong>
-                <code>(IPR / hits) x 20 = (${interproHits} / ${Math.max(totalHits, 1)}) x 20 = ${interproScore}</code>
+                <code>(IPR / hits) x 25 = (${interproHits} / ${Math.max(totalHits, 1)}) x 25 = ${interproScore}</code>
             </div>
             <div class="confidence-formula-item">
                 <strong>4. Consenso posicional</strong>
-                <code>(buckets com suporte multiplo / total de buckets) x 10 = (${multiSupportBuckets} / ${Math.max(bucketCount, 1)}) x 10 = ${consensusScore}</code>
+                <code>agrupar hits quando |start1-start2| <= 9 e |end1-end2| <= 9; depois calcular (hits em agrupamentos / hits totais) x 25 = (${clusteredHits} / ${Math.max(totalHits, 1)}) x 25 = ${consensusScore}</code>
             </div>
             <div class="confidence-formula-item">
                 <strong>5. Nota final</strong>

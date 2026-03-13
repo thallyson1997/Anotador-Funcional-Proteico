@@ -192,10 +192,12 @@ async def count_hypothetical_proteins(
         
         # Extrair proteínas
         proteins = extract_proteins_from_file(file_contents, file.filename)
+        indexed_proteins = list(enumerate(proteins))
         
         # Filtrar por BGC se necessário
         if filter_bgc:
-            proteins = [p for p in proteins if p.get("in_bgc", False)]
+            indexed_proteins = [(i, p) for i, p in indexed_proteins if p.get("in_bgc", False)]
+            proteins = [p for _, p in indexed_proteins]
         
         if not proteins:
             filtered_msg = " em clusters BGC" if filter_bgc else ""
@@ -213,13 +215,18 @@ async def count_hypothetical_proteins(
             "proteins": [
                 {
                     "index": p["index"],
+                    "source_index": source_index,
                     "locus_tag": p.get("locus_tag", "") or p.get("protein_id", "") or p.get("FASTA_ID", ""),
                     "FASTA_ID": p.get("FASTA_ID", ""),
                     "product": p.get("product", ""),
                     "sequence_length": len(p.get("sequence", "")),
-                    "bgc_type": p.get("bgc_cluster_type", "")
+                    "bgc_type": p.get("bgc_cluster_type", ""),
+                    "cluster_types": p.get("bgc_cluster_types", []),
+                    "bgc_region": p.get("BGC_Region"),
+                    "bgc_region_label": p.get("BGC_Region_Label"),
+                    "bgc_region_display_label": p.get("BGC_Region_Display_Label")
                 }
-                for p in proteins
+                for source_index, p in indexed_proteins
             ],
             "filter_by_bgc": filter_bgc
         }
