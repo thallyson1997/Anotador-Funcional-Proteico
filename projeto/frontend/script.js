@@ -1208,7 +1208,7 @@ function showConfidenceV2Modal(proteinIndex) {
             </div>
             <div class="confidence-modal-card">
                 <h3>Base do calculo</h3>
-                <p>O score nao vem do InterPro como nota oficial. Ele e derivado de um heuristico local para reduzir falso positivo por redundancia entre bancos e destacar sinais mais robustos. No consenso posicional, dois hits entram no mesmo agrupamento apenas quando start e end diferem no maximo em 3 aminoacidos.</p>
+                <p>O score nao vem do InterPro como nota oficial. Ele e derivado de um heuristico local para reduzir falso positivo por redundancia entre bancos e destacar sinais mais robustos. No consenso posicional, dois hits entram no mesmo agrupamento apenas quando start e end diferem no maximo em 9 aminoacidos.</p>
             </div>
             <div class="confidence-modal-card">
                 <h3>Leitura rapida</h3>

@@ -813,18 +813,7 @@ def _cluster_position_hits(real_hits: list) -> tuple:
         clusters[root].append(positioned[i]['name'])
 
     valid_clusters = [names for names in clusters.values() if len(names) >= 2]
-    singleton_hits = [names[0] for names in clusters.values() if len(names) == 1]
     valid_clusters.sort(key=len, reverse=True)
-
-    if valid_clusters:
-        print(f"\n🔗 Agrupamentos posicionais (nomes): {valid_clusters}")
-    else:
-        print("\n🔗 Agrupamentos posicionais (nomes): []")
-
-    if singleton_hits:
-        print(f"🪶 Hits soltos (nomes): {singleton_hits}")
-    else:
-        print("🪶 Hits soltos (nomes): []")
 
     valid_cluster_sizes = [len(names) for names in valid_clusters]
     cluster_count = len(valid_cluster_sizes)
