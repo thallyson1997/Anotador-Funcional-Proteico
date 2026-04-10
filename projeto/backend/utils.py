@@ -15,10 +15,10 @@ class InterProScanServiceError(Exception):
     """Erro ao comunicar ou obter resposta valida do InterProScan."""
 
 # ===== CONSTANTES DE BANCOS DE DADOS =====
-# 🔵 Domínios Funcionais (Azul) - 12 tipos
+# 🔵 Domínios Funcionais (Azul) - 13 tipos
 FUNCTIONAL_DOMAINS = [
     'PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS',
-    'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM'
+    'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'
 ]
 
 # 🔴 Domínios Estruturais (Vermelho) - 2 tipos
@@ -980,7 +980,7 @@ def extract_topology_features(raw_domains: list) -> dict:
 
 # ===== CONVERSÃO PARA MODELO PROTEIN =====
 
-def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = None, bgc_region: int = None, start: int = None, end: int = None) -> Protein:
+def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = None, bgc_region: int = None, bgc_region_display_label: str = None, start: int = None, end: int = None) -> Protein:
     """Converte lista de domínios brutos em objeto Protein com suporte a múltiplos clusters e região BGC"""
     
     if cluster_types is None:
@@ -1110,6 +1110,7 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
     return Protein(
         seq_id=seq_id,
         bgc_region=bgc_region,
+        bgc_region_display_label=bgc_region_display_label,
         cluster_types=cluster_types if isinstance(cluster_types, list) else ([] if cluster_types is None else [cluster_types]),
         start=start,
         end=end,

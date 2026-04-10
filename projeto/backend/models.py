@@ -40,6 +40,7 @@ class Protein(BaseModel):
     protein_name: Optional[str] = None
     region: Optional[str] = None
     bgc_region: Optional[int] = None  # Número da região BGC
+    bgc_region_display_label: Optional[str] = None  # Ex: "VRZE01000001.1 - Region 1"
     cluster_types: List[str] = []  # Múltiplos clusters possíveis
     start: Optional[int] = None  # Posição inicial no genoma
     end: Optional[int] = None  # Posição final no genoma

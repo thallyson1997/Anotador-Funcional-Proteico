@@ -344,6 +344,7 @@ async def analyze_antismash_range(
                 raw_domains=raw_domains if raw_domains else [],
                 cluster_types=protein_data.get('bgc_cluster_types', []),
                 bgc_region=protein_data.get('BGC_Region'),
+                bgc_region_display_label=protein_data.get('BGC_Region_Display_Label'),
                 start=protein_data.get('start'),
                 end=protein_data.get('end')
             )
@@ -466,6 +467,7 @@ async def analyze_antismash_selected(
                     raw_domains=raw_domains if raw_domains else [],
                     cluster_types=protein_data.get('bgc_cluster_types', []),
                     bgc_region=protein_data.get('BGC_Region'),
+                    bgc_region_display_label=protein_data.get('BGC_Region_Display_Label'),
                     start=protein_data.get('start'),
                     end=protein_data.get('end')
                 )

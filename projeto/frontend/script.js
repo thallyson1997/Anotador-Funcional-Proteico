@@ -23,6 +23,7 @@ function closeNotification() {
 }
 
 let currentDisplayedProteins = [];
+let currentAnalysisData = null;
 
 function normalizeApiErrorMessage(error) {
     const message = String(error?.message || error || '').trim();
@@ -251,6 +252,7 @@ async function analyzeSelectedProteins() {
     
     closeProteinModal();
     goToPage('page-loading');
+    resetProgress();
     
     try {
         // Chamar endpoint de análise com as proteínas selecionadas
@@ -373,6 +375,8 @@ async function submitAntismash() {
 async function analyzeSequence(seqId, sequence, email) {
     console.log('Analisando sequência:', { seqId, sequence: sequence.substring(0, 50) + '...', email });
     
+    resetProgress();
+    
     // Etapa 1: Validação local
     updateProgress(10, 1, 'Validando sequência...');
     await sleep(500);
@@ -416,6 +420,8 @@ async function analyzeSequence(seqId, sequence, email) {
 // ===== SIMULATE ANTISMASH ANALYSIS =====
 async function analyzeAntismash(file, email) {
     console.log('Analisando antiSMASH:', { file: file.name, email });
+    
+    resetProgress();
     
     // Etapa 1: Enviar arquivo
     updateProgress(15, 1, `Enviando arquivo ${file.name}...`);
@@ -467,6 +473,24 @@ async function analyzeAntismash(file, email) {
     }
 }
 
+// ===== RESET PROGRESS =====
+function resetProgress() {
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    if (progressFill) progressFill.style.width = '0%';
+    if (progressText) progressText.textContent = '0%';
+
+    for (let i = 1; i <= 4; i++) {
+        const desc = document.getElementById(`step-${i}-desc`);
+        const status = document.getElementById(`step-${i}-status`);
+        if (desc) desc.textContent = '';
+        if (status) {
+            status.textContent = '⏳';
+            status.classList.remove('done', 'error');
+        }
+    }
+}
+
 // ===== UPDATE PROGRESS =====
 function updateProgress(percentage, stepNumber, description, isDone = false) {
     // Atualizar barra de progresso
@@ -500,7 +524,7 @@ function getDatabaseCategory(database) {
     const db = database.toUpperCase().trim();
     
     // Domínios Funcionais - AZUL
-    if (['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM'].includes(db)) {
+    if (['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'].includes(db)) {
         return { 
             emoji: '🔵', 
             category: 'Domínios Funcionais',
@@ -559,7 +583,7 @@ function getDatabaseCategory(database) {
 // ===== VERIFICA SE BANCO PERTENCE A DOMÍNIOS FUNCIONAIS OU ESTRUTURAIS =====
 function isFunctionalOrStructuralDomain(database) {
     const db = database.toUpperCase().trim();
-    const functionalDomains = ['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM'];
+    const functionalDomains = ['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'];
     const structuralDomains = ['GENE3D', 'SUPERFAMILY'];
     
     return functionalDomains.includes(db) || structuralDomains.includes(db);
@@ -575,6 +599,7 @@ function getDomainPrimaryCategory(databases) {
 }
 
 function displayResults(data) {
+    currentAnalysisData = data;
     const resultsContainer = document.getElementById('results-content');
     let html = '';
     currentDisplayedProteins = Array.isArray(data?.proteins) ? data.proteins : [];
@@ -760,7 +785,7 @@ function displayResults(data) {
         // Domains
         if (protein.domains && protein.domains.length > 0) {
             // Separar domínios reais (apenas funcionais e estruturais, não topologia nem não-categorizados)
-            const functionalDomains = ['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM'];
+            const functionalDomains = ['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'];
             const structuralDomains = ['GENE3D', 'SUPERFAMILY'];
             const allRealDomains = [...functionalDomains, ...structuralDomains];
             
@@ -1250,4 +1275,96 @@ function showConfidenceV2Modal(proteinIndex) {
 function closeConfidenceV2Modal() {
     const modal = document.getElementById('modal-confidence-v2');
     modal.classList.remove('active');
+}
+
+// ===== DOWNLOAD RESULTS =====
+function buildCSV(proteins) {
+    const headers = [
+        'protein_id', 'bgc_region', 'cluster_types',
+        'confidence_level', 'confidence_score_v2',
+        'domain_name', 'domain_accession', 'databases',
+        'start', 'end', 'evalue', 'score', 'type', 'description',
+        'interpro_accession', 'interpro_name'
+    ];
+
+    const escape = (val) => {
+        if (val === null || val === undefined) return '';
+        const str = String(val).replace(/"/g, '""');
+        return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
+    };
+
+    const rows = [headers.join(',')];
+
+    proteins.forEach(protein => {
+        const regionLabel = protein.bgc_region_display_label
+            || (protein.bgc_region ? `Region ${protein.bgc_region}` : '');
+
+        const base = [
+            escape(protein.seq_id),
+            escape(regionLabel),
+            escape(Array.isArray(protein.cluster_types) ? protein.cluster_types.join('; ') : ''),
+            escape(protein.confidence_level || ''),
+            escape(protein.confidence_score_v2 ?? ''),
+        ];
+
+        if (protein.domains && protein.domains.length > 0) {
+            protein.domains.forEach(domain => {
+                rows.push([
+                    ...base,
+                    escape(domain.name),
+                    escape(domain.accession),
+                    escape(Array.isArray(domain.databases) ? domain.databases.join('; ') : ''),
+                    escape(domain.start),
+                    escape(domain.end),
+                    escape(domain.evalue),
+                    escape(domain.score),
+                    escape(domain.type),
+                    escape(domain.description),
+                    escape(domain.interpro_accession),
+                    escape(domain.interpro_name)
+                ].join(','));
+            });
+        } else {
+            rows.push([...base, '', '', '', '', '', '', '', '', '', '', ''].join(','));
+        }
+    });
+
+    return rows.join('\n');
+}
+
+async function downloadResults() {
+    if (!currentAnalysisData) {
+        showNotification('Nenhum resultado disponível para download.', 'error');
+        return;
+    }
+
+    if (typeof JSZip === 'undefined') {
+        showNotification('Biblioteca de ZIP não carregada. Verifique a conexão.', 'error');
+        return;
+    }
+
+    try {
+        const zip = new JSZip();
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+
+        // JSON
+        zip.file('resultados.json', JSON.stringify(currentAnalysisData, null, 2));
+
+        // CSV
+        const csv = buildCSV(currentAnalysisData.proteins || []);
+        zip.file('dominios.csv', csv);
+
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `anotacao_${timestamp}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Erro ao gerar ZIP:', err);
+        showNotification('Erro ao gerar o arquivo ZIP.', 'error');
+    }
 }
