@@ -980,7 +980,7 @@ def extract_topology_features(raw_domains: list) -> dict:
 
 # ===== CONVERSÃO PARA MODELO PROTEIN =====
 
-def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = None, bgc_region: int = None, bgc_region_display_label: str = None, start: int = None, end: int = None) -> Protein:
+def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = None, bgc_region: int = None, bgc_region_display_label: str = None, start: int = None, end: int = None, sequence: str = None) -> Protein:
     """Converte lista de domínios brutos em objeto Protein com suporte a múltiplos clusters e região BGC"""
     
     if cluster_types is None:
@@ -992,6 +992,7 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
         return Protein(
             seq_id=seq_id,
             bgc_region=bgc_region,
+            bgc_region_display_label=bgc_region_display_label,
             cluster_types=cluster_types if isinstance(cluster_types, list) else ([] if cluster_types is None else [cluster_types]),
             start=start,
             end=end,
@@ -1007,7 +1008,8 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
             has_signal_peptide=False,
             has_coils=False,
             has_mobidb=False,
-            topology_annotations=[]
+            topology_annotations=[],
+            sequence=sequence
         )
     
     # Separar domínios reais de topologia/características estruturais
@@ -1126,7 +1128,8 @@ def domains_to_protein(seq_id: str, raw_domains: list, cluster_types: list = Non
         has_signal_peptide=topology_features['has_signal_peptide'],
         has_coils=topology_features['has_coils'],
         has_mobidb=topology_features['has_mobidb'],
-        topology_annotations=topology_features['topology_annotations']
+        topology_annotations=topology_features['topology_annotations'],
+        sequence=sequence
     )
 
 # ===== DADOS PLACEHOLDER (para teste sem InterProScan) =====

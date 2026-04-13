@@ -264,41 +264,72 @@ async function analyzeSelectedProteins() {
             formData.append('email', emailToUse);
         }
         formData.append('selected_indices', JSON.stringify(selectedIndices));
-        
-        // Log para debugging
-        console.log('Enviando para backend:', {
-            fileAvailable: !!fileToAnalyze,
-            email: emailToUse,
-            selectedIndices: selectedIndices,
-            proteinsCount: selectedIndices.length
-        });
-        
-        // Atualizar progresso
-        updateProgress(25, 2, 'Enviando análise para o servidor...');
-        
-        const response = await fetch(`${API_BASE_URL}/api/analyze-antismash-selected`, {
+
+        // Etapas 1 e 2 já concluídas (seleção feita antes)
+        updateProgress(20, 1, 'Proteínas selecionadas', true);
+        updateProgress(20, 2, 'Proteínas hipotéticas identificadas', true);
+        updateProgress(30, 3, 'Iniciando consulta ao InterProScan...', false);
+
+        showTimerPanel(selectedIndices.length);
+
+        const response = await fetch(`${API_BASE_URL}/api/analyze-antismash-selected-stream`, {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.log('Erro do backend:', errorData);
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         }
-        
-        const result = await response.json();
-        
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let completedSeconds = 0;
+        let result = null;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                let event;
+                try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+                if (event.type === 'protein_start') {
+                    setTimerCurrentProtein(event.protein_id, event.index, event.total);
+                    const pct = 30 + Math.round((event.index / event.total) * 55);
+                    updateProgress(pct, 3, `Analisando ${event.protein_id} (${event.index + 1}/${event.total})...`, false);
+                } else if (event.type === 'protein_done') {
+                    completedSeconds += event.elapsed_ms / 1000;
+                    updateTimerEstimates(completedSeconds, event.total - event.index - 1);
+                } else if (event.type === 'complete') {
+                    result = event.result;
+                } else if (event.type === 'error') {
+                    throw new Error(event.message);
+                }
+            }
+        }
+
+        hideTimerPanel();
+        updateProgress(88, 3, 'Consulta ao InterProScan concluída!', true);
+        updateProgress(95, 4, 'Montando resultados...', false);
+        await sleep(500);
         updateProgress(100, 4, 'Análise concluída com sucesso!', true);
         await sleep(1000);
         displayResults(result);
         goToPage('page-results');
-        
+
     } catch (error) {
+        hideTimerPanel();
         console.error('API Error:', error);
-        updateProgress(0, 4, `Erro: ${error.message}`, false);
-        document.getElementById('step-4-status').textContent = '❌';
-        document.getElementById('step-4-status').classList.add('error');
+        updateProgress(0, 3, `Erro: ${error.message}`, false);
+        document.getElementById('step-3-status').textContent = '❌';
+        document.getElementById('step-3-status').classList.add('error');
         await sleep(2000);
         goToPage('page-input');
         showNotification(error.message || 'Erro ao analisar', 'error');
@@ -387,25 +418,29 @@ async function analyzeSequence(seqId, sequence, email) {
     
     // Etapa 3: Consultar API
     updateProgress(40, 3, 'Enviando sequência para análise...', false);
-    
+    showTimerPanel(1);
+    setTimerCurrentProtein(seqId, 0, 1);
+
     try {
         const result = await callAPI('/api/predict-domains', 'POST', {
             seq_id: seqId,
             sequence: sequence,
             email: email
         });
-        
+
+        hideTimerPanel();
         updateProgress(70, 3, 'Resultado recebido do servidor', true);
-        
+
         // Etapa 4: Processar resultados
         updateProgress(85, 4, 'Processando dados...', false);
         await sleep(500);
         updateProgress(100, 4, 'Análise concluída!', true);
-        
+
         await sleep(1000);
         displayResults(result);
         goToPage('page-results');
     } catch (error) {
+        hideTimerPanel();
         console.error('API Error:', error);
         const friendlyMessage = normalizeApiErrorMessage(error);
         updateProgress(0, 3, `Erro na consulta: ${friendlyMessage}`, false);
@@ -471,6 +506,51 @@ async function analyzeAntismash(file, email) {
         goToPage('page-input');
         showNotification(error.message || 'Erro ao processar arquivo.', 'error');
     }
+}
+
+// ===== TIMER DE ANÁLISE =====
+let _timerInterval = null;
+let _timerStartTime = null;
+
+function _formatTimerTime(totalSeconds) {
+    const s = Math.max(0, Math.floor(totalSeconds));
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function showTimerPanel(total) {
+    _timerStartTime = Date.now();
+    document.getElementById('timer-elapsed').textContent = '00:00';
+    document.getElementById('timer-min').textContent = _formatTimerTime(total * 60);
+    document.getElementById('timer-max').textContent = _formatTimerTime(total * 180);
+    document.getElementById('timer-protein-current').textContent = '—';
+    document.getElementById('timer-protein-count').textContent = `0 / ${total}`;
+    document.getElementById('analysis-timer-panel').style.display = 'block';
+
+    if (_timerInterval) clearInterval(_timerInterval);
+    _timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - _timerStartTime) / 1000;
+        document.getElementById('timer-elapsed').textContent = _formatTimerTime(elapsed);
+    }, 1000);
+}
+
+function hideTimerPanel() {
+    if (_timerInterval) {
+        clearInterval(_timerInterval);
+        _timerInterval = null;
+    }
+    document.getElementById('analysis-timer-panel').style.display = 'none';
+}
+
+function setTimerCurrentProtein(proteinId, index, total) {
+    document.getElementById('timer-protein-current').textContent = proteinId;
+    document.getElementById('timer-protein-count').textContent = `${index + 1} / ${total}`;
+}
+
+function updateTimerEstimates(completedSeconds, remaining) {
+    document.getElementById('timer-min').textContent = _formatTimerTime(completedSeconds + remaining * 60);
+    document.getElementById('timer-max').textContent = _formatTimerTime(completedSeconds + remaining * 180);
 }
 
 // ===== RESET PROGRESS =====
@@ -681,7 +761,7 @@ function displayResults(data) {
         html += `
             <div class="protein-info-row">
                 <div class="protein-info-label">Região BGC:</div>
-                <div class="protein-info-value">${protein.bgc_region ? `#${protein.bgc_region}` : 'N/A'}</div>
+                <div class="protein-info-value">${protein.bgc_region_display_label || (protein.bgc_region ? `Region ${protein.bgc_region}` : 'N/A')}</div>
             </div>
         `;
         
@@ -888,6 +968,8 @@ function displayResults(data) {
                             domainElement.addEventListener('click', function() {
                                 showDomainDetailsModal(domain);
                             });
+                            // Embedar dados do domínio para export HTML
+                            domainElement.dataset.domainJson = JSON.stringify(domain);
                         }
                     }, 100);
                 });
@@ -911,7 +993,27 @@ function displayResults(data) {
                 </div>
             `;
         }
-        
+
+        // Sequência completa da proteína
+        if (protein.sequence) {
+            const seq = protein.sequence;
+            const lineLen = 60;
+            let seqLines = '';
+            for (let i = 0; i < seq.length; i += lineLen) {
+                const pos = String(i + 1).padStart(6, ' ');
+                seqLines += pos + '  ' + seq.slice(i, i + lineLen) + '\n';
+            }
+            html += `
+                <details class="sequence-section">
+                    <summary class="sequence-summary">
+                        🧬 Sequência Completa
+                        <span class="sequence-length-badge">${seq.length} aa</span>
+                    </summary>
+                    <pre class="sequence-pre">${seqLines.trimEnd()}</pre>
+                </details>
+            `;
+        }
+
         html += '</div>';
     });
     
@@ -1354,6 +1456,10 @@ async function downloadResults() {
         const csv = buildCSV(currentAnalysisData.proteins || []);
         zip.file('dominios.csv', csv);
 
+        // HTML
+        const htmlContent = await buildExportHTML();
+        zip.file('resultados.html', htmlContent);
+
         const blob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1367,4 +1473,109 @@ async function downloadResults() {
         console.error('Erro ao gerar ZIP:', err);
         showNotification('Erro ao gerar o arquivo ZIP.', 'error');
     }
+}
+
+async function buildExportHTML() {
+    // 1. CSS da página
+    let css = '';
+    try {
+        const resp = await fetch('style.css');
+        if (resp.ok) css = await resp.text();
+    } catch (_) {}
+
+    // 2. Conteúdo já renderizado (domain cards têm data-domain-json embutido via setTimeout)
+    const resultsContent = document.getElementById('results-content')?.innerHTML || '';
+
+    // 3. Capturar HTML dos modais com estado limpo
+    const domainModalEl = document.getElementById('modal-domain-details');
+    const confModalEl = document.getElementById('modal-confidence-v2');
+    if (domainModalEl) {
+        domainModalEl.classList.remove('active');
+        document.getElementById('domain-details-body').innerHTML = '';
+    }
+    if (confModalEl) {
+        confModalEl.classList.remove('active');
+        document.getElementById('confidence-v2-body').innerHTML = '';
+    }
+    const modalDomainHTML = domainModalEl ? domainModalEl.outerHTML : '';
+    const modalConfHTML = confModalEl ? confModalEl.outerHTML : '';
+
+    // 4. Serializar dados de proteínas para o modal de confiança
+    const jsData = 'window.__EXPORT_DATA = ' + JSON.stringify(currentAnalysisData) + ';';
+
+    // 5. Funções puras — serializadas diretamente (sem dependências externas problemáticas)
+    const jsGetDbCategory = getDatabaseCategory.toString();
+    const jsDomainModal = showDomainDetailsModal.toString();
+    const jsCloseDomain = closeDomainDetailsModal.toString();
+    const jsCloseConf = closeConfidenceV2Modal.toString();
+
+    // 6. showConfidenceV2Modal adaptada: substitui currentDisplayedProteins e showNotification
+    const jsConfModal = showConfidenceV2Modal.toString()
+        .replace('currentDisplayedProteins[proteinIndex]', 'window.__EXPORT_DATA.proteins[proteinIndex]')
+        .replace(/showNotification\s*\([^)]*\)\s*;?/g, 'console.warn("Dados não encontrados para índice " + proteinIndex); return;');
+
+    // 7. Script de inicialização — reconecta listeners usando data-domain-json
+    const jsInit = `
+document.addEventListener('DOMContentLoaded', function() {
+    // Reconectar clique nos cards de domínio usando dados embutidos
+    document.querySelectorAll('.domain-card-clickable').forEach(function(card) {
+        var raw = card.dataset.domainJson;
+        if (raw) {
+            try {
+                var domain = JSON.parse(raw);
+                card.addEventListener('click', function() { showDomainDetailsModal(domain); });
+            } catch(e) {}
+        }
+    });
+
+    // Fechar modais clicando no backdrop
+    var md = document.getElementById('modal-domain-details');
+    var mc = document.getElementById('modal-confidence-v2');
+    if (md) md.addEventListener('click', function(e) { if (e.target === md) closeDomainDetailsModal(); });
+    if (mc) mc.addEventListener('click', function(e) { if (e.target === mc) closeConfidenceV2Modal(); });
+
+    // Fechar com ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') { closeDomainDetailsModal(); closeConfidenceV2Modal(); }
+    });
+});
+`;
+
+    const allJS = [jsData, jsGetDbCategory, jsDomainModal, jsCloseDomain, jsConfModal, jsCloseConf, jsInit].join('\n\n');
+
+    const exportStyle = `
+        body { margin: 0; padding: 0; background: #f5f7fa; }
+        .export-page { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+        .export-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e0e6f0; }
+        .export-header h1 { font-size: 1.5em; color: #0052cc; margin: 0 0 4px; }
+        .export-header p { color: #888; font-size: 0.9em; margin: 0; }
+    `;
+
+    const exportedAt = new Date().toLocaleString('pt-BR');
+
+    // 8. Montar HTML via array join (evita conflito de backticks com template literals)
+    return [
+        '<!DOCTYPE html>',
+        '<html lang="pt-BR">',
+        '<head>',
+        '<meta charset="UTF-8">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+        '<title>Resultados da Análise Proteica</title>',
+        '<style>', css, '</style>',
+        '<style>', exportStyle, '</style>',
+        '</head>',
+        '<body>',
+        modalDomainHTML,
+        modalConfHTML,
+        '<div class="export-page">',
+        '<div class="export-header">',
+        '<h1>Anotador Funcional Proteico \u2014 Resultados</h1>',
+        '<p>Exportado em ' + exportedAt + '</p>',
+        '</div>',
+        resultsContent,
+        '</div>',
+        '<script>', allJS, '</scr' + 'ipt>',
+        '</body>',
+        '</html>'
+    ].join('\n');
 }

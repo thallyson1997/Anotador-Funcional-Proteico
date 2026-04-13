@@ -5,9 +5,12 @@ Processa análise de domínios em proteínas
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, Response
+from fastapi.responses import JSONResponse, FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.concurrency import run_in_threadpool
 import os
+import json
+import time
 
 from backend.models import (
     Protein, Domain, 
@@ -346,7 +349,8 @@ async def analyze_antismash_range(
                 bgc_region=protein_data.get('BGC_Region'),
                 bgc_region_display_label=protein_data.get('BGC_Region_Display_Label'),
                 start=protein_data.get('start'),
-                end=protein_data.get('end')
+                end=protein_data.get('end'),
+                sequence=protein_data.get('sequence')
             )
             analyzed_proteins.append(protein)
         
@@ -469,7 +473,8 @@ async def analyze_antismash_selected(
                     bgc_region=protein_data.get('BGC_Region'),
                     bgc_region_display_label=protein_data.get('BGC_Region_Display_Label'),
                     start=protein_data.get('start'),
-                    end=protein_data.get('end')
+                    end=protein_data.get('end'),
+                    sequence=protein_data.get('sequence')
                 )
                 
                 analyzed_proteins.append(protein)
@@ -496,6 +501,109 @@ async def analyze_antismash_selected(
             status_code=400,
             detail=f"Erro ao analisar: {str(e)}"
         )
+
+@app.post("/api/analyze-antismash-selected-stream")
+async def analyze_antismash_selected_stream(
+    file: UploadFile = File(...),
+    email: str = Form(None),
+    selected_indices: str = Form(None)
+):
+    """Analisa proteínas selecionadas com streaming SSE de progresso."""
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Email é obrigatório")
+    if selected_indices is None:
+        raise HTTPException(status_code=400, detail="selected_indices é obrigatório")
+
+    try:
+        indices_list = json.loads(selected_indices)
+        if not isinstance(indices_list, list):
+            raise ValueError("selected_indices deve ser um array JSON")
+        indices_list = [int(i) for i in indices_list]
+    except (ValueError, json.JSONDecodeError) as e:
+        raise HTTPException(status_code=400, detail=f"Erro ao parsear selected_indices: {str(e)}")
+
+    if not indices_list:
+        raise HTTPException(status_code=400, detail="Nenhum índice foi selecionado")
+
+    MAX_SIZE = 500 * 1024 * 1024
+    file_contents = await file.read()
+
+    if len(file_contents) > MAX_SIZE:
+        raise HTTPException(status_code=413, detail="Arquivo muito grande")
+
+    proteins = extract_proteins_from_file(file_contents, file.filename)
+    if not proteins:
+        raise HTTPException(status_code=400, detail="Nenhuma proteína hipotética encontrada")
+
+    max_valid_index = len(proteins) - 1
+    for idx in indices_list:
+        if idx < 0 or idx > max_valid_index:
+            raise HTTPException(status_code=400, detail=f"Índice {idx} fora do intervalo válido (0-{max_valid_index})")
+
+    proteins_to_analyze = [proteins[i] for i in indices_list]
+    file_name = file.filename
+
+    async def generate():
+        total = len(proteins_to_analyze)
+        protein_ids = [
+            p.get('locus_tag') or p.get('FASTA_ID') or f"protein_{p['index']}"
+            for p in proteins_to_analyze
+        ]
+
+        yield f"data: {json.dumps({'type': 'init', 'total': total, 'proteins': protein_ids})}\n\n"
+
+        analyzed_proteins = []
+        for i, protein_data in enumerate(proteins_to_analyze):
+            seq_id = protein_ids[i]
+            yield f"data: {json.dumps({'type': 'protein_start', 'index': i, 'total': total, 'protein_id': seq_id})}\n\n"
+
+            t_start = time.time()
+            try:
+                raw_domains = await run_in_threadpool(
+                    search_interproscan,
+                    sequence=protein_data['sequence'],
+                    seq_id=seq_id,
+                    email=email,
+                    timeout=600
+                )
+            except InterProScanServiceError as exc:
+                yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+                return
+            except Exception as exc:
+                yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+                return
+
+            elapsed_ms = int((time.time() - t_start) * 1000)
+
+            protein = domains_to_protein(
+                seq_id=seq_id,
+                raw_domains=raw_domains if raw_domains else [],
+                cluster_types=protein_data.get('bgc_cluster_types', []),
+                bgc_region=protein_data.get('BGC_Region'),
+                bgc_region_display_label=protein_data.get('BGC_Region_Display_Label'),
+                start=protein_data.get('start'),
+                end=protein_data.get('end'),
+                sequence=protein_data.get('sequence')
+            )
+            analyzed_proteins.append(protein)
+
+            yield f"data: {json.dumps({'type': 'protein_done', 'index': i, 'total': total, 'protein_id': seq_id, 'elapsed_ms': elapsed_ms})}\n\n"
+
+        result = AntismashAnalysisResponse(
+            file_name=file_name,
+            proteins_analyzed=len(analyzed_proteins),
+            proteins_with_domains=len([p for p in analyzed_proteins if p.domain_count > 0]),
+            proteins=analyzed_proteins
+        )
+        yield f"data: {json.dumps({'type': 'complete', 'result': result.model_dump()})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    )
+
 @app.post("/api/predict-domains", response_model=SequenceAnalysisResponse)
 async def predict_domains(request: SequenceAnalysisRequest):
     """
@@ -543,7 +651,8 @@ async def predict_domains(request: SequenceAnalysisRequest):
         protein = domains_to_protein(
             seq_id=request.seq_id or "sequence_001",
             raw_domains=raw_domains if raw_domains else [],
-            cluster_types=[]  # Análise de sequência única (sem BGC)
+            cluster_types=[],  # Análise de sequência única (sem BGC)
+            sequence=clean_seq
         )
         
         return SequenceAnalysisResponse(proteins=[protein])

@@ -60,6 +60,8 @@ class Protein(BaseModel):
     has_mobidb: bool = False
     # Resumo das anotações de topologia
     topology_annotations: List[str] = []
+    # Sequência de aminoácidos
+    sequence: Optional[str] = None
 
 # ===== SEQUENCE ANALYSIS REQUEST =====
 class SequenceAnalysisRequest(BaseModel):
