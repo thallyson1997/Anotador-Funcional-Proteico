@@ -54,17 +54,17 @@ Adicionados 5 novos campos ao modelo `Domain` em `models.py`:
 
 ## 📁 Arquivos Modificados
 
-1. `projeto/backend/models.py` - Modelo Domain expandido
-2. `projeto/backend/utils.py` - Passagem de campos extras + placeholders
-3. `projeto/frontend/index.html` - Modal de detalhes
-4. `projeto/frontend/script.js` - Funcionalidade de clique e exibição
-5. `projeto/frontend/style.css` - Estilização do modal
+1. `backend/models.py` - Modelo Domain expandido
+2. `backend/utils.py` - Passagem de campos extras + placeholders
+3. `frontend/index.html` - Modal de detalhes
+4. `frontend/script.js` - Funcionalidade de clique e exibição
+5. `frontend/style.css` - Estilização do modal
 
 ## 🚀 Como Testar
 
 1. Inicie o backend:
    ```bash
-   cd projeto/backend
+   cd backend
    uvicorn main:app --reload
    ```
 

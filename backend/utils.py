@@ -3,7 +3,7 @@ Funções utilitárias para análise de proteínas
 Integração com InterProScan (EBI) para busca real de domínios
 """
 
-from models import Protein, Domain, ConfidenceV2Breakdown
+from .models import Protein, Domain, ConfidenceV2Breakdown
 import requests
 import time
 import io

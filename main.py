@@ -9,14 +9,14 @@ from fastapi.responses import JSONResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 
-from models import (
+from backend.models import (
     Protein, Domain, 
     SequenceAnalysisRequest, 
     SequenceAnalysisResponse,
     AntismashAnalysisResponse,
     HealthResponse
 )
-from utils import (
+from backend.utils import (
     search_interproscan,
     InterProScanServiceError,
     clean_sequence,
@@ -74,7 +74,7 @@ async def favicon():
     Retorna o favicon do frontend quando disponível.
     Se não existir, responde sem conteúdo para evitar 404 no log.
     """
-    favicon_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "favicon.ico")
+    favicon_path = os.path.join(os.path.dirname(__file__), "frontend", "favicon.ico")
     if os.path.exists(favicon_path):
         return FileResponse(path=favicon_path, media_type="image/x-icon")
 
@@ -558,7 +558,7 @@ async def predict_domains(request: SequenceAnalysisRequest):
 
 # ===== SERVIR FRONTEND ESTÁTICO (DEVE SER O ÚLTIMO!) =====
 # Mount StaticFiles por último para não interceptar as rotas da API
-frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
 if os.path.exists(frontend_path):
     app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
 else:

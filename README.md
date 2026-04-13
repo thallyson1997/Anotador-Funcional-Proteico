@@ -12,6 +12,26 @@ Os dois fluxos utilizam a mesma lógica central de:
 
 ---
 
+## 0. 🚀 Aplicação Web (Modo Rápido)
+
+Para usar a **aplicação web completa** com interface gráfica:
+
+```bash
+# 1. Ativar ambiente virtual (se disponível)
+source .venv/bin/activate  # Linux/Mac
+# ou
+.venv\Scripts\activate     # Windows
+
+# 2. Executar o servidor (diretamente na raiz)
+python main.py
+```
+
+**Pronto!** Acesse http://localhost:8000 no navegador para usar a interface web completa.
+
+> 📝 **Nota**: A aplicação web inclui backend FastAPI + frontend integrado, com upload de arquivos, análise InterProScan e visualização de resultados. Para configuração detalhada, veja a pasta [projeto/](projeto/).
+
+---
+
 ## 1. Requisitos
 
 Ambos os notebooks foram pensados para rodar em **Google Colab**, mas também funcionam em qualquer ambiente com Python 3 e `pip`.
@@ -242,9 +262,34 @@ Essa pequena sequência artificial é suficiente apenas para testar o fluxo de c
 
 ## 5. Estrutura do repositório
 
-- `anotador_proteico_colab_antismash.ipynb` – notebook completo integrado ao antiSMASH e BGCs.
-- `anotador_proteico_interpro_single_sequence.ipynb` – notebook simplificado para uma única sequência.
-- `main/` – pasta auxiliar (pode conter arquivos de texto ou dados adicionais).
-- `outputs/` – criada em tempo de execução pelos notebooks para armazenar CSVs, figuras e relatórios.
+```
+Anotador-Funcional-Proteico/
+├── main.py                  # 🚀 Aplicação web principal (FastAPI)
+├── backend/                 # Package Python com lógica de negócio
+│   ├── __init__.py
+│   ├── models.py           # Modelos Pydantic
+│   ├── utils.py            # Funções de análise InterProScan
+│   └── requirements.txt    # Dependências Python
+├── frontend/               # Interface web estática
+│   ├── index.html          # SPA principal
+│   ├── script.js           # Lógica JavaScript
+│   └── style.css           # Estilos
+├── notebook/               # Notebooks Jupyter originais
+│   ├── anotador_proteico_colab_antismash.ipynb
+│   └── anotador_proteico_interpro_single_sequence.ipynb
+├── dados/                  # Dados de entrada e resultados
+├── projeto/                # Documentação e configuração
+│   ├── README.md           # Guia de setup detalhado
+│   ├── .env.example        # Exemplo de variáveis de ambiente
+│   └── DOMAIN_DETAILS_UPDATE.md
+├── roteiro/                # Roteiros e instruções
+└── outputs/                # Gerada em runtime para resultados
+```
+
+**Principais componentes:**
+- **🚀 Application Web** (`main.py` + `backend/` + `frontend/`) – Interface completa com FastAPI
+- **📓 Notebooks** (`notebook/`) – Versões originais para Colab/Jupyter  
+- **🗃️ Dados** (`dados/`) – Datasets e resultados de análise
+- **📖 Documentação** (`projeto/`) – Guias de instalação e configuração
 
 ---

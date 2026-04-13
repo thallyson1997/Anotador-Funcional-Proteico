@@ -4,16 +4,27 @@
 
 ```
 projeto/
-├── backend/              # FastAPI Backend
-│   ├── main.py          # Aplicação principal
+├── README.md            # Este arquivo (documentação)
+├── .env.example         # Exemplo de configuração
+└── DOMAIN_DETAILS_UPDATE.md  # Documentação de atualizações
+
+# Estrutura na raiz do repositório:
+../
+├── main.py              # Aplicação principal ⬅️ NOVO LOCAL
+├── backend/             # Package Python Backend  
+│   ├── __init__.py      # Torna backend um pacote
 │   ├── models.py        # Modelos Pydantic
 │   ├── utils.py         # Funções auxiliares
-│   └── requirements.txt  # Dependências Python
+│   └── requirements.txt # Dependências Python
 │
-└── frontend/            # Frontend Web
-    ├── index.html       # Página principal (SPA)
-    ├── style.css        # Estilos
-    └── script.js        # Lógica JavaScript
+├── frontend/            # Frontend Web
+│   ├── index.html       # Página principal (SPA)
+│   ├── style.css        # Estilos
+│   └── script.js        # Lógica JavaScript
+│
+├── dados/               # Dados e resultados
+├── notebook/            # Notebooks Jupyter
+└── roteiro/             # Roteiros de uso
 ```
 
 ## Instalação & Execução
@@ -28,7 +39,7 @@ projeto/
 
 ```bash
 # Navegar até a pasta do backend
-cd projeto/backend
+cd backend
 
 # Criar ambiente virtual (opcional mas recomendado)
 python -m venv venv
@@ -55,10 +66,10 @@ O servidor estará disponível em:
 
 ```bash
 # Opção 1: Abrir diretamente no navegador
-# Abrir o arquivo: projeto/frontend/index.html
+# Abrir o arquivo: frontend/index.html
 
 # Opção 2: Servir com Python (recomendado)
-cd projeto/frontend
+cd frontend
 python -m http.server 8080
 
 # Depois acessar: http://localhost:8080
@@ -217,13 +228,13 @@ Para desenvolvimento, é recomendado rodar ambos em paralelo:
 
 **Terminal 1 - Backend:**
 ```bash
-cd projeto/backend
+cd backend
 python main.py
 ```
 
 **Terminal 2 - Frontend:**
 ```bash
-cd projeto/frontend
+cd frontend
 python -m http.server 8080
 ```
 
