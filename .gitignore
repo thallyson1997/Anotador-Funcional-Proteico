@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.env
+
+# Debug / logs
+backend/debug_proteins.txt
+debug_proteins.txt
+
+# Jupyter
+.ipynb_checkpoints/
