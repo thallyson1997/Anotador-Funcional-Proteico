@@ -735,7 +735,35 @@ function displayResults(data) {
         html += `
             <div class="protein-card">
                 <h3>${protein.seq_id}</h3>
-                
+        `;
+        
+        // Sequência completa da proteína (movida para cima)
+        if (protein.sequence) {
+            const seq = protein.sequence;
+            const lineLen = 133;
+            let coloredSeq = '';
+            for (let i = 0; i < seq.length; i += lineLen) {
+                const line = seq.slice(i, i + lineLen);
+                let coloredLine = '';
+                for (let j = 0; j < line.length; j++) {
+                    const aa = line[j];
+                    coloredLine += `<span class="aa-${aa}">${aa}</span>`;
+                }
+                coloredSeq += coloredLine;
+                if (i + lineLen < seq.length) coloredSeq += '\n';
+            }
+            html += `
+                <details class="sequence-section">
+                    <summary class="sequence-summary">
+                        🧬 Sequência Completa
+                        <span class="sequence-length-badge">${seq.length} aa</span>
+                    </summary>
+                    <div class="sequence-display">${coloredSeq}</div>
+                </details>
+            `;
+        }
+        
+        html += `
                 <div class="protein-info">
         `;
         
@@ -994,25 +1022,7 @@ function displayResults(data) {
             `;
         }
 
-        // Sequência completa da proteína
-        if (protein.sequence) {
-            const seq = protein.sequence;
-            const lineLen = 60;
-            let seqLines = '';
-            for (let i = 0; i < seq.length; i += lineLen) {
-                const pos = String(i + 1).padStart(6, ' ');
-                seqLines += pos + '  ' + seq.slice(i, i + lineLen) + '\n';
-            }
-            html += `
-                <details class="sequence-section">
-                    <summary class="sequence-summary">
-                        🧬 Sequência Completa
-                        <span class="sequence-length-badge">${seq.length} aa</span>
-                    </summary>
-                    <pre class="sequence-pre">${seqLines.trimEnd()}</pre>
-                </details>
-            `;
-        }
+        // Sequência movida para cima - removido daqui
 
         html += '</div>';
     });
@@ -1383,7 +1393,7 @@ function closeConfidenceV2Modal() {
 function buildCSV(proteins) {
     const headers = [
         'protein_id', 'bgc_region', 'cluster_types',
-        'confidence_level', 'confidence_score_v2',
+        'confidence_level', 'confidence_score_v2', 'sequencia',
         'domain_name', 'domain_accession', 'databases',
         'start', 'end', 'evalue', 'score', 'type', 'description',
         'interpro_accession', 'interpro_name'
@@ -1407,6 +1417,7 @@ function buildCSV(proteins) {
             escape(Array.isArray(protein.cluster_types) ? protein.cluster_types.join('; ') : ''),
             escape(protein.confidence_level || ''),
             escape(protein.confidence_score_v2 ?? ''),
+            escape(protein.sequence || ''),
         ];
 
         if (protein.domains && protein.domains.length > 0) {
