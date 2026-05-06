@@ -555,7 +555,7 @@ def search_interproscan(sequence: str, seq_id: str, email: str, timeout: int = 6
 
         print(f"  → Enviando para InterProScan ({seq_id})...", end="", flush=True)
         
-        # ===== SUBMETER SEQUÊNCIA =====
+        # ===== SUBMETER SEQUÊNCIA (com retry) =====
         submit_url = "https://www.ebi.ac.uk/Tools/services/rest/iprscan5/run"
         params = {
             'email': email,
@@ -564,15 +564,26 @@ def search_interproscan(sequence: str, seq_id: str, email: str, timeout: int = 6
             'goterms': 'false',
             'pathways': 'false'
         }
-        
-        response = requests.post(submit_url, data=params, timeout=30)
-        if response.status_code != 200:
-            print(f" ⚠️ HTTP {response.status_code}")
-            raise InterProScanServiceError(
-                "Falha ao iniciar a analise no InterProScan. Tente novamente em instantes."
-            )
 
-        job_id = response.text.strip()
+        job_id = None
+        for attempt_submit in range(3):
+            try:
+                response = requests.post(submit_url, data=params, timeout=60)
+                if response.status_code == 200:
+                    job_id = response.text.strip()
+                    break
+                print(f" ⚠️ HTTP {response.status_code} (tentativa {attempt_submit + 1}/3)", end="", flush=True)
+            except requests.Timeout:
+                print(f" ⏱ timeout submit ({attempt_submit + 1}/3)", end="", flush=True)
+            except requests.ConnectionError:
+                print(f" ⚠️ conn err ({attempt_submit + 1}/3)", end="", flush=True)
+            if attempt_submit < 2:
+                time.sleep(10)
+
+        if not job_id:
+            raise InterProScanServiceError(
+                "Falha ao iniciar a analise no InterProScan após 3 tentativas. Tente novamente em instantes."
+            )
         print(f" Job ID: {job_id[:8]}...", end="", flush=True)
         
         # ===== AGUARDAR RESULTADO =====
@@ -586,7 +597,7 @@ def search_interproscan(sequence: str, seq_id: str, email: str, timeout: int = 6
             try:
                 status_resp = requests.get(
                     f"https://www.ebi.ac.uk/Tools/services/rest/iprscan5/status/{job_id}",
-                    timeout=10
+                    timeout=20
                 )
             except requests.Timeout:
                 continue
@@ -598,13 +609,26 @@ def search_interproscan(sequence: str, seq_id: str, email: str, timeout: int = 6
 
             # ===== PROCESSAR RESPOSTA =====
             if status == 'FINISHED':
-                try:
-                    result = requests.get(
-                        f"https://www.ebi.ac.uk/Tools/services/rest/iprscan5/result/{job_id}/json",
-                        timeout=60
-                    )
-                except requests.Timeout:
-                    print(" ⚠️ Timeout ao baixar resultado")
+                result = None
+                for attempt_dl in range(3):
+                    try:
+                        r = requests.get(
+                            f"https://www.ebi.ac.uk/Tools/services/rest/iprscan5/result/{job_id}/json",
+                            timeout=90
+                        )
+                        if r.status_code == 200:
+                            result = r
+                            break
+                        print(f" ⚠️ HTTP {r.status_code} ao baixar ({attempt_dl + 1}/3)", end="", flush=True)
+                    except requests.Timeout:
+                        print(f" ⏱ timeout download ({attempt_dl + 1}/3)", end="", flush=True)
+                    except requests.ConnectionError:
+                        print(f" ⚠️ conn err download ({attempt_dl + 1}/3)", end="", flush=True)
+                    if attempt_dl < 2:
+                        time.sleep(10)
+
+                if result is None:
+                    print(" ⚠️ Falha ao baixar resultado após 3 tentativas")
                     raise InterProScanServiceError(
                         "O InterProScan demorou demais para responder. Tente novamente em instantes."
                     )

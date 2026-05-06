@@ -682,5 +682,6 @@ if __name__ == "__main__":
         port=8000,
         log_level="info",
         reload=True,
-        reload_excludes=["**/__pycache__/**", "**/*.pyc", "**/debug_proteins.txt"]
+        reload_includes=["*.py"],
+        reload_dirs=[str(__file__).replace("main.py", "")]
     )

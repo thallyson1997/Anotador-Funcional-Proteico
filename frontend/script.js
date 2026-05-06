@@ -603,59 +603,59 @@ function updateProgress(percentage, stepNumber, description, isDone = false) {
 function getDatabaseCategory(database) {
     const db = database.toUpperCase().trim();
     
-    // Domínios Funcionais - AZUL
+    // Domínios Funcionais
     if (['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'].includes(db)) {
-        return { 
-            emoji: '🔵', 
+        return {
+            emoji: '🔵',
             category: 'Domínios Funcionais',
-            color: '#0052cc',
-            bgColor: '#ddf1ff',
-            borderColor: '#0052cc',
-            accentColor: 'rgba(0, 82, 204, 0.1)'
+            color: '#1a5fbf',
+            bgColor: 'rgba(26, 95, 191, 0.05)',
+            borderColor: 'rgba(26, 95, 191, 0.18)',
+            accentColor: 'rgba(26, 95, 191, 0.08)'
         };
-    } 
-    // Domínios Estruturais - VERMELHO
+    }
+    // Domínios Estruturais
     else if (['GENE3D', 'SUPERFAMILY'].includes(db)) {
-        return { 
-            emoji: '🔴', 
+        return {
+            emoji: '🔴',
             category: 'Domínios Estruturais',
-            color: '#cc0000',
-            bgColor: '#ffe6e6',
-            borderColor: '#cc0000',
-            accentColor: 'rgba(204, 0, 0, 0.1)'
+            color: '#c0392b',
+            bgColor: 'rgba(192, 57, 43, 0.05)',
+            borderColor: 'rgba(192, 57, 43, 0.18)',
+            accentColor: 'rgba(192, 57, 43, 0.08)'
         };
-    } 
-    // Topologia/Localização - VERDE
+    }
+    // Topologia/Localização
     else if (['PHOBIUS', 'TMHMM', 'SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE', 'SIGNALP_GRAM_NEGATIVE'].includes(db)) {
-        return { 
-            emoji: '🟢', 
+        return {
+            emoji: '🟢',
             category: 'Topologia/Localização',
-            color: '#009900',
-            bgColor: '#e6ffe6',
-            borderColor: '#009900',
-            accentColor: 'rgba(0, 153, 0, 0.1)'
+            color: '#047857',
+            bgColor: 'rgba(4, 120, 87, 0.05)',
+            borderColor: 'rgba(4, 120, 87, 0.18)',
+            accentColor: 'rgba(4, 120, 87, 0.08)'
         };
-    } 
-    // Características Estruturais - AMARELO
+    }
+    // Características Estruturais
     else if (['COILS', 'MOBIDB_LITE'].includes(db)) {
-        return { 
-            emoji: '🟡', 
+        return {
+            emoji: '🟡',
             category: 'Características Estruturais',
-            color: '#cc9900',
-            bgColor: '#fff9e6',
-            borderColor: '#cc9900',
-            accentColor: 'rgba(204, 153, 0, 0.1)'
+            color: '#92400e',
+            bgColor: 'rgba(146, 64, 14, 0.05)',
+            borderColor: 'rgba(146, 64, 14, 0.18)',
+            accentColor: 'rgba(146, 64, 14, 0.08)'
         };
-    } 
-    // Outros/Não Categorizados - BRANCO/CINZA
+    }
+    // Outros
     else {
-        return { 
-            emoji: '⚪', 
+        return {
+            emoji: '⚪',
             category: 'Outros/Não Categorizados',
-            color: '#333333',
-            bgColor: '#f5f5f5',
-            borderColor: '#999999',
-            accentColor: 'rgba(51, 51, 51, 0.05)'
+            color: '#475569',
+            bgColor: 'rgba(71, 85, 105, 0.04)',
+            borderColor: 'rgba(71, 85, 105, 0.14)',
+            accentColor: 'rgba(71, 85, 105, 0.07)'
         };
     }
 }
@@ -922,18 +922,18 @@ function displayResults(data) {
             html += `
                 <div class="domains-section">
                     <h4>${totalResults} Resultados Encontrados</h4>
-                    <div style="background-color: #f8f9fa; padding: 12px 14px; border-radius: 6px; margin-bottom: 12px; font-size: 0.95em;">
+                    <div style="background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.07); padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 0.9em;">
             `;
             
             if (totalRealDomains > 0) {
-                html += `<div style="color: #555;">Foram encontrados ${totalRealDomains} domínio${totalRealDomains !== 1 ? 's' : ''} em ${totalRealDatabases} banco${totalRealDatabases !== 1 ? 's' : ''} de dados</div>`;
+                html += `<div style="color: #4b5e7a;">Foram encontrados ${totalRealDomains} domínio${totalRealDomains !== 1 ? 's' : ''} em ${totalRealDatabases} banco${totalRealDatabases !== 1 ? 's' : ''} de dados</div>`;
             } else {
-                html += `<div style="color: #555;">Nenhum domínio identificado em bancos de dados.</div>`;
+                html += `<div style="color: #9aa8bc; font-style: italic;">Nenhum domínio identificado em bancos de dados.</div>`;
             }
             
             html += `
                     </div>
-                    <div class="domains-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div class="domains-list" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%;">
             `;
             
             // Agrupar domínios por banco de dados
@@ -954,18 +954,20 @@ function displayResults(data) {
                 
                 html += `
                     <div style="
+                        min-width: 0;
+                        overflow: hidden;
                         background-color: ${primaryCategory.bgColor};
-                        border-left: 4px solid ${primaryCategory.color};
+                        border-left: 3px solid ${primaryCategory.color};
                         border: 1px solid ${primaryCategory.borderColor};
-                        border-radius: 6px;
+                        border-radius: 8px;
                         padding: 12px;
                     ">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid ${primaryCategory.borderColor}; padding-bottom: 8px;">
-                            <span style="font-size: 1.1em;">${primaryCategory.emoji}</span>
-                            <strong style="color: ${primaryCategory.color}; flex: 1;">${dbName}</strong>
-                            <span style="background-color: ${primaryCategory.color}20; color: ${primaryCategory.color}; border: 1px solid ${primaryCategory.color}; border-radius: 4px; padding: 2px 8px; font-size: 0.75em; font-weight: 600;">${primaryCategory.category}</span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid ${primaryCategory.borderColor}; padding-bottom: 8px; min-width: 0;">
+                            <span style="font-size: 1em; flex-shrink: 0;">${primaryCategory.emoji}</span>
+                            <strong style="color: ${primaryCategory.color}; flex: 1; font-size: 0.88em; text-transform: uppercase; letter-spacing: 0.04em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${dbName}</strong>
+                            <span style="flex-shrink: 0; background-color: ${primaryCategory.accentColor}; color: ${primaryCategory.color}; border: 1px solid ${primaryCategory.borderColor}; border-radius: 4px; padding: 2px 8px; font-size: 0.68em; font-weight: 600; letter-spacing: 0.05em;">${primaryCategory.category}</span>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
                 `;
                 
                 domains.forEach(domain => {
@@ -973,18 +975,16 @@ function displayResults(data) {
                     const domainId = `domain-${Math.random().toString(36).substr(2, 9)}`;
                     
                     html += `
-                        <div class="domain-card-clickable" data-domain-id="${domainId}" style="padding: 8px; background-color: rgba(255,255,255,0.6); border-radius: 4px; border-left: 2px solid ${primaryCategory.color}; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='rgba(255,255,255,1)'; this.style.transform='translateX(2px)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';" onmouseout="this.style.backgroundColor='rgba(255,255,255,0.6)'; this.style.transform='translateX(0)'; this.style.boxShadow='none';">
-                            <div style="display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 4px;">
-                                <strong style="color: ${primaryCategory.color}; word-break: break-word; flex: 1;">${domain.name}</strong>
-                                <span style="font-size: 0.75em; color: #666; white-space: nowrap;">${domain.accession}</span>
+                <div class="domain-card-clickable" data-domain-id="${domainId}" style="padding: 9px 10px; background-color: rgba(0,0,0,0.02); border-radius: 6px; border-left: 2px solid ${primaryCategory.color}; cursor: pointer; transition: all 0.18s ease;" onmouseover="this.style.backgroundColor='rgba(0,0,0,0.05)'; this.style.transform='translateX(2px)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)';" onmouseout="this.style.backgroundColor='rgba(0,0,0,0.02)'; this.style.transform='translateX(0)'; this.style.boxShadow='none';">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 4px;">
+                                <strong style="color: ${primaryCategory.color}; word-break: break-word; flex: 1; font-size: 0.9em;">${domain.name}</strong>
+                                <span style="font-size: 0.7em; color: #9aa8bc; white-space: nowrap; font-family: 'JetBrains Mono', monospace;">${domain.accession}</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 0.85em; color: #555;">
-                                <span><strong>E-value:</strong> ${domain.evalue}</span>
-                                <span><strong>Posição:</strong> ${domain.start}-${domain.end}</span>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 0.8em; color: #6b7280;">
+                                <span>E-val: <span style="font-family: monospace; color: #374151;">${domain.evalue}</span></span>
+                                <span>Pos: <span style="font-family: monospace; color: #374151;">${domain.start}–${domain.end}</span></span>
                             </div>
-                            <div style="text-align: right; margin-top: 4px; font-size: 0.75em; color: #999;">
-                                👆 Clique para ver detalhes completos
-                            </div>
+                            <div style="text-align: right; margin-top: 5px; font-size: 0.68em; color: #9aa8bc; font-style: italic;">clique para detalhes</div>
                         </div>
                     `;
                     
@@ -1191,7 +1191,7 @@ function showDomainDetailsModal(domain) {
                 <div style="margin-bottom: 8px;">
                     <span class="badge badge-position">${domain.start} → ${domain.end}</span>
                 </div>
-                <div style="color: #666;">
+                <div style="color: var(--text-secondary);">
                     <strong>${domain.end - domain.start + 1}</strong> aminoácidos
                 </div>
             </div>
@@ -1239,7 +1239,7 @@ function showDomainDetailsModal(domain) {
                     Tipo
                 </div>
                 <div class="info-card-content">
-                    <span class="badge" style="background: #f0f0f0; color: #333; font-family: monospace; font-size: 1em; padding: 8px 14px;">
+                    <span class="badge" style="background: rgba(0,0,0,0.05); color: var(--text-primary); font-family: 'JetBrains Mono', monospace; font-size: 0.95em; padding: 7px 14px; border: 1px solid rgba(0,0,0,0.08);">
                         ${domain.type}
                     </span>
                 </div>
@@ -1282,7 +1282,7 @@ function showDomainDetailsModal(domain) {
         
         if (domain.interpro_name && domain.interpro_name !== 'N/A' && domain.interpro_name !== '') {
             html += `
-                    <div style="margin-top: 8px; color: #333; font-weight: 500;">
+                    <div style="margin-top: 8px; color: var(--text-primary); font-weight: 500;">
                         ${domain.interpro_name}
                     </div>
             `;
@@ -1555,11 +1555,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const allJS = [jsData, jsGetDbCategory, jsDomainModal, jsCloseDomain, jsConfModal, jsCloseConf, jsInit].join('\n\n');
 
     const exportStyle = `
-        body { margin: 0; padding: 0; background: #f5f7fa; }
-        .export-page { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
-        .export-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e0e6f0; }
-        .export-header h1 { font-size: 1.5em; color: #0052cc; margin: 0 0 4px; }
-        .export-header p { color: #888; font-size: 0.9em; margin: 0; }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #f0f4fa; color: #111827; }
+        .export-page { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+        .export-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(0,0,0,0.08); }
+        .export-header h1 { font-size: 1.4em; color: #1a6ef5; margin: 0 0 4px; }
+        .export-header p { color: #4b5e7a; font-size: 0.88em; margin: 0; }
+        /* Corrigir grid de domínios no export */
+        .domains-list[style*="repeat(3"] {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+            width: 100% !important;
+        }
+        .domain-card-clickable { min-width: 0; overflow: hidden; }
+        .protein-card { width: 100% !important; }
     `;
 
     const exportedAt = new Date().toLocaleString('pt-BR');
