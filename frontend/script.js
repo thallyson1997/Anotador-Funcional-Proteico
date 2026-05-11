@@ -25,6 +25,16 @@ function closeNotification() {
 let currentDisplayedProteins = [];
 let currentAnalysisData = null;
 
+// ===== GLOBALS DE ANÁLISE / RETOMADA =====
+let currentStreamReader = null;
+let cancelRequested = false;
+let partialAnalyzedProteins = [];
+let analysisOriginallySelectedIndices = [];
+let analysisAllProteinsList = [];   // snapshot de currentProteins no momento da análise
+let resumePartialData = null;       // proteínas já analisadas ao retomar de um ZIP resultado
+let currentFilterByBGC = true;      // filtro BGC utilizado na última análise antiSMASH
+let currentInputFileForDownload = null; // arquivo original preservado para inclusão no ZIP de download
+
 function normalizeApiErrorMessage(error) {
     const message = String(error?.message || error || '').trim();
     const lowerMessage = message.toLowerCase();
@@ -164,14 +174,14 @@ function toggleAllProteinCheckboxes(checked) {
     });
 }
 
-function showProteinModal(proteins, filename) {
+function showProteinModal(proteins, filename, resumeContext = null) {
     const modal = document.getElementById('modal-proteins');
     const countText = document.getElementById('proteins-count-text');
     const tableContainer = document.getElementById('proteins-table-container');
     const tableBody = document.getElementById('proteins-tbody');
     const noMessage = document.getElementById('no-proteins-message');
     const btnAnalyze = document.getElementById('btn-analyze-selected');
-    
+
     const sortedProteins = [...proteins].sort((a, b) => {
         const locusA = (a?.locus_tag || '').trim();
         const locusB = (b?.locus_tag || '').trim();
@@ -184,19 +194,32 @@ function showProteinModal(proteins, filename) {
     });
 
     currentProteins = sortedProteins;
-    
+
     if (sortedProteins.length === 0) {
         countText.textContent = '❌ Nenhuma proteína hipotética foi encontrada.';
         tableContainer.style.display = 'none';
         noMessage.style.display = 'block';
         btnAnalyze.style.display = 'none';
     } else {
-        countText.textContent = `✅ Encontradas ${sortedProteins.length} proteínas hipotéticas`;
+        const analyzedCount = resumeContext ? resumeContext.analyzedLocusTags.size : 0;
+        const pendingCount = resumeContext
+            ? sortedProteins.filter(p => {
+                const si = Number.isInteger(p.source_index) ? p.source_index : Math.max((parseInt(p.index, 10) || 1) - 1, 0);
+                return resumeContext.pendingSourceIndices.has(si) && !resumeContext.analyzedLocusTags.has(p.locus_tag);
+            }).length
+            : sortedProteins.length;
+
+        if (resumeContext) {
+            countText.innerHTML = `🔄 Retomando análise &mdash; <strong>${analyzedCount}</strong> já analisada(s), <strong>${pendingCount}</strong> pendente(s)`;
+        } else {
+            countText.textContent = `✅ Encontradas ${sortedProteins.length} proteínas hipotéticas`;
+        }
+
         tableContainer.style.display = 'block';
         noMessage.style.display = 'none';
         btnAnalyze.style.display = 'block';
-        
-        // Preencher tabela com checkboxes (desmarcados por padrão)
+
+        // Preencher tabela com checkboxes
         tableBody.innerHTML = '';
         sortedProteins.forEach((protein) => {
             const sourceIndex = Number.isInteger(protein.source_index)
@@ -206,9 +229,24 @@ function showProteinModal(proteins, filename) {
             const typeText = Array.isArray(protein.cluster_types) && protein.cluster_types.length > 0
                 ? protein.cluster_types.join(', ')
                 : (protein.bgc_type || '-');
+
+            const isAnalyzed = resumeContext?.analyzedLocusTags.has(protein.locus_tag) || false;
+            const isPending = resumeContext
+                ? (resumeContext.pendingSourceIndices.has(sourceIndex) && !isAnalyzed)
+                : false;
+
+            const checkboxAttrs = isAnalyzed
+                ? 'disabled'
+                : (resumeContext ? (isPending ? 'checked' : '') : '');
+            const rowStyle = isAnalyzed ? 'opacity: 0.45; background: var(--color-bg-alt, #f5f5f5);' : '';
+            const statusCell = isAnalyzed
+                ? '<td style="text-align:center;" title="Já analisado">✅</td>'
+                : `<td style="text-align: center;"><input type="checkbox" class="protein-checkbox" data-index="${sourceIndex}" ${checkboxAttrs}></td>`;
+
             const row = document.createElement('tr');
+            row.style.cssText = rowStyle;
             row.innerHTML = `
-                <td style="text-align: center;"><input type="checkbox" class="protein-checkbox" data-index="${sourceIndex}"></td>
+                ${statusCell}
                 <td>${protein.locus_tag || '-'}</td>
                 <td>${regionText}</td>
                 <td>${typeText}</td>
@@ -218,7 +256,7 @@ function showProteinModal(proteins, filename) {
             tableBody.appendChild(row);
         });
     }
-    
+
     modal.classList.add('active');
 }
 
@@ -250,10 +288,23 @@ async function analyzeSelectedProteins() {
         console.warn('Arquivo não disponível, mas email existe. Prosseguindo...');
     }
     
+    // Salvar snapshot antes de fechar o modal
+    analysisAllProteinsList = [...currentProteins];
+    analysisOriginallySelectedIndices = [...selectedIndices];
+    partialAnalyzedProteins = [];
+    cancelRequested = false;
+    currentStreamReader = null;
+    // Preservar referência ao arquivo ANTES de closeProteinModal zerá-la
+    currentInputFileForDownload = currentAntismashFile;
+
     closeProteinModal();
     goToPage('page-loading');
     resetProgress();
-    
+
+    // Mostrar botão de cancelar
+    const cancelContainer = document.getElementById('cancel-analysis-container');
+    if (cancelContainer) cancelContainer.style.display = 'block';
+
     try {
         // Chamar endpoint de análise com as proteínas selecionadas
         const formData = new FormData();
@@ -283,6 +334,7 @@ async function analyzeSelectedProteins() {
         }
 
         const reader = response.body.getReader();
+        currentStreamReader = reader;
         const decoder = new TextDecoder();
         let buffer = '';
         let completedSeconds = 0;
@@ -307,6 +359,9 @@ async function analyzeSelectedProteins() {
                 } else if (event.type === 'protein_done') {
                     completedSeconds += event.elapsed_ms / 1000;
                     updateTimerEstimates(completedSeconds, event.total - event.index - 1);
+                    if (event.protein) {
+                        partialAnalyzedProteins.push(event.protein);
+                    }
                 } else if (event.type === 'complete') {
                     result = event.result;
                 } else if (event.type === 'error') {
@@ -315,16 +370,54 @@ async function analyzeSelectedProteins() {
             }
         }
 
+        currentStreamReader = null;
+
+        // Se foi cancelado e não chegou o 'complete', montar resultado parcial
+        if (!result && partialAnalyzedProteins.length > 0) {
+            result = {
+                type: 'antismash',
+                file_name: fileToAnalyze?.name || 'análise',
+                proteins_analyzed: partialAnalyzedProteins.length,
+                proteins_with_domains: partialAnalyzedProteins.filter(p => p.domain_count > 0).length,
+                proteins: partialAnalyzedProteins,
+                is_partial: true
+            };
+        }
+
+        // Mesclar com proteínas já analisadas ao retomar de ZIP resultado
+        if (result && resumePartialData) {
+            const mergedProteins = [...resumePartialData.proteins, ...result.proteins];
+            result = {
+                ...result,
+                proteins: mergedProteins,
+                proteins_analyzed: mergedProteins.length,
+                proteins_with_domains: mergedProteins.filter(p => p.domain_count > 0).length
+            };
+            resumePartialData = null;
+        }
+
+        if (cancelContainer) cancelContainer.style.display = 'none';
         hideTimerPanel();
+
+        if (!result) {
+            // Cancelado antes de qualquer proteína ser analisada
+            if (cancelContainer) cancelContainer.style.display = 'none';
+            goToPage('page-input');
+            showNotification('Análise cancelada. Nenhuma proteína foi analisada.', 'warning');
+            return;
+        }
+
         updateProgress(88, 3, 'Consulta ao InterProScan concluída!', true);
         updateProgress(95, 4, 'Montando resultados...', false);
         await sleep(500);
-        updateProgress(100, 4, 'Análise concluída com sucesso!', true);
+        updateProgress(100, 4, result.is_partial ? 'Análise parcial salva!' : 'Análise concluída com sucesso!', true);
         await sleep(1000);
         displayResults(result);
         goToPage('page-results');
 
     } catch (error) {
+        currentStreamReader = null;
+        if (cancelContainer) cancelContainer.style.display = 'none';
         hideTimerPanel();
         console.error('API Error:', error);
         updateProgress(0, 3, `Erro: ${error.message}`, false);
@@ -336,63 +429,92 @@ async function analyzeSelectedProteins() {
     }
 }
 
+// ===== CANCELAR ANÁLISE =====
+function cancelAnalysis() {
+    cancelRequested = true;
+    if (currentStreamReader) {
+        currentStreamReader.cancel();
+        currentStreamReader = null;
+    }
+}
+
 // ===== SUBMIT ANTISMASH =====
 async function submitAntismash() {
+    // Capturar o botão ANTES de qualquer await (event global é limpo após async)
+    const btn = event.target;
     const file = document.getElementById('antismash-file').files[0];
     const email = document.getElementById('email-antismash').value.trim();
     const filterByBGC = document.getElementById('filter-by-bgc').checked;
-    
+
     // Validação
     if (!file) {
         showNotification('Por favor, selecione um arquivo para upload.', 'error');
         return;
     }
-    
+
     if (file.size > 500 * 1024 * 1024) {
         showNotification('Arquivo muito grande (máximo 500 MB).', 'error');
         return;
     }
-    
+
+    // Verificar se é um ZIP resultado do próprio programa
+    if (file.name.endsWith('.zip')) {
+        btn.disabled = true;
+        btn.textContent = 'Verificando arquivo...';
+        try {
+            const isResult = await checkIfResultZip(file);
+            if (isResult) {
+                await handleResultZipUpload(file, email);
+                return;
+            }
+        } catch (e) {
+            console.warn('Erro ao verificar ZIP:', e);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Carregar e Analisar';
+        }
+    }
+
     if (!email || !validateEmail(email)) {
         showNotification('Por favor, insira um email válido.', 'error');
         return;
     }
-    
+
     // Mostrar aviso se filtro desativado
     if (!filterByBGC) {
         showNotification('⚠️ Filtro BGC desativado - a análise pode demorar bastante tempo!', 'warning');
     }
-    
-    // Desabilitar botão
-    const btn = event.target;
+
     btn.disabled = true;
     btn.textContent = 'Contando proteínas...';
-    
+
     try {
         // Guardar arquivo e email para uso posterior
         currentAntismashFile = file;
         currentAntismashEmail = email;
-        
+        currentFilterByBGC = filterByBGC;
+        currentInputFileForDownload = file;
+
         // Contar proteínas
         const formData = new FormData();
         formData.append('file', file);
         formData.append('filter_by_bgc', filterByBGC ? 'true' : 'false');
-        
+
         const response = await fetch(`${API_BASE_URL}/api/count-hypothetical-proteins`, {
             method: 'POST',
             body: formData
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         // Mostrar modal com contagem
         showProteinModal(result.proteins || [], file.name);
-        
+
     } catch (error) {
         console.error('Erro:', error);
         showNotification('Erro ao contar proteínas: ' + error.message, 'error');
@@ -402,10 +524,140 @@ async function submitAntismash() {
     }
 }
 
+// ===== DETECÇÃO E RETOMADA DE ZIP RESULTADO =====
+
+/**
+ * Verifica se um File ZIP é um resultado gerado pelo próprio programa.
+ * Retorna true se o arquivo contiver manifest.json com o marcador correto.
+ */
+async function checkIfResultZip(file) {
+    if (typeof JSZip === 'undefined') return false;
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const manifestFile = zip.file('manifest.json');
+        if (!manifestFile) return false;
+        const text = await manifestFile.async('string');
+        const manifest = JSON.parse(text);
+        return manifest?.type === 'anotador_proteico_resultado';
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Lida com o re-upload de um ZIP resultado do programa.
+ * - Se a análise estava completa: restaura resultado diretamente.
+ * - Se estava parcial: extrai o arquivo original, pré-seleciona proteínas pendentes e abre o modal.
+ */
+async function handleResultZipUpload(file, emailFromField) {
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
+
+        // Ler manifest
+        const manifestText = await zip.file('manifest.json').async('string');
+        const manifest = JSON.parse(manifestText);
+
+        const {
+            original_filename,
+            email: manifestEmail,
+            filter_by_bgc,
+            is_complete,
+            originally_selected_indices,
+            analyzed_proteins
+        } = manifest;
+
+        // Pré-preencher email se o campo estiver vazio
+        const emailField = document.getElementById('email-antismash');
+        if (emailField && !emailField.value.trim() && manifestEmail) {
+            emailField.value = manifestEmail;
+        }
+        const emailToUse = emailFromField || manifestEmail || emailField?.value.trim() || '';
+
+        if (is_complete) {
+            // Análise já estava completa: apenas restaurar resultado
+            const result = {
+                type: 'antismash',
+                file_name: original_filename || file.name,
+                proteins_analyzed: analyzed_proteins.length,
+                proteins_with_domains: analyzed_proteins.filter(p => p.domain_count > 0).length,
+                proteins: analyzed_proteins,
+                is_partial: false
+            };
+            displayResults(result);
+            goToPage('page-results');
+            showNotification('✅ Resultado completo restaurado do arquivo ZIP.', 'success');
+            return;
+        }
+
+        // Análise estava parcial: extrair arquivo original e abrir modal de retomada
+        const originalFile = zip.file(`input/${original_filename}`);
+        if (!originalFile) {
+            showNotification('Arquivo original não encontrado dentro do ZIP. Faça o upload do arquivo antiSMASH diretamente.', 'error');
+            return;
+        }
+
+        const originalBlob = await originalFile.async('blob');
+        const restoredFile = new File([originalBlob], original_filename, { type: originalBlob.type });
+
+        currentAntismashFile = restoredFile;
+        currentAntismashEmail = emailToUse;
+        currentFilterByBGC = !!filter_by_bgc;
+
+        // Proteínas já analisadas
+        const analyzedLocusTags = new Set((analyzed_proteins || []).map(p => p.seq_id));
+        const originallySelectedSet = new Set(originally_selected_indices || []);
+
+        // Guardar dados parciais para mesclar ao final
+        resumePartialData = {
+            type: 'antismash',
+            file_name: original_filename,
+            proteins: analyzed_proteins || []
+        };
+
+        // Chamar endpoint para obter lista de proteínas do arquivo original
+        showNotification('🔄 Carregando proteínas do arquivo original...', 'info', 3000);
+        const formData = new FormData();
+        formData.append('file', restoredFile);
+        formData.append('filter_by_bgc', filter_by_bgc ? 'true' : 'false');
+
+        const response = await fetch(`${API_BASE_URL}/api/count-hypothetical-proteins`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || 'Erro ao carregar proteínas do arquivo original');
+        }
+
+        const countResult = await response.json();
+        const proteins = countResult.proteins || [];
+
+        // Contexto de retomada para o modal
+        const resumeContext = { analyzedLocusTags, pendingSourceIndices: originallySelectedSet };
+
+        const pendingCount = proteins.filter(p => {
+            const si = Number.isInteger(p.source_index) ? p.source_index : Math.max((parseInt(p.index, 10) || 1) - 1, 0);
+            return originallySelectedSet.has(si) && !analyzedLocusTags.has(p.locus_tag);
+        }).length;
+
+        showProteinModal(proteins, original_filename, resumeContext);
+        if (pendingCount > 0) {
+            showNotification(`▶️ ${analyzedLocusTags.size} proteína(s) já analisada(s). ${pendingCount} pendente(s) pré-selecionada(s).`, 'info', 6000);
+        }
+
+    } catch (err) {
+        console.error('Erro ao processar ZIP resultado:', err);
+        showNotification('Erro ao processar ZIP: ' + err.message, 'error');
+    }
+}
+
 // ===== SIMULATE SEQUENCE ANALYSIS =====
 async function analyzeSequence(seqId, sequence, email) {
     console.log('Analisando sequência:', { seqId, sequence: sequence.substring(0, 50) + '...', email });
-    
+
     resetProgress();
     
     // Etapa 1: Validação local
@@ -685,12 +937,21 @@ function displayResults(data) {
     currentDisplayedProteins = Array.isArray(data?.proteins) ? data.proteins : [];
     
     // Header
-    html += `
-        <div class="results-header">
-            <h2>✅ Análise Concluída com Sucesso!</h2>
-            <p>Confira os resultados abaixo</p>
-        </div>
-    `;
+    if (data.is_partial) {
+        html += `
+            <div class="results-header" style="border-left: 4px solid #f59e0b; padding-left: 16px;">
+                <h2>⚠️ Análise Parcial</h2>
+                <p>A análise foi cancelada. Resultados abaixo são das proteínas já processadas. Baixe o ZIP para retomar depois.</p>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="results-header">
+                <h2>✅ Análise Concluída com Sucesso!</h2>
+                <p>Confira os resultados abaixo</p>
+            </div>
+        `;
+    }
     
     // Stats
     if (data.type === 'antismash') {
@@ -1470,6 +1731,44 @@ async function downloadResults() {
         // HTML
         const htmlContent = await buildExportHTML();
         zip.file('resultados.html', htmlContent);
+
+        // ===== MANIFEST + ARQUIVO ORIGINAL (para retomada) =====
+        const isPartial = !!currentAnalysisData.is_partial;
+
+        // Calcular proteínas pendentes (selecionadas originalmente mas não analisadas)
+        const analyzedLocusTags = new Set((currentAnalysisData.proteins || []).map(p => p.seq_id));
+        const originallySelectedIndices = analysisOriginallySelectedIndices || [];
+        const pendingSourceIndices = analysisAllProteinsList
+            .filter(p => {
+                const si = Number.isInteger(p.source_index) ? p.source_index : Math.max((parseInt(p.index, 10) || 1) - 1, 0);
+                return originallySelectedIndices.includes(si) && !analyzedLocusTags.has(p.locus_tag);
+            })
+            .map(p => Number.isInteger(p.source_index) ? p.source_index : Math.max((parseInt(p.index, 10) || 1) - 1, 0));
+
+        const manifest = {
+            type: 'anotador_proteico_resultado',
+            version: '1',
+            original_filename: (currentInputFileForDownload || currentAntismashFile)?.name || currentAnalysisData.file_name || 'arquivo_original',
+            timestamp: new Date().toISOString(),
+            email: currentAntismashEmail || '',
+            filter_by_bgc: currentFilterByBGC,
+            is_complete: !isPartial,
+            originally_selected_indices: originallySelectedIndices,
+            pending_source_indices: pendingSourceIndices,
+            analyzed_proteins: currentAnalysisData.proteins || []
+        };
+        zip.file('manifest.json', JSON.stringify(manifest, null, 2));
+
+        // Incluir arquivo original para permitir retomada
+        const inputFile = currentInputFileForDownload || currentAntismashFile;
+        if (inputFile) {
+            try {
+                const originalBytes = await inputFile.arrayBuffer();
+                zip.folder('input').file(inputFile.name, originalBytes);
+            } catch (e) {
+                console.warn('Não foi possível incluir o arquivo original no ZIP:', e);
+            }
+        }
 
         const blob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(blob);

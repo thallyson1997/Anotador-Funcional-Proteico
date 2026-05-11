@@ -588,7 +588,7 @@ async def analyze_antismash_selected_stream(
             )
             analyzed_proteins.append(protein)
 
-            yield f"data: {json.dumps({'type': 'protein_done', 'index': i, 'total': total, 'protein_id': seq_id, 'elapsed_ms': elapsed_ms})}\n\n"
+            yield f"data: {json.dumps({'type': 'protein_done', 'index': i, 'total': total, 'protein_id': seq_id, 'elapsed_ms': elapsed_ms, 'protein': protein.model_dump()})}\n\n"
 
         result = AntismashAnalysisResponse(
             file_name=file_name,

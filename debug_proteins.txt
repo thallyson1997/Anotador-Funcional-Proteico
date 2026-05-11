@@ -2,11 +2,11 @@
 🔍 DEBUG: ANÁLISE DE PROTEÍNAS EXTRAÍDAS
 ======================================================================
 
-📊 Total de proteínas extraídas (ANTES de deduplicação): 1554
+📊 Total de proteínas extraídas (ANTES de deduplicação): 1432
 
-⚠️ Locus_tags DUPLICADOS encontrados: 122
+✅ Nenhum locus_tag duplicado encontrado
 
-⭐ Proteínas que aparecem APENAS 1x (NÃO foram duplicadas): 1310
+⭐ Proteínas que aparecem APENAS 1x (NÃO foram duplicadas): 1432
    - FWK04_00015: bgc=SEM_BGC, size=153aa
    - FWK04_00025: bgc=SEM_BGC, size=272aa
    - FWK04_00040: bgc=SEM_BGC, size=233aa
@@ -69,6 +69,10 @@
    - FWK04_01120: bgc=SEM_BGC, size=141aa
    - FWK04_01140: bgc=SEM_BGC, size=192aa
    - FWK04_01180: bgc=SEM_BGC, size=215aa
+   - FWK04_01235: bgc=lanthipeptide-class-ii, terpene, size=65aa
+   - FWK04_01240: bgc=lanthipeptide-class-ii, terpene, size=66aa
+   - FWK04_01250: bgc=lanthipeptide-class-ii, terpene, proteusin, size=707aa
+   - FWK04_01260: bgc=lanthipeptide-class-ii, terpene, proteusin, size=1209aa
    - FWK04_01310: bgc=SEM_BGC, size=86aa
    - FWK04_01365: bgc=SEM_BGC, size=241aa
    - FWK04_01380: bgc=SEM_BGC, size=182aa
@@ -83,6 +87,9 @@
    - FWK04_01610: bgc=SEM_BGC, size=217aa
    - FWK04_01680: bgc=SEM_BGC, size=11aa
    - FWK04_01700: bgc=SEM_BGC, size=59aa
+   - FWK04_01750: bgc=terpene-precursor, size=138aa
+   - FWK04_01755: bgc=terpene-precursor, size=81aa
+   - FWK04_01775: bgc=terpene-precursor, size=225aa
    - FWK04_01810: bgc=SEM_BGC, size=127aa
    - FWK04_01815: bgc=SEM_BGC, size=477aa
    - FWK04_01840: bgc=SEM_BGC, size=181aa
@@ -142,6 +149,10 @@
    - FWK04_03275: bgc=SEM_BGC, size=64aa
    - FWK04_03285: bgc=SEM_BGC, size=133aa
    - FWK04_03295: bgc=SEM_BGC, size=59aa
+   - FWK04_03310: bgc=hglE-KS, T1PKS, size=186aa
+   - FWK04_03330: bgc=hglE-KS, T1PKS, size=220aa
+   - FWK04_03420: bgc=hglE-KS, size=79aa
+   - FWK04_03425: bgc=hglE-KS, size=129aa
    - FWK04_03450: bgc=SEM_BGC, size=81aa
    - FWK04_03470: bgc=SEM_BGC, size=933aa
    - FWK04_03490: bgc=SEM_BGC, size=141aa
@@ -229,6 +240,10 @@
    - FWK04_05340: bgc=SEM_BGC, size=67aa
    - FWK04_05355: bgc=SEM_BGC, size=78aa
    - FWK04_05385: bgc=SEM_BGC, size=326aa
+   - FWK04_05495: bgc=transAT-PKS, T3PKS, PKS-like, T1PKS, size=66aa
+   - FWK04_05505: bgc=transAT-PKS, T3PKS, PKS-like, T1PKS, size=75aa
+   - FWK04_05510: bgc=transAT-PKS, T3PKS, PKS-like, T1PKS, size=98aa
+   - FWK04_05520: bgc=transAT-PKS, T3PKS, PKS-like, T1PKS, size=81aa
    - FWK04_05630: bgc=SEM_BGC, size=68aa
    - FWK04_05670: bgc=SEM_BGC, size=35aa
    - FWK04_05720: bgc=SEM_BGC, size=102aa
@@ -254,6 +269,16 @@
    - FWK04_06335: bgc=SEM_BGC, size=298aa
    - FWK04_06355: bgc=SEM_BGC, size=296aa
    - FWK04_06365: bgc=SEM_BGC, size=452aa
+   - FWK04_06375: bgc=hglE-KS, size=454aa
+   - FWK04_06390: bgc=hglE-KS, size=160aa
+   - FWK04_06425: bgc=hglE-KS, size=432aa
+   - FWK04_06445: bgc=hglE-KS, size=90aa
+   - FWK04_06450: bgc=hglE-KS, size=107aa
+   - FWK04_06470: bgc=hglE-KS, size=62aa
+   - FWK04_06475: bgc=hglE-KS, size=250aa
+   - FWK04_06495: bgc=hglE-KS, size=255aa
+   - FWK04_06505: bgc=hglE-KS, size=118aa
+   - FWK04_06510: bgc=hglE-KS, size=247aa
    - FWK04_06535: bgc=SEM_BGC, size=106aa
    - FWK04_06540: bgc=SEM_BGC, size=76aa
    - FWK04_06565: bgc=SEM_BGC, size=167aa
@@ -268,6 +293,14 @@
    - FWK04_06745: bgc=SEM_BGC, size=207aa
    - FWK04_06755: bgc=SEM_BGC, size=65aa
    - FWK04_06765: bgc=SEM_BGC, size=141aa
+   - FWK04_06830: bgc=NRPS-like, size=371aa
+   - FWK04_06840: bgc=NRPS-like, size=82aa
+   - FWK04_06850: bgc=NRPS-like, size=133aa
+   - FWK04_06865: bgc=NRPS-like, size=88aa
+   - FWK04_06870: bgc=NRPS-like, size=160aa
+   - FWK04_06875: bgc=NRPS-like, size=159aa
+   - FWK04_06890: bgc=NRPS-like, size=77aa
+   - FWK04_06920: bgc=NRPS-like, size=150aa
    - FWK04_07005: bgc=SEM_BGC, size=94aa
    - FWK04_07040: bgc=SEM_BGC, size=548aa
    - FWK04_07095: bgc=SEM_BGC, size=110aa
@@ -277,6 +310,13 @@
    - FWK04_07230: bgc=SEM_BGC, size=98aa
    - FWK04_07240: bgc=SEM_BGC, size=134aa
    - FWK04_07255: bgc=SEM_BGC, size=370aa
+   - FWK04_07280: bgc=NRPS, size=77aa
+   - FWK04_07305: bgc=NRPS, size=168aa
+   - FWK04_07330: bgc=NRPS, size=97aa
+   - FWK04_07340: bgc=NRPS, size=59aa
+   - FWK04_07360: bgc=NRPS, size=96aa
+   - FWK04_07365: bgc=NRPS, size=180aa
+   - FWK04_07425: bgc=NRPS, size=669aa
    - FWK04_07475: bgc=SEM_BGC, size=60aa
    - FWK04_07480: bgc=SEM_BGC, size=94aa
    - FWK04_07530: bgc=SEM_BGC, size=223aa
@@ -448,6 +488,7 @@
    - FWK04_11675: bgc=SEM_BGC, size=155aa
    - FWK04_11685: bgc=SEM_BGC, size=716aa
    - FWK04_11690: bgc=SEM_BGC, size=200aa
+   - FWK04_11785: bgc=azole-containing-RiPP, size=124aa
    - FWK04_11845: bgc=SEM_BGC, size=36aa
    - FWK04_11885: bgc=SEM_BGC, size=112aa
    - FWK04_11930: bgc=SEM_BGC, size=218aa
@@ -467,6 +508,9 @@
    - FWK04_12305: bgc=SEM_BGC, size=108aa
    - FWK04_12310: bgc=SEM_BGC, size=291aa
    - FWK04_12330: bgc=SEM_BGC, size=95aa
+   - FWK04_12390: bgc=terpene, size=290aa
+   - FWK04_12395: bgc=terpene, size=177aa
+   - FWK04_12415: bgc=terpene, size=238aa
    - FWK04_12435: bgc=SEM_BGC, size=83aa
    - FWK04_12440: bgc=SEM_BGC, size=60aa
    - FWK04_12450: bgc=SEM_BGC, size=203aa
@@ -502,6 +546,8 @@
    - FWK04_12680: bgc=SEM_BGC, size=68aa
    - FWK04_12685: bgc=SEM_BGC, size=106aa
    - FWK04_12710: bgc=SEM_BGC, size=205aa
+   - FWK04_12790: bgc=terpene, size=72aa
+   - FWK04_12820: bgc=terpene, size=61aa
    - FWK04_12850: bgc=SEM_BGC, size=92aa
    - FWK04_12860: bgc=SEM_BGC, size=185aa
    - FWK04_12865: bgc=SEM_BGC, size=306aa
@@ -526,10 +572,16 @@
    - FWK04_13220: bgc=SEM_BGC, size=99aa
    - FWK04_13245: bgc=SEM_BGC, size=134aa
    - FWK04_13255: bgc=SEM_BGC, size=106aa
+   - FWK04_13295: bgc=mycosporine, size=331aa
+   - FWK04_13305: bgc=mycosporine, size=86aa
+   - FWK04_13310: bgc=mycosporine, size=92aa
    - FWK04_13405: bgc=SEM_BGC, size=540aa
    - FWK04_13430: bgc=SEM_BGC, size=81aa
    - FWK04_13510: bgc=SEM_BGC, size=331aa
    - FWK04_13515: bgc=SEM_BGC, size=99aa
+   - FWK04_13630: bgc=azole-containing-RiPP, NRPS, size=90aa
+   - FWK04_13655: bgc=NRPS, size=248aa
+   - FWK04_13670: bgc=NRPS, size=65aa
    - FWK04_13745: bgc=SEM_BGC, size=1980aa
    - FWK04_13775: bgc=SEM_BGC, size=345aa
    - FWK04_13780: bgc=SEM_BGC, size=81aa
@@ -729,9 +781,27 @@
    - FWK04_18435: bgc=SEM_BGC, size=160aa
    - FWK04_18455: bgc=SEM_BGC, size=280aa
    - FWK04_18460: bgc=SEM_BGC, size=125aa
+   - FWK04_18475: bgc=lanthipeptide-class-v, size=303aa
+   - FWK04_18490: bgc=lanthipeptide-class-v, size=254aa
+   - FWK04_18505: bgc=lanthipeptide-class-v, size=73aa
+   - FWK04_18530: bgc=lanthipeptide-class-v, size=159aa
+   - FWK04_18535: bgc=lanthipeptide-class-v, size=428aa
+   - FWK04_18540: bgc=lanthipeptide-class-v, size=475aa
+   - FWK04_18545: bgc=lanthipeptide-class-v, size=80aa
+   - FWK04_18570: bgc=lanthipeptide-class-v, size=365aa
+   - FWK04_18580: bgc=lanthipeptide-class-v, size=105aa
+   - FWK04_18590: bgc=lanthipeptide-class-v, size=266aa
+   - FWK04_18605: bgc=lanthipeptide-class-v, size=86aa
+   - FWK04_18610: bgc=lanthipeptide-class-v, size=691aa
+   - FWK04_18615: bgc=lanthipeptide-class-v, size=78aa
+   - FWK04_18620: bgc=lanthipeptide-class-v, size=123aa
+   - FWK04_18635: bgc=lanthipeptide-class-v, size=736aa
+   - FWK04_18640: bgc=lanthipeptide-class-v, size=107aa
    - FWK04_18665: bgc=SEM_BGC, size=428aa
    - FWK04_18675: bgc=SEM_BGC, size=106aa
    - FWK04_18735: bgc=SEM_BGC, size=61aa
+   - FWK04_18925: bgc=NRPS, size=180aa
+   - FWK04_18930: bgc=NRPS, size=136aa
    - FWK04_18960: bgc=SEM_BGC, size=71aa
    - FWK04_18965: bgc=SEM_BGC, size=72aa
    - FWK04_18985: bgc=SEM_BGC, size=64aa
@@ -749,12 +819,20 @@
    - FWK04_19330: bgc=SEM_BGC, size=97aa
    - FWK04_19335: bgc=SEM_BGC, size=365aa
    - FWK04_19340: bgc=terpene, size=149aa
+   - FWK04_19345: bgc=terpene, size=40aa
+   - FWK04_19375: bgc=terpene, size=383aa
    - FWK04_19435: bgc=SEM_BGC, size=67aa
    - FWK04_19450: bgc=SEM_BGC, size=64aa
    - FWK04_19465: bgc=SEM_BGC, size=122aa
    - FWK04_19475: bgc=SEM_BGC, size=491aa
    - FWK04_19490: bgc=SEM_BGC, size=64aa
    - FWK04_19495: bgc=azole-containing-RiPP, size=568aa
+   - FWK04_19505: bgc=azole-containing-RiPP, size=22aa
+   - FWK04_19510: bgc=azole-containing-RiPP, size=27aa
+   - FWK04_19560: bgc=azole-containing-RiPP, cyanobactin, size=71aa
+   - FWK04_19595: bgc=azole-containing-RiPP, cyanobactin, size=134aa
+   - FWK04_19610: bgc=cyanobactin, size=169aa
+   - FWK04_19620: bgc=cyanobactin, size=65aa
    - FWK04_19685: bgc=SEM_BGC, size=153aa
    - FWK04_19705: bgc=SEM_BGC, size=66aa
    - FWK04_19740: bgc=SEM_BGC, size=266aa
@@ -762,6 +840,8 @@
    - FWK04_19765: bgc=SEM_BGC, size=549aa
    - FWK04_19775: bgc=SEM_BGC, size=319aa
    - FWK04_19795: bgc=SEM_BGC, size=187aa
+   - FWK04_19815: bgc=NRPS, size=478aa
+   - FWK04_19820: bgc=NRPS, size=433aa
    - FWK04_20050: bgc=SEM_BGC, size=135aa
    - FWK04_20055: bgc=SEM_BGC, size=142aa
    - FWK04_20075: bgc=SEM_BGC, size=203aa
@@ -797,6 +877,12 @@
    - FWK04_20770: bgc=SEM_BGC, size=86aa
    - FWK04_20795: bgc=SEM_BGC, size=1052aa
    - FWK04_20865: bgc=SEM_BGC, size=127aa
+   - FWK04_20905: bgc=NRPS, size=362aa
+   - FWK04_20915: bgc=NRPS, size=67aa
+   - FWK04_20940: bgc=NRPS, size=106aa
+   - FWK04_21005: bgc=NRPS, size=262aa
+   - FWK04_21025: bgc=NRPS, size=233aa
+   - FWK04_21030: bgc=NRPS, size=65aa
    - FWK04_21035: bgc=SEM_BGC, size=118aa
    - FWK04_21045: bgc=SEM_BGC, size=65aa
    - FWK04_21055: bgc=SEM_BGC, size=182aa
@@ -837,6 +923,7 @@
    - FWK04_21740: bgc=SEM_BGC, size=96aa
    - FWK04_21750: bgc=SEM_BGC, size=78aa
    - FWK04_21760: bgc=SEM_BGC, size=59aa
+   - FWK04_21835: bgc=redox-cofactor, darobactin, size=170aa
    - FWK04_21980: bgc=SEM_BGC, size=73aa
    - FWK04_21995: bgc=SEM_BGC, size=279aa
    - FWK04_22050: bgc=SEM_BGC, size=148aa
@@ -848,6 +935,11 @@
    - FWK04_22245: bgc=SEM_BGC, size=84aa
    - FWK04_22280: bgc=SEM_BGC, size=61aa
    - FWK04_22285: bgc=SEM_BGC, size=64aa
+   - FWK04_22310: bgc=terpene, size=86aa
+   - FWK04_22320: bgc=terpene, size=64aa
+   - FWK04_22465: bgc=terpene, size=315aa
+   - FWK04_22490: bgc=terpene, size=266aa
+   - FWK04_22495: bgc=terpene, size=105aa
    - FWK04_22540: bgc=SEM_BGC, size=142aa
    - FWK04_22545: bgc=SEM_BGC, size=392aa
    - FWK04_22560: bgc=SEM_BGC, size=77aa
@@ -937,6 +1029,8 @@
    - FWK04_24255: bgc=SEM_BGC, size=163aa
    - FWK04_24270: bgc=SEM_BGC, size=108aa
    - FWK04_24305: bgc=SEM_BGC, size=478aa
+   - FWK04_24365: bgc=phosphonate, size=87aa
+   - FWK04_24380: bgc=phosphonate, size=125aa
    - FWK04_24420: bgc=SEM_BGC, size=97aa
    - FWK04_24475: bgc=SEM_BGC, size=308aa
    - FWK04_24530: bgc=SEM_BGC, size=127aa
@@ -944,10 +1038,20 @@
    - FWK04_24565: bgc=SEM_BGC, size=201aa
    - FWK04_24580: bgc=SEM_BGC, size=82aa
    - FWK04_24600: bgc=SEM_BGC, size=222aa
+   - FWK04_24675: bgc=RRE-containing, size=72aa
    - FWK04_24720: bgc=SEM_BGC, size=308aa
+   - FWK04_24800: bgc=NRPS-like, size=138aa
+   - FWK04_24810: bgc=NRPS-like, size=462aa
    - FWK04_24900: bgc=SEM_BGC, size=332aa
    - FWK04_24905: bgc=SEM_BGC, size=287aa
    - FWK04_24910: bgc=SEM_BGC, size=130aa
+   - FWK04_24950: bgc=microviridin, size=164aa
+   - FWK04_24955: bgc=microviridin, size=330aa
+   - FWK04_24970: bgc=microviridin, size=127aa
+   - FWK04_24980: bgc=microviridin, size=141aa
+   - FWK04_24985: bgc=microviridin, size=48aa
+   - FWK04_25005: bgc=microviridin, size=388aa
+   - FWK04_25035: bgc=microviridin, size=68aa
    - FWK04_25090: bgc=SEM_BGC, size=84aa
    - FWK04_25095: bgc=SEM_BGC, size=92aa
    - FWK04_25105: bgc=SEM_BGC, size=376aa
@@ -1032,6 +1136,17 @@
    - FWK04_26320: bgc=SEM_BGC, size=59aa
    - FWK04_26340: bgc=SEM_BGC, size=172aa
    - FWK04_26360: bgc=SEM_BGC, size=68aa
+   - FWK04_26400: bgc=lanthipeptide-class-v, size=875aa
+   - FWK04_26435: bgc=lanthipeptide-class-v, size=365aa
+   - FWK04_26445: bgc=lanthipeptide-class-v, size=77aa
+   - FWK04_26450: bgc=lanthipeptide-class-v, size=76aa
+   - FWK04_26455: bgc=lanthipeptide-class-v, size=76aa
+   - FWK04_26460: bgc=lanthipeptide-class-v, size=76aa
+   - FWK04_26465: bgc=lanthipeptide-class-v, size=87aa
+   - FWK04_26495: bgc=lanthipeptide-class-v, size=84aa
+   - FWK04_26505: bgc=lanthipeptide-class-v, size=120aa
+   - FWK04_26510: bgc=lanthipeptide-class-v, size=60aa
+   - FWK04_26545: bgc=lanthipeptide-class-v, size=270aa
    - FWK04_26555: bgc=SEM_BGC, size=270aa
    - FWK04_26565: bgc=SEM_BGC, size=238aa
    - FWK04_26570: bgc=SEM_BGC, size=218aa
@@ -1158,6 +1273,11 @@
    - FWK04_29075: bgc=SEM_BGC, size=92aa
    - FWK04_29080: bgc=SEM_BGC, size=67aa
    - FWK04_29090: bgc=SEM_BGC, size=134aa
+   - FWK04_29165: bgc=lanthipeptide-class-v, size=373aa
+   - FWK04_29180: bgc=lanthipeptide-class-v, size=62aa
+   - FWK04_29190: bgc=lanthipeptide-class-v, size=61aa
+   - FWK04_29210: bgc=lanthipeptide-class-v, size=411aa
+   - FWK04_29215: bgc=lanthipeptide-class-v, size=81aa
    - FWK04_29250: bgc=SEM_BGC, size=208aa
    - FWK04_29285: bgc=SEM_BGC, size=91aa
    - FWK04_29330: bgc=SEM_BGC, size=78aa
@@ -1291,6 +1411,8 @@
    - FWK04_32025: bgc=SEM_BGC, size=69aa
    - FWK04_32035: bgc=SEM_BGC, size=91aa
    - FWK04_32055: bgc=terpene, size=431aa
+   - FWK04_32060: bgc=terpene, size=131aa
+   - FWK04_32095: bgc=terpene, size=78aa
    - FWK04_32130: bgc=SEM_BGC, size=85aa
    - FWK04_32135: bgc=SEM_BGC, size=20aa
    - FWK04_32145: bgc=SEM_BGC, size=286aa
@@ -1319,1366 +1441,14 @@
    - FWK04_32780: bgc=SEM_BGC, size=105aa
 
 📈 BREAKDOWN POR BGC (ANTES DEDUP):
-   - NRPS: 40 proteína(s)
-   - NRPS-like: 20 proteína(s)
-   - PKS-like: 8 proteína(s)
-   - RRE-containing: 2 proteína(s)
-   - SEM_BGC: 1307 proteína(s)
-   - T1PKS: 12 proteína(s)
-   - T3PKS: 8 proteína(s)
-   - azole-containing-RiPP: 13 proteína(s)
-   - cyanobactin: 8 proteína(s)
-   - darobactin: 2 proteína(s)
-   - hglE-KS: 28 proteína(s)
-   - lanthipeptide-class-ii: 8 proteína(s)
-   - lanthipeptide-class-v: 64 proteína(s)
-   - microviridin: 14 proteína(s)
-   - mycosporine: 6 proteína(s)
-   - phosphonate: 4 proteína(s)
-   - proteusin: 4 proteína(s)
-   - redox-cofactor: 2 proteína(s)
-   - terpene: 38 proteína(s)
-   - terpene-precursor: 6 proteína(s)
-   - transAT-PKS: 8 proteína(s)
-
-======================================================================
-🔄 APLICANDO DEDUPLICAÇÃO...
-======================================================================
-
-✅ Deduplicação concluída:
-   Antes: 1554 proteínas
-   Depois: 1432 proteínas
-   Removido: 122 duplicatas
-
-======================================================================
-🔎 FILTRAGEM: Removendo proteins que aparecem APENAS 1x...
-======================================================================
-
-✅ Filtragem concluída:
-   Antes (com 1x): 1432 proteínas
-   Depois (sem 1x): 122 proteínas
-   Removido: 1310 (proteínas que appeareceram 1x)
-
-⚠️ Proteínas removidas (aparecem APENAS 1x):
-   - FWK04_10890: bgc=SEM_BGC, size=124aa
-   - FWK04_10905: bgc=SEM_BGC, size=77aa
-   - FWK04_10915: bgc=SEM_BGC, size=494aa
-   - FWK04_10935: bgc=SEM_BGC, size=499aa
-   - FWK04_10980: bgc=SEM_BGC, size=300aa
-   - FWK04_11015: bgc=SEM_BGC, size=244aa
-   - FWK04_11045: bgc=SEM_BGC, size=209aa
-   - FWK04_11090: bgc=SEM_BGC, size=387aa
-   - FWK04_11095: bgc=SEM_BGC, size=428aa
-   - FWK04_11100: bgc=SEM_BGC, size=61aa
-   - FWK04_11115: bgc=SEM_BGC, size=84aa
-   - FWK04_11155: bgc=SEM_BGC, size=66aa
-   - FWK04_11165: bgc=SEM_BGC, size=128aa
-   - FWK04_11190: bgc=SEM_BGC, size=70aa
-   - FWK04_11230: bgc=SEM_BGC, size=99aa
-   - FWK04_11270: bgc=SEM_BGC, size=180aa
-   - FWK04_11275: bgc=SEM_BGC, size=236aa
-   - FWK04_11310: bgc=SEM_BGC, size=103aa
-   - FWK04_11315: bgc=SEM_BGC, size=72aa
-   - FWK04_11325: bgc=SEM_BGC, size=249aa
-   - FWK04_11335: bgc=SEM_BGC, size=73aa
-   - FWK04_11340: bgc=SEM_BGC, size=170aa
-   - FWK04_11390: bgc=SEM_BGC, size=163aa
-   - FWK04_11400: bgc=SEM_BGC, size=1177aa
-   - FWK04_11465: bgc=SEM_BGC, size=208aa
-   - FWK04_11475: bgc=SEM_BGC, size=169aa
-   - FWK04_11480: bgc=SEM_BGC, size=115aa
-   - FWK04_11485: bgc=SEM_BGC, size=273aa
-   - FWK04_11490: bgc=SEM_BGC, size=60aa
-   - FWK04_11505: bgc=SEM_BGC, size=181aa
-   - FWK04_11550: bgc=SEM_BGC, size=170aa
-   - FWK04_11560: bgc=SEM_BGC, size=242aa
-   - FWK04_11620: bgc=SEM_BGC, size=444aa
-   - FWK04_11630: bgc=SEM_BGC, size=130aa
-   - FWK04_11655: bgc=SEM_BGC, size=399aa
-   - FWK04_11675: bgc=SEM_BGC, size=155aa
-   - FWK04_11685: bgc=SEM_BGC, size=716aa
-   - FWK04_11690: bgc=SEM_BGC, size=200aa
-   - FWK04_11845: bgc=SEM_BGC, size=36aa
-   - FWK04_11885: bgc=SEM_BGC, size=112aa
-   - FWK04_11930: bgc=SEM_BGC, size=218aa
-   - FWK04_11995: bgc=SEM_BGC, size=125aa
-   - FWK04_12000: bgc=SEM_BGC, size=403aa
-   - FWK04_12050: bgc=SEM_BGC, size=128aa
-   - FWK04_12075: bgc=SEM_BGC, size=66aa
-   - FWK04_12085: bgc=SEM_BGC, size=83aa
-   - FWK04_12145: bgc=SEM_BGC, size=96aa
-   - FWK04_12150: bgc=SEM_BGC, size=68aa
-   - FWK04_12215: bgc=SEM_BGC, size=75aa
-   - FWK04_12235: bgc=SEM_BGC, size=146aa
-   - FWK04_12245: bgc=SEM_BGC, size=124aa
-   - FWK04_12250: bgc=SEM_BGC, size=470aa
-   - FWK04_12255: bgc=SEM_BGC, size=397aa
-   - FWK04_12260: bgc=SEM_BGC, size=116aa
-   - FWK04_12305: bgc=SEM_BGC, size=108aa
-   - FWK04_12310: bgc=SEM_BGC, size=291aa
-   - FWK04_12330: bgc=SEM_BGC, size=95aa
-   - FWK04_12435: bgc=SEM_BGC, size=83aa
-   - FWK04_12440: bgc=SEM_BGC, size=60aa
-   - FWK04_12450: bgc=SEM_BGC, size=203aa
-   - FWK04_12460: bgc=SEM_BGC, size=126aa
-   - FWK04_12470: bgc=SEM_BGC, size=277aa
-   - FWK04_12510: bgc=SEM_BGC, size=362aa
-   - FWK04_12535: bgc=SEM_BGC, size=350aa
-   - FWK04_12550: bgc=SEM_BGC, size=221aa
-   - FWK04_12555: bgc=SEM_BGC, size=412aa
-   - FWK04_12560: bgc=SEM_BGC, size=121aa
-   - FWK04_12565: bgc=SEM_BGC, size=67aa
-   - FWK04_12570: bgc=SEM_BGC, size=68aa
-   - FWK04_12575: bgc=SEM_BGC, size=123aa
-   - FWK04_12580: bgc=SEM_BGC, size=134aa
-   - FWK04_12585: bgc=SEM_BGC, size=88aa
-   - FWK04_12590: bgc=SEM_BGC, size=60aa
-   - FWK04_12595: bgc=SEM_BGC, size=114aa
-   - FWK04_12600: bgc=SEM_BGC, size=130aa
-   - FWK04_12605: bgc=SEM_BGC, size=70aa
-   - FWK04_12610: bgc=SEM_BGC, size=68aa
-   - FWK04_12620: bgc=SEM_BGC, size=111aa
-   - FWK04_12625: bgc=SEM_BGC, size=119aa
-   - FWK04_12630: bgc=SEM_BGC, size=195aa
-   - FWK04_12635: bgc=SEM_BGC, size=206aa
-   - FWK04_12640: bgc=SEM_BGC, size=107aa
-   - FWK04_12645: bgc=SEM_BGC, size=798aa
-   - FWK04_12650: bgc=SEM_BGC, size=263aa
-   - FWK04_12655: bgc=SEM_BGC, size=117aa
-   - FWK04_12660: bgc=SEM_BGC, size=125aa
-   - FWK04_12665: bgc=SEM_BGC, size=160aa
-   - FWK04_12670: bgc=SEM_BGC, size=119aa
-   - FWK04_12675: bgc=SEM_BGC, size=72aa
-   - FWK04_12680: bgc=SEM_BGC, size=68aa
-   - FWK04_12685: bgc=SEM_BGC, size=106aa
-   - FWK04_12710: bgc=SEM_BGC, size=205aa
-   - FWK04_12850: bgc=SEM_BGC, size=92aa
-   - FWK04_12860: bgc=SEM_BGC, size=185aa
-   - FWK04_12865: bgc=SEM_BGC, size=306aa
-   - FWK04_12935: bgc=SEM_BGC, size=108aa
-   - FWK04_12950: bgc=SEM_BGC, size=586aa
-   - FWK04_12985: bgc=SEM_BGC, size=152aa
-   - FWK04_13010: bgc=SEM_BGC, size=76aa
-   - FWK04_13030: bgc=SEM_BGC, size=250aa
-   - FWK04_13050: bgc=SEM_BGC, size=207aa
-   - FWK04_13065: bgc=SEM_BGC, size=86aa
-   - FWK04_13080: bgc=SEM_BGC, size=77aa
-   - FWK04_13100: bgc=SEM_BGC, size=202aa
-   - FWK04_13115: bgc=SEM_BGC, size=129aa
-   - FWK04_13150: bgc=SEM_BGC, size=59aa
-   - FWK04_13165: bgc=SEM_BGC, size=115aa
-   - FWK04_13175: bgc=SEM_BGC, size=82aa
-   - FWK04_13180: bgc=SEM_BGC, size=140aa
-   - FWK04_13190: bgc=SEM_BGC, size=82aa
-   - FWK04_13195: bgc=SEM_BGC, size=546aa
-   - FWK04_13210: bgc=SEM_BGC, size=147aa
-   - FWK04_13215: bgc=SEM_BGC, size=70aa
-   - FWK04_13220: bgc=SEM_BGC, size=99aa
-   - FWK04_13245: bgc=SEM_BGC, size=134aa
-   - FWK04_13255: bgc=SEM_BGC, size=106aa
-   - FWK04_13405: bgc=SEM_BGC, size=540aa
-   - FWK04_13430: bgc=SEM_BGC, size=81aa
-   - FWK04_13510: bgc=SEM_BGC, size=331aa
-   - FWK04_13515: bgc=SEM_BGC, size=99aa
-   - FWK04_13745: bgc=SEM_BGC, size=1980aa
-   - FWK04_13775: bgc=SEM_BGC, size=345aa
-   - FWK04_13780: bgc=SEM_BGC, size=81aa
-   - FWK04_13880: bgc=SEM_BGC, size=223aa
-   - FWK04_13885: bgc=SEM_BGC, size=82aa
-   - FWK04_13930: bgc=SEM_BGC, size=324aa
-   - FWK04_13960: bgc=SEM_BGC, size=95aa
-   - FWK04_13965: bgc=SEM_BGC, size=244aa
-   - FWK04_13970: bgc=SEM_BGC, size=195aa
-   - FWK04_13995: bgc=SEM_BGC, size=66aa
-   - FWK04_14025: bgc=SEM_BGC, size=546aa
-   - FWK04_14050: bgc=SEM_BGC, size=236aa
-   - FWK04_14105: bgc=SEM_BGC, size=276aa
-   - FWK04_14125: bgc=SEM_BGC, size=150aa
-   - FWK04_14135: bgc=SEM_BGC, size=122aa
-   - FWK04_14175: bgc=SEM_BGC, size=20aa
-   - FWK04_14180: bgc=SEM_BGC, size=761aa
-   - FWK04_14220: bgc=SEM_BGC, size=121aa
-   - FWK04_14285: bgc=SEM_BGC, size=365aa
-   - FWK04_14320: bgc=SEM_BGC, size=79aa
-   - FWK04_14355: bgc=SEM_BGC, size=81aa
-   - FWK04_14375: bgc=SEM_BGC, size=76aa
-   - FWK04_14380: bgc=SEM_BGC, size=70aa
-   - FWK04_14385: bgc=SEM_BGC, size=64aa
-   - FWK04_14390: bgc=SEM_BGC, size=88aa
-   - FWK04_14395: bgc=SEM_BGC, size=84aa
-   - FWK04_14405: bgc=SEM_BGC, size=224aa
-   - FWK04_14415: bgc=SEM_BGC, size=140aa
-   - FWK04_14420: bgc=SEM_BGC, size=89aa
-   - FWK04_14430: bgc=SEM_BGC, size=562aa
-   - FWK04_14435: bgc=SEM_BGC, size=595aa
-   - FWK04_14440: bgc=SEM_BGC, size=147aa
-   - FWK04_14460: bgc=SEM_BGC, size=95aa
-   - FWK04_14465: bgc=SEM_BGC, size=109aa
-   - FWK04_14470: bgc=SEM_BGC, size=86aa
-   - FWK04_14515: bgc=SEM_BGC, size=435aa
-   - FWK04_14555: bgc=SEM_BGC, size=237aa
-   - FWK04_14630: bgc=SEM_BGC, size=69aa
-   - FWK04_14735: bgc=SEM_BGC, size=72aa
-   - FWK04_14765: bgc=SEM_BGC, size=162aa
-   - FWK04_14820: bgc=SEM_BGC, size=132aa
-   - FWK04_14835: bgc=SEM_BGC, size=132aa
-   - FWK04_14855: bgc=SEM_BGC, size=142aa
-   - FWK04_14870: bgc=SEM_BGC, size=335aa
-   - FWK04_14920: bgc=SEM_BGC, size=320aa
-   - FWK04_14975: bgc=SEM_BGC, size=544aa
-   - FWK04_15015: bgc=SEM_BGC, size=110aa
-   - FWK04_15030: bgc=SEM_BGC, size=60aa
-   - FWK04_15085: bgc=SEM_BGC, size=186aa
-   - FWK04_15145: bgc=SEM_BGC, size=64aa
-   - FWK04_15180: bgc=SEM_BGC, size=97aa
-   - FWK04_15195: bgc=SEM_BGC, size=116aa
-   - FWK04_15215: bgc=SEM_BGC, size=159aa
-   - FWK04_15250: bgc=SEM_BGC, size=77aa
-   - FWK04_15260: bgc=SEM_BGC, size=61aa
-   - FWK04_15265: bgc=SEM_BGC, size=105aa
-   - FWK04_15305: bgc=SEM_BGC, size=165aa
-   - FWK04_15315: bgc=SEM_BGC, size=62aa
-   - FWK04_15320: bgc=SEM_BGC, size=69aa
-   - FWK04_15340: bgc=SEM_BGC, size=155aa
-   - FWK04_15360: bgc=SEM_BGC, size=86aa
-   - FWK04_15370: bgc=SEM_BGC, size=238aa
-   - FWK04_15390: bgc=SEM_BGC, size=67aa
-   - FWK04_15400: bgc=SEM_BGC, size=109aa
-   - FWK04_15465: bgc=SEM_BGC, size=59aa
-   - FWK04_15490: bgc=SEM_BGC, size=71aa
-   - FWK04_15510: bgc=SEM_BGC, size=549aa
-   - FWK04_15545: bgc=SEM_BGC, size=111aa
-   - FWK04_15550: bgc=SEM_BGC, size=82aa
-   - FWK04_15555: bgc=SEM_BGC, size=129aa
-   - FWK04_15585: bgc=SEM_BGC, size=168aa
-   - FWK04_15605: bgc=SEM_BGC, size=270aa
-   - FWK04_15650: bgc=SEM_BGC, size=129aa
-   - FWK04_15665: bgc=SEM_BGC, size=201aa
-   - FWK04_15685: bgc=SEM_BGC, size=491aa
-   - FWK04_15720: bgc=SEM_BGC, size=248aa
-   - FWK04_15775: bgc=SEM_BGC, size=185aa
-   - FWK04_15875: bgc=SEM_BGC, size=165aa
-   - FWK04_15880: bgc=SEM_BGC, size=184aa
-   - FWK04_15900: bgc=SEM_BGC, size=149aa
-   - FWK04_16080: bgc=SEM_BGC, size=64aa
-   - FWK04_16085: bgc=SEM_BGC, size=230aa
-   - FWK04_16095: bgc=SEM_BGC, size=1720aa
-   - FWK04_16110: bgc=SEM_BGC, size=75aa
-   - FWK04_16150: bgc=SEM_BGC, size=75aa
-   - FWK04_16165: bgc=SEM_BGC, size=37aa
-   - FWK04_16190: bgc=SEM_BGC, size=96aa
-   - FWK04_16230: bgc=SEM_BGC, size=74aa
-   - FWK04_16240: bgc=SEM_BGC, size=76aa
-   - FWK04_16245: bgc=SEM_BGC, size=986aa
-   - FWK04_16250: bgc=SEM_BGC, size=244aa
-   - FWK04_16260: bgc=SEM_BGC, size=76aa
-   - FWK04_16270: bgc=SEM_BGC, size=242aa
-   - FWK04_16275: bgc=SEM_BGC, size=133aa
-   - FWK04_16290: bgc=SEM_BGC, size=60aa
-   - FWK04_16300: bgc=SEM_BGC, size=106aa
-   - FWK04_16330: bgc=SEM_BGC, size=245aa
-   - FWK04_16345: bgc=SEM_BGC, size=111aa
-   - FWK04_16350: bgc=SEM_BGC, size=448aa
-   - FWK04_16355: bgc=SEM_BGC, size=237aa
-   - FWK04_16360: bgc=SEM_BGC, size=92aa
-   - FWK04_16365: bgc=SEM_BGC, size=215aa
-   - FWK04_16370: bgc=SEM_BGC, size=1357aa
-   - FWK04_16375: bgc=SEM_BGC, size=721aa
-   - FWK04_16380: bgc=SEM_BGC, size=994aa
-   - FWK04_16385: bgc=SEM_BGC, size=669aa
-   - FWK04_16405: bgc=SEM_BGC, size=277aa
-   - FWK04_16410: bgc=SEM_BGC, size=67aa
-   - FWK04_16420: bgc=SEM_BGC, size=113aa
-   - FWK04_16425: bgc=SEM_BGC, size=61aa
-   - FWK04_16430: bgc=SEM_BGC, size=314aa
-   - FWK04_16435: bgc=SEM_BGC, size=131aa
-   - FWK04_16440: bgc=SEM_BGC, size=178aa
-   - FWK04_16450: bgc=SEM_BGC, size=111aa
-   - FWK04_16455: bgc=SEM_BGC, size=119aa
-   - FWK04_16475: bgc=SEM_BGC, size=260aa
-   - FWK04_16480: bgc=SEM_BGC, size=325aa
-   - FWK04_16490: bgc=SEM_BGC, size=63aa
-   - FWK04_16495: bgc=SEM_BGC, size=145aa
-   - FWK04_16500: bgc=SEM_BGC, size=72aa
-   - FWK04_16505: bgc=SEM_BGC, size=73aa
-   - FWK04_16535: bgc=SEM_BGC, size=147aa
-   - FWK04_16590: bgc=SEM_BGC, size=63aa
-   - FWK04_16605: bgc=SEM_BGC, size=389aa
-   - FWK04_16610: bgc=SEM_BGC, size=336aa
-   - FWK04_16625: bgc=SEM_BGC, size=112aa
-   - FWK04_16685: bgc=SEM_BGC, size=280aa
-   - FWK04_16725: bgc=SEM_BGC, size=124aa
-   - FWK04_16780: bgc=SEM_BGC, size=217aa
-   - FWK04_16790: bgc=SEM_BGC, size=200aa
-   - FWK04_16805: bgc=SEM_BGC, size=64aa
-   - FWK04_16835: bgc=SEM_BGC, size=571aa
-   - FWK04_16875: bgc=SEM_BGC, size=61aa
-   - FWK04_16880: bgc=SEM_BGC, size=292aa
-   - FWK04_16955: bgc=SEM_BGC, size=283aa
-   - FWK04_16965: bgc=SEM_BGC, size=220aa
-   - FWK04_16970: bgc=SEM_BGC, size=283aa
-   - FWK04_16980: bgc=SEM_BGC, size=101aa
-   - FWK04_17065: bgc=SEM_BGC, size=160aa
-   - FWK04_17075: bgc=SEM_BGC, size=65aa
-   - FWK04_17090: bgc=SEM_BGC, size=83aa
-   - FWK04_17145: bgc=SEM_BGC, size=97aa
-   - FWK04_17150: bgc=SEM_BGC, size=323aa
-   - FWK04_17155: bgc=SEM_BGC, size=113aa
-   - FWK04_17170: bgc=SEM_BGC, size=131aa
-   - FWK04_17180: bgc=SEM_BGC, size=240aa
-   - FWK04_17190: bgc=SEM_BGC, size=262aa
-   - FWK04_17200: bgc=SEM_BGC, size=1101aa
-   - FWK04_17210: bgc=SEM_BGC, size=60aa
-   - FWK04_17225: bgc=SEM_BGC, size=74aa
-   - FWK04_17255: bgc=SEM_BGC, size=71aa
-   - FWK04_17315: bgc=SEM_BGC, size=59aa
-   - FWK04_17345: bgc=SEM_BGC, size=244aa
-   - FWK04_17375: bgc=SEM_BGC, size=130aa
-   - FWK04_17475: bgc=SEM_BGC, size=85aa
-   - FWK04_17495: bgc=SEM_BGC, size=90aa
-   - FWK04_17525: bgc=SEM_BGC, size=165aa
-   - FWK04_17545: bgc=SEM_BGC, size=80aa
-   - FWK04_17550: bgc=SEM_BGC, size=79aa
-   - FWK04_17555: bgc=SEM_BGC, size=80aa
-   - FWK04_17560: bgc=SEM_BGC, size=83aa
-   - FWK04_17565: bgc=SEM_BGC, size=83aa
-   - FWK04_17580: bgc=SEM_BGC, size=219aa
-   - FWK04_17595: bgc=SEM_BGC, size=127aa
-   - FWK04_17625: bgc=SEM_BGC, size=131aa
-   - FWK04_17640: bgc=SEM_BGC, size=248aa
-   - FWK04_17780: bgc=SEM_BGC, size=322aa
-   - FWK04_17830: bgc=SEM_BGC, size=237aa
-   - FWK04_17875: bgc=SEM_BGC, size=193aa
-   - FWK04_17895: bgc=SEM_BGC, size=59aa
-   - FWK04_17900: bgc=SEM_BGC, size=70aa
-   - FWK04_17970: bgc=SEM_BGC, size=66aa
-   - FWK04_18015: bgc=SEM_BGC, size=568aa
-   - FWK04_18020: bgc=SEM_BGC, size=535aa
-   - FWK04_18045: bgc=SEM_BGC, size=64aa
-   - FWK04_00015: bgc=SEM_BGC, size=153aa
-   - FWK04_00025: bgc=SEM_BGC, size=272aa
-   - FWK04_00040: bgc=SEM_BGC, size=233aa
-   - FWK04_00105: bgc=SEM_BGC, size=460aa
-   - FWK04_00110: bgc=SEM_BGC, size=209aa
-   - FWK04_00115: bgc=SEM_BGC, size=123aa
-   - FWK04_00120: bgc=SEM_BGC, size=915aa
-   - FWK04_00125: bgc=SEM_BGC, size=267aa
-   - FWK04_00130: bgc=SEM_BGC, size=349aa
-   - FWK04_00135: bgc=SEM_BGC, size=274aa
-   - FWK04_00140: bgc=SEM_BGC, size=230aa
-   - FWK04_00145: bgc=SEM_BGC, size=533aa
-   - FWK04_00150: bgc=SEM_BGC, size=192aa
-   - FWK04_00155: bgc=SEM_BGC, size=79aa
-   - FWK04_00160: bgc=SEM_BGC, size=85aa
-   - FWK04_00165: bgc=SEM_BGC, size=151aa
-   - FWK04_00210: bgc=SEM_BGC, size=488aa
-   - FWK04_00250: bgc=SEM_BGC, size=226aa
-   - FWK04_00260: bgc=SEM_BGC, size=97aa
-   - FWK04_00270: bgc=SEM_BGC, size=144aa
-   - FWK04_00285: bgc=SEM_BGC, size=169aa
-   - FWK04_00315: bgc=SEM_BGC, size=67aa
-   - FWK04_00350: bgc=SEM_BGC, size=206aa
-   - FWK04_00360: bgc=SEM_BGC, size=109aa
-   - FWK04_00420: bgc=SEM_BGC, size=92aa
-   - FWK04_00445: bgc=SEM_BGC, size=84aa
-   - FWK04_00520: bgc=SEM_BGC, size=95aa
-   - FWK04_00535: bgc=SEM_BGC, size=109aa
-   - FWK04_00600: bgc=SEM_BGC, size=123aa
-   - FWK04_00605: bgc=SEM_BGC, size=143aa
-   - FWK04_00610: bgc=SEM_BGC, size=115aa
-   - FWK04_00620: bgc=SEM_BGC, size=162aa
-   - FWK04_00625: bgc=SEM_BGC, size=68aa
-   - FWK04_00645: bgc=SEM_BGC, size=98aa
-   - FWK04_00665: bgc=SEM_BGC, size=115aa
-   - FWK04_00715: bgc=SEM_BGC, size=324aa
-   - FWK04_00720: bgc=SEM_BGC, size=88aa
-   - FWK04_00725: bgc=SEM_BGC, size=74aa
-   - FWK04_00735: bgc=SEM_BGC, size=403aa
-   - FWK04_00780: bgc=SEM_BGC, size=124aa
-   - FWK04_00785: bgc=SEM_BGC, size=124aa
-   - FWK04_00795: bgc=SEM_BGC, size=111aa
-   - FWK04_00800: bgc=SEM_BGC, size=103aa
-   - FWK04_00805: bgc=SEM_BGC, size=88aa
-   - FWK04_00810: bgc=SEM_BGC, size=135aa
-   - FWK04_00830: bgc=SEM_BGC, size=160aa
-   - FWK04_00885: bgc=SEM_BGC, size=79aa
-   - FWK04_00900: bgc=SEM_BGC, size=140aa
-   - FWK04_00910: bgc=SEM_BGC, size=69aa
-   - FWK04_00920: bgc=SEM_BGC, size=125aa
-   - FWK04_00970: bgc=SEM_BGC, size=72aa
-   - FWK04_01015: bgc=SEM_BGC, size=87aa
-   - FWK04_01035: bgc=SEM_BGC, size=86aa
-   - FWK04_01045: bgc=SEM_BGC, size=122aa
-   - FWK04_01065: bgc=SEM_BGC, size=122aa
-   - FWK04_01075: bgc=SEM_BGC, size=291aa
-   - FWK04_01080: bgc=SEM_BGC, size=127aa
-   - FWK04_01085: bgc=SEM_BGC, size=123aa
-   - FWK04_01105: bgc=SEM_BGC, size=59aa
-   - FWK04_01120: bgc=SEM_BGC, size=141aa
-   - FWK04_01140: bgc=SEM_BGC, size=192aa
-   - FWK04_01180: bgc=SEM_BGC, size=215aa
-   - FWK04_01310: bgc=SEM_BGC, size=86aa
-   - FWK04_01365: bgc=SEM_BGC, size=241aa
-   - FWK04_01380: bgc=SEM_BGC, size=182aa
-   - FWK04_01390: bgc=SEM_BGC, size=158aa
-   - FWK04_01435: bgc=SEM_BGC, size=84aa
-   - FWK04_01445: bgc=SEM_BGC, size=289aa
-   - FWK04_01465: bgc=SEM_BGC, size=1190aa
-   - FWK04_01520: bgc=SEM_BGC, size=154aa
-   - FWK04_01530: bgc=SEM_BGC, size=136aa
-   - FWK04_01565: bgc=SEM_BGC, size=144aa
-   - FWK04_01600: bgc=SEM_BGC, size=414aa
-   - FWK04_01610: bgc=SEM_BGC, size=217aa
-   - FWK04_01680: bgc=SEM_BGC, size=11aa
-   - FWK04_01700: bgc=SEM_BGC, size=59aa
-   - FWK04_01810: bgc=SEM_BGC, size=127aa
-   - FWK04_01815: bgc=SEM_BGC, size=477aa
-   - FWK04_01840: bgc=SEM_BGC, size=181aa
-   - FWK04_01855: bgc=SEM_BGC, size=287aa
-   - FWK04_01870: bgc=SEM_BGC, size=350aa
-   - FWK04_01895: bgc=SEM_BGC, size=145aa
-   - FWK04_01905: bgc=SEM_BGC, size=146aa
-   - FWK04_01910: bgc=SEM_BGC, size=66aa
-   - FWK04_01920: bgc=SEM_BGC, size=618aa
-   - FWK04_01945: bgc=SEM_BGC, size=109aa
-   - FWK04_18110: bgc=SEM_BGC, size=66aa
-   - FWK04_18115: bgc=SEM_BGC, size=98aa
-   - FWK04_18130: bgc=SEM_BGC, size=175aa
-   - FWK04_18135: bgc=SEM_BGC, size=1458aa
-   - FWK04_18140: bgc=SEM_BGC, size=100aa
-   - FWK04_18165: bgc=SEM_BGC, size=437aa
-   - FWK04_18175: bgc=SEM_BGC, size=100aa
-   - FWK04_18180: bgc=SEM_BGC, size=170aa
-   - FWK04_18185: bgc=SEM_BGC, size=319aa
-   - FWK04_18205: bgc=SEM_BGC, size=62aa
-   - FWK04_18210: bgc=SEM_BGC, size=65aa
-   - FWK04_18215: bgc=SEM_BGC, size=665aa
-   - FWK04_18220: bgc=SEM_BGC, size=69aa
-   - FWK04_18245: bgc=SEM_BGC, size=145aa
-   - FWK04_18265: bgc=SEM_BGC, size=82aa
-   - FWK04_18330: bgc=SEM_BGC, size=93aa
-   - FWK04_18345: bgc=SEM_BGC, size=186aa
-   - FWK04_18370: bgc=SEM_BGC, size=269aa
-   - FWK04_18385: bgc=SEM_BGC, size=103aa
-   - FWK04_18410: bgc=SEM_BGC, size=94aa
-   - FWK04_18425: bgc=SEM_BGC, size=173aa
-   - FWK04_18435: bgc=SEM_BGC, size=160aa
-   - FWK04_18455: bgc=SEM_BGC, size=280aa
-   - FWK04_18460: bgc=SEM_BGC, size=125aa
-   - FWK04_18665: bgc=SEM_BGC, size=428aa
-   - FWK04_18675: bgc=SEM_BGC, size=106aa
-   - FWK04_18735: bgc=SEM_BGC, size=61aa
-   - FWK04_18960: bgc=SEM_BGC, size=71aa
-   - FWK04_18965: bgc=SEM_BGC, size=72aa
-   - FWK04_18985: bgc=SEM_BGC, size=64aa
-   - FWK04_19060: bgc=SEM_BGC, size=88aa
-   - FWK04_19095: bgc=SEM_BGC, size=163aa
-   - FWK04_19100: bgc=SEM_BGC, size=74aa
-   - FWK04_19105: bgc=SEM_BGC, size=139aa
-   - FWK04_19110: bgc=SEM_BGC, size=103aa
-   - FWK04_19120: bgc=SEM_BGC, size=317aa
-   - FWK04_19135: bgc=SEM_BGC, size=94aa
-   - FWK04_19140: bgc=SEM_BGC, size=167aa
-   - FWK04_19225: bgc=SEM_BGC, size=239aa
-   - FWK04_19240: bgc=SEM_BGC, size=272aa
-   - FWK04_19325: bgc=SEM_BGC, size=70aa
-   - FWK04_19330: bgc=SEM_BGC, size=97aa
-   - FWK04_19335: bgc=SEM_BGC, size=365aa
-   - FWK04_19340: bgc=terpene, size=149aa
-   - FWK04_19435: bgc=SEM_BGC, size=67aa
-   - FWK04_19450: bgc=SEM_BGC, size=64aa
-   - FWK04_19465: bgc=SEM_BGC, size=122aa
-   - FWK04_19475: bgc=SEM_BGC, size=491aa
-   - FWK04_19490: bgc=SEM_BGC, size=64aa
-   - FWK04_19495: bgc=azole-containing-RiPP, size=568aa
-   - FWK04_19685: bgc=SEM_BGC, size=153aa
-   - FWK04_19705: bgc=SEM_BGC, size=66aa
-   - FWK04_19740: bgc=SEM_BGC, size=266aa
-   - FWK04_19760: bgc=SEM_BGC, size=1094aa
-   - FWK04_19765: bgc=SEM_BGC, size=549aa
-   - FWK04_19775: bgc=SEM_BGC, size=319aa
-   - FWK04_19795: bgc=SEM_BGC, size=187aa
-   - FWK04_20050: bgc=SEM_BGC, size=135aa
-   - FWK04_20055: bgc=SEM_BGC, size=142aa
-   - FWK04_20075: bgc=SEM_BGC, size=203aa
-   - FWK04_20080: bgc=SEM_BGC, size=90aa
-   - FWK04_20095: bgc=SEM_BGC, size=105aa
-   - FWK04_20100: bgc=SEM_BGC, size=219aa
-   - FWK04_20105: bgc=SEM_BGC, size=950aa
-   - FWK04_20145: bgc=SEM_BGC, size=73aa
-   - FWK04_20170: bgc=SEM_BGC, size=66aa
-   - FWK04_20250: bgc=SEM_BGC, size=222aa
-   - FWK04_20270: bgc=SEM_BGC, size=94aa
-   - FWK04_20280: bgc=SEM_BGC, size=451aa
-   - FWK04_20315: bgc=SEM_BGC, size=74aa
-   - FWK04_20325: bgc=SEM_BGC, size=489aa
-   - FWK04_20335: bgc=SEM_BGC, size=327aa
-   - FWK04_20340: bgc=SEM_BGC, size=226aa
-   - FWK04_20355: bgc=SEM_BGC, size=359aa
-   - FWK04_20380: bgc=SEM_BGC, size=154aa
-   - FWK04_20415: bgc=SEM_BGC, size=61aa
-   - FWK04_20420: bgc=SEM_BGC, size=107aa
-   - FWK04_20435: bgc=SEM_BGC, size=88aa
-   - FWK04_20450: bgc=SEM_BGC, size=65aa
-   - FWK04_20535: bgc=SEM_BGC, size=114aa
-   - FWK04_20540: bgc=SEM_BGC, size=78aa
-   - FWK04_20570: bgc=SEM_BGC, size=276aa
-   - FWK04_20590: bgc=SEM_BGC, size=80aa
-   - FWK04_20665: bgc=SEM_BGC, size=100aa
-   - FWK04_20685: bgc=SEM_BGC, size=117aa
-   - FWK04_20710: bgc=SEM_BGC, size=106aa
-   - FWK04_20715: bgc=SEM_BGC, size=200aa
-   - FWK04_20750: bgc=SEM_BGC, size=5aa
-   - FWK04_20765: bgc=SEM_BGC, size=277aa
-   - FWK04_20770: bgc=SEM_BGC, size=86aa
-   - FWK04_20795: bgc=SEM_BGC, size=1052aa
-   - FWK04_20865: bgc=SEM_BGC, size=127aa
-   - FWK04_21035: bgc=SEM_BGC, size=118aa
-   - FWK04_21045: bgc=SEM_BGC, size=65aa
-   - FWK04_21055: bgc=SEM_BGC, size=182aa
-   - FWK04_21100: bgc=SEM_BGC, size=67aa
-   - FWK04_21140: bgc=SEM_BGC, size=105aa
-   - FWK04_21210: bgc=SEM_BGC, size=85aa
-   - FWK04_21225: bgc=SEM_BGC, size=63aa
-   - FWK04_21260: bgc=SEM_BGC, size=127aa
-   - FWK04_21315: bgc=SEM_BGC, size=128aa
-   - FWK04_21320: bgc=SEM_BGC, size=180aa
-   - FWK04_21350: bgc=SEM_BGC, size=78aa
-   - FWK04_21365: bgc=SEM_BGC, size=158aa
-   - FWK04_21370: bgc=SEM_BGC, size=149aa
-   - FWK04_21380: bgc=SEM_BGC, size=78aa
-   - FWK04_21405: bgc=SEM_BGC, size=69aa
-   - FWK04_21440: bgc=SEM_BGC, size=206aa
-   - FWK04_21470: bgc=SEM_BGC, size=155aa
-   - FWK04_21480: bgc=SEM_BGC, size=146aa
-   - FWK04_21485: bgc=SEM_BGC, size=173aa
-   - FWK04_21500: bgc=SEM_BGC, size=22aa
-   - FWK04_21535: bgc=SEM_BGC, size=117aa
-   - FWK04_21550: bgc=SEM_BGC, size=62aa
-   - FWK04_21565: bgc=SEM_BGC, size=85aa
-   - FWK04_21575: bgc=SEM_BGC, size=1165aa
-   - FWK04_21585: bgc=SEM_BGC, size=120aa
-   - FWK04_21595: bgc=SEM_BGC, size=515aa
-   - FWK04_21610: bgc=SEM_BGC, size=845aa
-   - FWK04_21615: bgc=SEM_BGC, size=187aa
-   - FWK04_21640: bgc=SEM_BGC, size=123aa
-   - FWK04_21650: bgc=SEM_BGC, size=60aa
-   - FWK04_21675: bgc=SEM_BGC, size=61aa
-   - FWK04_21680: bgc=SEM_BGC, size=149aa
-   - FWK04_21685: bgc=SEM_BGC, size=267aa
-   - FWK04_21695: bgc=SEM_BGC, size=246aa
-   - FWK04_21720: bgc=SEM_BGC, size=84aa
-   - FWK04_21725: bgc=SEM_BGC, size=59aa
-   - FWK04_21730: bgc=SEM_BGC, size=75aa
-   - FWK04_21740: bgc=SEM_BGC, size=96aa
-   - FWK04_21750: bgc=SEM_BGC, size=78aa
-   - FWK04_21760: bgc=SEM_BGC, size=59aa
-   - FWK04_21980: bgc=SEM_BGC, size=73aa
-   - FWK04_21995: bgc=SEM_BGC, size=279aa
-   - FWK04_22050: bgc=SEM_BGC, size=148aa
-   - FWK04_22060: bgc=SEM_BGC, size=296aa
-   - FWK04_22100: bgc=SEM_BGC, size=72aa
-   - FWK04_22130: bgc=SEM_BGC, size=268aa
-   - FWK04_22155: bgc=SEM_BGC, size=75aa
-   - FWK04_22235: bgc=SEM_BGC, size=78aa
-   - FWK04_22245: bgc=SEM_BGC, size=84aa
-   - FWK04_22280: bgc=SEM_BGC, size=61aa
-   - FWK04_22285: bgc=SEM_BGC, size=64aa
-   - FWK04_22540: bgc=SEM_BGC, size=142aa
-   - FWK04_22545: bgc=SEM_BGC, size=392aa
-   - FWK04_22560: bgc=SEM_BGC, size=77aa
-   - FWK04_22570: bgc=SEM_BGC, size=91aa
-   - FWK04_22595: bgc=SEM_BGC, size=286aa
-   - FWK04_22610: bgc=SEM_BGC, size=155aa
-   - FWK04_22645: bgc=SEM_BGC, size=102aa
-   - FWK04_22655: bgc=SEM_BGC, size=149aa
-   - FWK04_22685: bgc=SEM_BGC, size=150aa
-   - FWK04_22740: bgc=SEM_BGC, size=169aa
-   - FWK04_22765: bgc=SEM_BGC, size=127aa
-   - FWK04_22770: bgc=SEM_BGC, size=16aa
-   - FWK04_22775: bgc=SEM_BGC, size=553aa
-   - FWK04_22800: bgc=SEM_BGC, size=110aa
-   - FWK04_22805: bgc=SEM_BGC, size=45aa
-   - FWK04_22825: bgc=SEM_BGC, size=66aa
-   - FWK04_22850: bgc=SEM_BGC, size=330aa
-   - FWK04_22865: bgc=SEM_BGC, size=69aa
-   - FWK04_22870: bgc=SEM_BGC, size=145aa
-   - FWK04_22880: bgc=SEM_BGC, size=98aa
-   - FWK04_22905: bgc=SEM_BGC, size=169aa
-   - FWK04_22915: bgc=SEM_BGC, size=88aa
-   - FWK04_22925: bgc=SEM_BGC, size=66aa
-   - FWK04_22930: bgc=SEM_BGC, size=242aa
-   - FWK04_22950: bgc=SEM_BGC, size=218aa
-   - FWK04_22965: bgc=SEM_BGC, size=443aa
-   - FWK04_22970: bgc=SEM_BGC, size=157aa
-   - FWK04_22975: bgc=SEM_BGC, size=605aa
-   - FWK04_22980: bgc=SEM_BGC, size=796aa
-   - FWK04_22985: bgc=SEM_BGC, size=70aa
-   - FWK04_22990: bgc=SEM_BGC, size=537aa
-   - FWK04_22995: bgc=SEM_BGC, size=1371aa
-   - FWK04_23015: bgc=SEM_BGC, size=240aa
-   - FWK04_23035: bgc=SEM_BGC, size=277aa
-   - FWK04_23095: bgc=SEM_BGC, size=194aa
-   - FWK04_01955: bgc=SEM_BGC, size=552aa
-   - FWK04_01975: bgc=SEM_BGC, size=66aa
-   - FWK04_01980: bgc=SEM_BGC, size=62aa
-   - FWK04_01990: bgc=SEM_BGC, size=395aa
-   - FWK04_02035: bgc=SEM_BGC, size=224aa
-   - FWK04_02060: bgc=SEM_BGC, size=89aa
-   - FWK04_02070: bgc=SEM_BGC, size=93aa
-   - FWK04_02090: bgc=SEM_BGC, size=700aa
-   - FWK04_02110: bgc=SEM_BGC, size=92aa
-   - FWK04_02210: bgc=SEM_BGC, size=114aa
-   - FWK04_02255: bgc=SEM_BGC, size=391aa
-   - FWK04_02265: bgc=SEM_BGC, size=158aa
-   - FWK04_02300: bgc=SEM_BGC, size=94aa
-   - FWK04_02335: bgc=SEM_BGC, size=91aa
-   - FWK04_02365: bgc=SEM_BGC, size=62aa
-   - FWK04_02370: bgc=SEM_BGC, size=61aa
-   - FWK04_02420: bgc=SEM_BGC, size=78aa
-   - FWK04_02425: bgc=SEM_BGC, size=589aa
-   - FWK04_02490: bgc=SEM_BGC, size=164aa
-   - FWK04_02500: bgc=SEM_BGC, size=952aa
-   - FWK04_02505: bgc=SEM_BGC, size=292aa
-   - FWK04_02510: bgc=SEM_BGC, size=208aa
-   - FWK04_02525: bgc=SEM_BGC, size=254aa
-   - FWK04_02535: bgc=SEM_BGC, size=61aa
-   - FWK04_02590: bgc=SEM_BGC, size=194aa
-   - FWK04_02620: bgc=SEM_BGC, size=76aa
-   - FWK04_02640: bgc=SEM_BGC, size=212aa
-   - FWK04_02655: bgc=SEM_BGC, size=65aa
-   - FWK04_02710: bgc=SEM_BGC, size=75aa
-   - FWK04_02745: bgc=SEM_BGC, size=98aa
-   - FWK04_02780: bgc=SEM_BGC, size=170aa
-   - FWK04_02790: bgc=SEM_BGC, size=180aa
-   - FWK04_02835: bgc=SEM_BGC, size=470aa
-   - FWK04_02850: bgc=SEM_BGC, size=109aa
-   - FWK04_02890: bgc=SEM_BGC, size=202aa
-   - FWK04_02930: bgc=SEM_BGC, size=84aa
-   - FWK04_02945: bgc=SEM_BGC, size=731aa
-   - FWK04_02950: bgc=SEM_BGC, size=1539aa
-   - FWK04_02955: bgc=SEM_BGC, size=144aa
-   - FWK04_02960: bgc=SEM_BGC, size=274aa
-   - FWK04_02985: bgc=SEM_BGC, size=62aa
-   - FWK04_03060: bgc=SEM_BGC, size=68aa
-   - FWK04_03070: bgc=SEM_BGC, size=60aa
-   - FWK04_03120: bgc=SEM_BGC, size=62aa
-   - FWK04_03140: bgc=SEM_BGC, size=180aa
-   - FWK04_03150: bgc=SEM_BGC, size=95aa
-   - FWK04_03275: bgc=SEM_BGC, size=64aa
-   - FWK04_03285: bgc=SEM_BGC, size=133aa
-   - FWK04_03295: bgc=SEM_BGC, size=59aa
-   - FWK04_23115: bgc=SEM_BGC, size=742aa
-   - FWK04_23130: bgc=SEM_BGC, size=73aa
-   - FWK04_23140: bgc=SEM_BGC, size=299aa
-   - FWK04_23145: bgc=SEM_BGC, size=287aa
-   - FWK04_23150: bgc=SEM_BGC, size=261aa
-   - FWK04_23200: bgc=SEM_BGC, size=169aa
-   - FWK04_23245: bgc=SEM_BGC, size=64aa
-   - FWK04_23275: bgc=SEM_BGC, size=519aa
-   - FWK04_23300: bgc=SEM_BGC, size=139aa
-   - FWK04_23310: bgc=SEM_BGC, size=268aa
-   - FWK04_23340: bgc=SEM_BGC, size=64aa
-   - FWK04_23355: bgc=SEM_BGC, size=98aa
-   - FWK04_23360: bgc=SEM_BGC, size=129aa
-   - FWK04_23385: bgc=SEM_BGC, size=398aa
-   - FWK04_23470: bgc=SEM_BGC, size=63aa
-   - FWK04_23505: bgc=SEM_BGC, size=154aa
-   - FWK04_23560: bgc=SEM_BGC, size=142aa
-   - FWK04_23565: bgc=SEM_BGC, size=213aa
-   - FWK04_23570: bgc=SEM_BGC, size=437aa
-   - FWK04_23590: bgc=SEM_BGC, size=162aa
-   - FWK04_23605: bgc=SEM_BGC, size=124aa
-   - FWK04_23610: bgc=SEM_BGC, size=66aa
-   - FWK04_23660: bgc=SEM_BGC, size=71aa
-   - FWK04_23670: bgc=SEM_BGC, size=204aa
-   - FWK04_23695: bgc=SEM_BGC, size=109aa
-   - FWK04_23710: bgc=SEM_BGC, size=145aa
-   - FWK04_23715: bgc=SEM_BGC, size=79aa
-   - FWK04_23745: bgc=SEM_BGC, size=186aa
-   - FWK04_23760: bgc=SEM_BGC, size=159aa
-   - FWK04_23765: bgc=SEM_BGC, size=65aa
-   - FWK04_23770: bgc=SEM_BGC, size=113aa
-   - FWK04_23840: bgc=SEM_BGC, size=60aa
-   - FWK04_23845: bgc=SEM_BGC, size=79aa
-   - FWK04_23850: bgc=SEM_BGC, size=133aa
-   - FWK04_23870: bgc=SEM_BGC, size=304aa
-   - FWK04_23945: bgc=SEM_BGC, size=68aa
-   - FWK04_23960: bgc=SEM_BGC, size=208aa
-   - FWK04_23965: bgc=SEM_BGC, size=70aa
-   - FWK04_23980: bgc=SEM_BGC, size=441aa
-   - FWK04_24010: bgc=SEM_BGC, size=400aa
-   - FWK04_24050: bgc=SEM_BGC, size=230aa
-   - FWK04_24055: bgc=SEM_BGC, size=145aa
-   - FWK04_24065: bgc=SEM_BGC, size=140aa
-   - FWK04_24085: bgc=SEM_BGC, size=91aa
-   - FWK04_24090: bgc=SEM_BGC, size=125aa
-   - FWK04_24105: bgc=SEM_BGC, size=129aa
-   - FWK04_24135: bgc=SEM_BGC, size=128aa
-   - FWK04_24165: bgc=SEM_BGC, size=99aa
-   - FWK04_24195: bgc=SEM_BGC, size=132aa
-   - FWK04_24210: bgc=SEM_BGC, size=72aa
-   - FWK04_24235: bgc=SEM_BGC, size=163aa
-   - FWK04_24255: bgc=SEM_BGC, size=163aa
-   - FWK04_24270: bgc=SEM_BGC, size=108aa
-   - FWK04_24305: bgc=SEM_BGC, size=478aa
-   - FWK04_24420: bgc=SEM_BGC, size=97aa
-   - FWK04_24475: bgc=SEM_BGC, size=308aa
-   - FWK04_24530: bgc=SEM_BGC, size=127aa
-   - FWK04_24540: bgc=SEM_BGC, size=89aa
-   - FWK04_24565: bgc=SEM_BGC, size=201aa
-   - FWK04_24580: bgc=SEM_BGC, size=82aa
-   - FWK04_24600: bgc=SEM_BGC, size=222aa
-   - FWK04_24720: bgc=SEM_BGC, size=308aa
-   - FWK04_24900: bgc=SEM_BGC, size=332aa
-   - FWK04_24905: bgc=SEM_BGC, size=287aa
-   - FWK04_24910: bgc=SEM_BGC, size=130aa
-   - FWK04_25090: bgc=SEM_BGC, size=84aa
-   - FWK04_25095: bgc=SEM_BGC, size=92aa
-   - FWK04_25105: bgc=SEM_BGC, size=376aa
-   - FWK04_25130: bgc=SEM_BGC, size=278aa
-   - FWK04_25175: bgc=SEM_BGC, size=452aa
-   - FWK04_25185: bgc=SEM_BGC, size=75aa
-   - FWK04_25240: bgc=SEM_BGC, size=81aa
-   - FWK04_25250: bgc=SEM_BGC, size=347aa
-   - FWK04_25255: bgc=SEM_BGC, size=207aa
-   - FWK04_25290: bgc=SEM_BGC, size=392aa
-   - FWK04_25295: bgc=SEM_BGC, size=181aa
-   - FWK04_25310: bgc=SEM_BGC, size=594aa
-   - FWK04_25315: bgc=SEM_BGC, size=193aa
-   - FWK04_25330: bgc=SEM_BGC, size=412aa
-   - FWK04_25355: bgc=SEM_BGC, size=60aa
-   - FWK04_25370: bgc=SEM_BGC, size=241aa
-   - FWK04_25390: bgc=SEM_BGC, size=86aa
-   - FWK04_25445: bgc=SEM_BGC, size=165aa
-   - FWK04_25460: bgc=SEM_BGC, size=383aa
-   - FWK04_25465: bgc=SEM_BGC, size=1206aa
-   - FWK04_25470: bgc=SEM_BGC, size=277aa
-   - FWK04_25490: bgc=SEM_BGC, size=186aa
-   - FWK04_25495: bgc=SEM_BGC, size=125aa
-   - FWK04_25610: bgc=SEM_BGC, size=359aa
-   - FWK04_25615: bgc=SEM_BGC, size=327aa
-   - FWK04_25640: bgc=SEM_BGC, size=544aa
-   - FWK04_25645: bgc=SEM_BGC, size=86aa
-   - FWK04_25655: bgc=SEM_BGC, size=514aa
-   - FWK04_25660: bgc=SEM_BGC, size=62aa
-   - FWK04_25665: bgc=SEM_BGC, size=130aa
-   - FWK04_25680: bgc=SEM_BGC, size=97aa
-   - FWK04_25720: bgc=SEM_BGC, size=239aa
-   - FWK04_25725: bgc=SEM_BGC, size=295aa
-   - FWK04_25730: bgc=SEM_BGC, size=169aa
-   - FWK04_25735: bgc=SEM_BGC, size=82aa
-   - FWK04_25750: bgc=SEM_BGC, size=3aa
-   - FWK04_25760: bgc=SEM_BGC, size=275aa
-   - FWK04_25765: bgc=SEM_BGC, size=153aa
-   - FWK04_25770: bgc=SEM_BGC, size=212aa
-   - FWK04_25790: bgc=SEM_BGC, size=82aa
-   - FWK04_25850: bgc=SEM_BGC, size=444aa
-   - FWK04_25910: bgc=SEM_BGC, size=154aa
-   - FWK04_25940: bgc=SEM_BGC, size=182aa
-   - FWK04_25955: bgc=SEM_BGC, size=168aa
-   - FWK04_25960: bgc=SEM_BGC, size=125aa
-   - FWK04_26005: bgc=SEM_BGC, size=63aa
-   - FWK04_26045: bgc=SEM_BGC, size=64aa
-   - FWK04_26060: bgc=SEM_BGC, size=137aa
-   - FWK04_26065: bgc=SEM_BGC, size=562aa
-   - FWK04_26070: bgc=SEM_BGC, size=2118aa
-   - FWK04_26075: bgc=SEM_BGC, size=439aa
-   - FWK04_26080: bgc=SEM_BGC, size=102aa
-   - FWK04_26095: bgc=SEM_BGC, size=345aa
-   - FWK04_26105: bgc=SEM_BGC, size=87aa
-   - FWK04_26110: bgc=SEM_BGC, size=297aa
-   - FWK04_26120: bgc=SEM_BGC, size=390aa
-   - FWK04_26145: bgc=SEM_BGC, size=79aa
-   - FWK04_26160: bgc=SEM_BGC, size=517aa
-   - FWK04_26175: bgc=SEM_BGC, size=187aa
-   - FWK04_26185: bgc=SEM_BGC, size=299aa
-   - FWK04_26190: bgc=SEM_BGC, size=153aa
-   - FWK04_26200: bgc=SEM_BGC, size=180aa
-   - FWK04_26205: bgc=SEM_BGC, size=1325aa
-   - FWK04_26210: bgc=SEM_BGC, size=91aa
-   - FWK04_26215: bgc=SEM_BGC, size=72aa
-   - FWK04_26220: bgc=SEM_BGC, size=268aa
-   - FWK04_26225: bgc=SEM_BGC, size=113aa
-   - FWK04_26230: bgc=SEM_BGC, size=76aa
-   - FWK04_26235: bgc=SEM_BGC, size=122aa
-   - FWK04_26240: bgc=SEM_BGC, size=212aa
-   - FWK04_26245: bgc=SEM_BGC, size=93aa
-   - FWK04_26250: bgc=SEM_BGC, size=60aa
-   - FWK04_26255: bgc=SEM_BGC, size=64aa
-   - FWK04_26260: bgc=SEM_BGC, size=219aa
-   - FWK04_26265: bgc=SEM_BGC, size=721aa
-   - FWK04_26275: bgc=SEM_BGC, size=83aa
-   - FWK04_26280: bgc=SEM_BGC, size=66aa
-   - FWK04_26285: bgc=SEM_BGC, size=617aa
-   - FWK04_26300: bgc=SEM_BGC, size=186aa
-   - FWK04_26305: bgc=SEM_BGC, size=191aa
-   - FWK04_26310: bgc=SEM_BGC, size=16aa
-   - FWK04_26320: bgc=SEM_BGC, size=59aa
-   - FWK04_26340: bgc=SEM_BGC, size=172aa
-   - FWK04_26360: bgc=SEM_BGC, size=68aa
-   - FWK04_26555: bgc=SEM_BGC, size=270aa
-   - FWK04_26565: bgc=SEM_BGC, size=238aa
-   - FWK04_26570: bgc=SEM_BGC, size=218aa
-   - FWK04_26575: bgc=SEM_BGC, size=151aa
-   - FWK04_26580: bgc=SEM_BGC, size=99aa
-   - FWK04_26610: bgc=SEM_BGC, size=85aa
-   - FWK04_03450: bgc=SEM_BGC, size=81aa
-   - FWK04_03470: bgc=SEM_BGC, size=933aa
-   - FWK04_03490: bgc=SEM_BGC, size=141aa
-   - FWK04_03505: bgc=SEM_BGC, size=78aa
-   - FWK04_03520: bgc=SEM_BGC, size=203aa
-   - FWK04_03535: bgc=SEM_BGC, size=199aa
-   - FWK04_03545: bgc=SEM_BGC, size=140aa
-   - FWK04_03555: bgc=SEM_BGC, size=61aa
-   - FWK04_03580: bgc=SEM_BGC, size=117aa
-   - FWK04_03600: bgc=SEM_BGC, size=204aa
-   - FWK04_03610: bgc=SEM_BGC, size=549aa
-   - FWK04_03615: bgc=SEM_BGC, size=98aa
-   - FWK04_03650: bgc=SEM_BGC, size=66aa
-   - FWK04_03740: bgc=SEM_BGC, size=121aa
-   - FWK04_03745: bgc=SEM_BGC, size=94aa
-   - FWK04_03750: bgc=SEM_BGC, size=363aa
-   - FWK04_03780: bgc=SEM_BGC, size=206aa
-   - FWK04_03820: bgc=SEM_BGC, size=106aa
-   - FWK04_03915: bgc=SEM_BGC, size=307aa
-   - FWK04_03935: bgc=SEM_BGC, size=73aa
-   - FWK04_03950: bgc=SEM_BGC, size=207aa
-   - FWK04_03965: bgc=SEM_BGC, size=134aa
-   - FWK04_03970: bgc=SEM_BGC, size=148aa
-   - FWK04_04045: bgc=SEM_BGC, size=126aa
-   - FWK04_04050: bgc=SEM_BGC, size=1215aa
-   - FWK04_04070: bgc=SEM_BGC, size=73aa
-   - FWK04_04110: bgc=SEM_BGC, size=202aa
-   - FWK04_04130: bgc=SEM_BGC, size=186aa
-   - FWK04_04135: bgc=SEM_BGC, size=225aa
-   - FWK04_04160: bgc=SEM_BGC, size=165aa
-   - FWK04_04240: bgc=SEM_BGC, size=387aa
-   - FWK04_04245: bgc=SEM_BGC, size=120aa
-   - FWK04_04295: bgc=SEM_BGC, size=127aa
-   - FWK04_04300: bgc=SEM_BGC, size=172aa
-   - FWK04_04305: bgc=SEM_BGC, size=542aa
-   - FWK04_04330: bgc=SEM_BGC, size=99aa
-   - FWK04_04355: bgc=SEM_BGC, size=172aa
-   - FWK04_04385: bgc=SEM_BGC, size=1225aa
-   - FWK04_04390: bgc=SEM_BGC, size=261aa
-   - FWK04_04395: bgc=SEM_BGC, size=998aa
-   - FWK04_04410: bgc=SEM_BGC, size=169aa
-   - FWK04_04415: bgc=SEM_BGC, size=133aa
-   - FWK04_04420: bgc=SEM_BGC, size=102aa
-   - FWK04_26670: bgc=SEM_BGC, size=180aa
-   - FWK04_26695: bgc=SEM_BGC, size=538aa
-   - FWK04_26700: bgc=SEM_BGC, size=1313aa
-   - FWK04_26715: bgc=SEM_BGC, size=98aa
-   - FWK04_26750: bgc=SEM_BGC, size=65aa
-   - FWK04_26780: bgc=SEM_BGC, size=148aa
-   - FWK04_26790: bgc=SEM_BGC, size=59aa
-   - FWK04_26815: bgc=SEM_BGC, size=108aa
-   - FWK04_26830: bgc=SEM_BGC, size=120aa
-   - FWK04_26835: bgc=SEM_BGC, size=459aa
-   - FWK04_26840: bgc=SEM_BGC, size=328aa
-   - FWK04_26850: bgc=SEM_BGC, size=102aa
-   - FWK04_26860: bgc=SEM_BGC, size=44aa
-   - FWK04_26875: bgc=SEM_BGC, size=274aa
-   - FWK04_26900: bgc=SEM_BGC, size=472aa
-   - FWK04_26905: bgc=SEM_BGC, size=1225aa
-   - FWK04_26930: bgc=SEM_BGC, size=90aa
-   - FWK04_26945: bgc=SEM_BGC, size=538aa
-   - FWK04_27010: bgc=SEM_BGC, size=165aa
-   - FWK04_27015: bgc=SEM_BGC, size=62aa
-   - FWK04_27030: bgc=SEM_BGC, size=109aa
-   - FWK04_27090: bgc=SEM_BGC, size=608aa
-   - FWK04_27125: bgc=SEM_BGC, size=172aa
-   - FWK04_27145: bgc=SEM_BGC, size=211aa
-   - FWK04_27165: bgc=SEM_BGC, size=247aa
-   - FWK04_27190: bgc=SEM_BGC, size=125aa
-   - FWK04_27255: bgc=SEM_BGC, size=165aa
-   - FWK04_27280: bgc=SEM_BGC, size=259aa
-   - FWK04_27290: bgc=SEM_BGC, size=69aa
-   - FWK04_27305: bgc=SEM_BGC, size=165aa
-   - FWK04_27325: bgc=SEM_BGC, size=119aa
-   - FWK04_27395: bgc=SEM_BGC, size=8aa
-   - FWK04_27405: bgc=SEM_BGC, size=157aa
-   - FWK04_27410: bgc=SEM_BGC, size=400aa
-   - FWK04_27425: bgc=SEM_BGC, size=353aa
-   - FWK04_27430: bgc=SEM_BGC, size=632aa
-   - FWK04_27435: bgc=SEM_BGC, size=116aa
-   - FWK04_27445: bgc=SEM_BGC, size=265aa
-   - FWK04_27460: bgc=SEM_BGC, size=73aa
-   - FWK04_27485: bgc=SEM_BGC, size=83aa
-   - FWK04_27495: bgc=SEM_BGC, size=160aa
-   - FWK04_27520: bgc=SEM_BGC, size=120aa
-   - FWK04_27530: bgc=SEM_BGC, size=443aa
-   - FWK04_27535: bgc=SEM_BGC, size=88aa
-   - FWK04_27540: bgc=SEM_BGC, size=60aa
-   - FWK04_27585: bgc=SEM_BGC, size=220aa
-   - FWK04_27650: bgc=SEM_BGC, size=123aa
-   - FWK04_27660: bgc=SEM_BGC, size=179aa
-   - FWK04_27675: bgc=SEM_BGC, size=128aa
-   - FWK04_27690: bgc=SEM_BGC, size=780aa
-   - FWK04_27695: bgc=SEM_BGC, size=63aa
-   - FWK04_27735: bgc=SEM_BGC, size=88aa
-   - FWK04_27815: bgc=SEM_BGC, size=210aa
-   - FWK04_27830: bgc=SEM_BGC, size=1196aa
-   - FWK04_27835: bgc=SEM_BGC, size=220aa
-   - FWK04_27855: bgc=SEM_BGC, size=157aa
-   - FWK04_27880: bgc=SEM_BGC, size=59aa
-   - FWK04_27885: bgc=SEM_BGC, size=181aa
-   - FWK04_27890: bgc=SEM_BGC, size=129aa
-   - FWK04_27925: bgc=SEM_BGC, size=124aa
-   - FWK04_27940: bgc=SEM_BGC, size=228aa
-   - FWK04_27960: bgc=SEM_BGC, size=135aa
-   - FWK04_27995: bgc=SEM_BGC, size=138aa
-   - FWK04_28005: bgc=SEM_BGC, size=233aa
-   - FWK04_28040: bgc=SEM_BGC, size=433aa
-   - FWK04_28060: bgc=SEM_BGC, size=150aa
-   - FWK04_28065: bgc=SEM_BGC, size=92aa
-   - FWK04_28085: bgc=SEM_BGC, size=194aa
-   - FWK04_28100: bgc=SEM_BGC, size=144aa
-   - FWK04_28115: bgc=SEM_BGC, size=98aa
-   - FWK04_28130: bgc=SEM_BGC, size=86aa
-   - FWK04_28160: bgc=SEM_BGC, size=117aa
-   - FWK04_28190: bgc=SEM_BGC, size=158aa
-   - FWK04_28195: bgc=SEM_BGC, size=406aa
-   - FWK04_28200: bgc=SEM_BGC, size=66aa
-   - FWK04_28215: bgc=SEM_BGC, size=187aa
-   - FWK04_28220: bgc=SEM_BGC, size=187aa
-   - FWK04_28235: bgc=SEM_BGC, size=400aa
-   - FWK04_28270: bgc=SEM_BGC, size=592aa
-   - FWK04_28275: bgc=SEM_BGC, size=486aa
-   - FWK04_28280: bgc=SEM_BGC, size=73aa
-   - FWK04_28290: bgc=SEM_BGC, size=122aa
-   - FWK04_28325: bgc=SEM_BGC, size=100aa
-   - FWK04_28350: bgc=SEM_BGC, size=77aa
-   - FWK04_28355: bgc=SEM_BGC, size=66aa
-   - FWK04_28370: bgc=SEM_BGC, size=287aa
-   - FWK04_28425: bgc=SEM_BGC, size=303aa
-   - FWK04_28435: bgc=SEM_BGC, size=765aa
-   - FWK04_28440: bgc=SEM_BGC, size=744aa
-   - FWK04_28465: bgc=SEM_BGC, size=459aa
-   - FWK04_28495: bgc=SEM_BGC, size=83aa
-   - FWK04_28500: bgc=SEM_BGC, size=127aa
-   - FWK04_28510: bgc=SEM_BGC, size=83aa
-   - FWK04_28550: bgc=SEM_BGC, size=184aa
-   - FWK04_28570: bgc=SEM_BGC, size=105aa
-   - FWK04_28610: bgc=SEM_BGC, size=257aa
-   - FWK04_28660: bgc=SEM_BGC, size=91aa
-   - FWK04_28710: bgc=SEM_BGC, size=173aa
-   - FWK04_28725: bgc=SEM_BGC, size=299aa
-   - FWK04_28730: bgc=SEM_BGC, size=71aa
-   - FWK04_28765: bgc=SEM_BGC, size=286aa
-   - FWK04_28770: bgc=SEM_BGC, size=77aa
-   - FWK04_28780: bgc=SEM_BGC, size=66aa
-   - FWK04_28820: bgc=SEM_BGC, size=342aa
-   - FWK04_28825: bgc=SEM_BGC, size=237aa
-   - FWK04_28850: bgc=SEM_BGC, size=97aa
-   - FWK04_28865: bgc=SEM_BGC, size=135aa
-   - FWK04_28870: bgc=SEM_BGC, size=257aa
-   - FWK04_28900: bgc=SEM_BGC, size=139aa
-   - FWK04_28920: bgc=SEM_BGC, size=147aa
-   - FWK04_28935: bgc=SEM_BGC, size=67aa
-   - FWK04_04520: bgc=SEM_BGC, size=142aa
-   - FWK04_04545: bgc=SEM_BGC, size=242aa
-   - FWK04_04555: bgc=SEM_BGC, size=966aa
-   - FWK04_04560: bgc=SEM_BGC, size=147aa
-   - FWK04_04565: bgc=SEM_BGC, size=132aa
-   - FWK04_04580: bgc=SEM_BGC, size=59aa
-   - FWK04_04595: bgc=SEM_BGC, size=66aa
-   - FWK04_04615: bgc=SEM_BGC, size=108aa
-   - FWK04_04640: bgc=SEM_BGC, size=65aa
-   - FWK04_04675: bgc=SEM_BGC, size=479aa
-   - FWK04_04685: bgc=SEM_BGC, size=296aa
-   - FWK04_04710: bgc=SEM_BGC, size=136aa
-   - FWK04_04720: bgc=SEM_BGC, size=79aa
-   - FWK04_04730: bgc=SEM_BGC, size=91aa
-   - FWK04_04735: bgc=SEM_BGC, size=91aa
-   - FWK04_04810: bgc=SEM_BGC, size=85aa
-   - FWK04_04835: bgc=SEM_BGC, size=130aa
-   - FWK04_04845: bgc=SEM_BGC, size=56aa
-   - FWK04_04850: bgc=SEM_BGC, size=97aa
-   - FWK04_04920: bgc=SEM_BGC, size=128aa
-   - FWK04_04940: bgc=SEM_BGC, size=92aa
-   - FWK04_04950: bgc=SEM_BGC, size=70aa
-   - FWK04_04970: bgc=SEM_BGC, size=70aa
-   - FWK04_04975: bgc=SEM_BGC, size=824aa
-   - FWK04_04980: bgc=SEM_BGC, size=106aa
-   - FWK04_05005: bgc=SEM_BGC, size=389aa
-   - FWK04_05060: bgc=SEM_BGC, size=60aa
-   - FWK04_05100: bgc=SEM_BGC, size=65aa
-   - FWK04_05160: bgc=SEM_BGC, size=1299aa
-   - FWK04_05180: bgc=SEM_BGC, size=124aa
-   - FWK04_05190: bgc=SEM_BGC, size=92aa
-   - FWK04_05215: bgc=SEM_BGC, size=239aa
-   - FWK04_05225: bgc=SEM_BGC, size=61aa
-   - FWK04_05245: bgc=SEM_BGC, size=97aa
-   - FWK04_05250: bgc=SEM_BGC, size=154aa
-   - FWK04_05260: bgc=SEM_BGC, size=87aa
-   - FWK04_05265: bgc=SEM_BGC, size=76aa
-   - FWK04_05280: bgc=SEM_BGC, size=124aa
-   - FWK04_05285: bgc=SEM_BGC, size=280aa
-   - FWK04_05290: bgc=SEM_BGC, size=77aa
-   - FWK04_05305: bgc=SEM_BGC, size=64aa
-   - FWK04_05340: bgc=SEM_BGC, size=67aa
-   - FWK04_05355: bgc=SEM_BGC, size=78aa
-   - FWK04_05385: bgc=SEM_BGC, size=326aa
-   - FWK04_29015: bgc=SEM_BGC, size=99aa
-   - FWK04_29020: bgc=SEM_BGC, size=452aa
-   - FWK04_29030: bgc=SEM_BGC, size=120aa
-   - FWK04_29040: bgc=SEM_BGC, size=154aa
-   - FWK04_29055: bgc=SEM_BGC, size=203aa
-   - FWK04_29060: bgc=SEM_BGC, size=819aa
-   - FWK04_29075: bgc=SEM_BGC, size=92aa
-   - FWK04_29080: bgc=SEM_BGC, size=67aa
-   - FWK04_29090: bgc=SEM_BGC, size=134aa
-   - FWK04_29250: bgc=SEM_BGC, size=208aa
-   - FWK04_29285: bgc=SEM_BGC, size=91aa
-   - FWK04_29330: bgc=SEM_BGC, size=78aa
-   - FWK04_29365: bgc=SEM_BGC, size=63aa
-   - FWK04_29390: bgc=SEM_BGC, size=67aa
-   - FWK04_29450: bgc=SEM_BGC, size=107aa
-   - FWK04_29485: bgc=SEM_BGC, size=212aa
-   - FWK04_29510: bgc=SEM_BGC, size=81aa
-   - FWK04_29520: bgc=SEM_BGC, size=182aa
-   - FWK04_29550: bgc=SEM_BGC, size=80aa
-   - FWK04_29555: bgc=SEM_BGC, size=34aa
-   - FWK04_29575: bgc=SEM_BGC, size=77aa
-   - FWK04_29595: bgc=SEM_BGC, size=421aa
-   - FWK04_29600: bgc=SEM_BGC, size=189aa
-   - FWK04_29610: bgc=SEM_BGC, size=353aa
-   - FWK04_29615: bgc=SEM_BGC, size=107aa
-   - FWK04_29620: bgc=SEM_BGC, size=92aa
-   - FWK04_29625: bgc=SEM_BGC, size=240aa
-   - FWK04_29630: bgc=SEM_BGC, size=178aa
-   - FWK04_29640: bgc=SEM_BGC, size=426aa
-   - FWK04_29650: bgc=SEM_BGC, size=115aa
-   - FWK04_29660: bgc=SEM_BGC, size=69aa
-   - FWK04_29685: bgc=SEM_BGC, size=163aa
-   - FWK04_29695: bgc=SEM_BGC, size=248aa
-   - FWK04_29700: bgc=SEM_BGC, size=232aa
-   - FWK04_29705: bgc=SEM_BGC, size=162aa
-   - FWK04_29715: bgc=SEM_BGC, size=177aa
-   - FWK04_29720: bgc=SEM_BGC, size=62aa
-   - FWK04_29735: bgc=SEM_BGC, size=110aa
-   - FWK04_29775: bgc=SEM_BGC, size=218aa
-   - FWK04_29865: bgc=SEM_BGC, size=68aa
-   - FWK04_29935: bgc=SEM_BGC, size=144aa
-   - FWK04_29960: bgc=SEM_BGC, size=201aa
-   - FWK04_29975: bgc=SEM_BGC, size=66aa
-   - FWK04_30000: bgc=SEM_BGC, size=24aa
-   - FWK04_30025: bgc=SEM_BGC, size=196aa
-   - FWK04_30040: bgc=SEM_BGC, size=183aa
-   - FWK04_30060: bgc=SEM_BGC, size=618aa
-   - FWK04_30065: bgc=SEM_BGC, size=14aa
-   - FWK04_30070: bgc=SEM_BGC, size=888aa
-   - FWK04_30075: bgc=SEM_BGC, size=138aa
-   - FWK04_30080: bgc=SEM_BGC, size=59aa
-   - FWK04_30085: bgc=SEM_BGC, size=146aa
-   - FWK04_30090: bgc=SEM_BGC, size=478aa
-   - FWK04_30135: bgc=SEM_BGC, size=70aa
-   - FWK04_30160: bgc=SEM_BGC, size=130aa
-   - FWK04_30175: bgc=SEM_BGC, size=114aa
-   - FWK04_30180: bgc=SEM_BGC, size=125aa
-   - FWK04_30220: bgc=SEM_BGC, size=523aa
-   - FWK04_30230: bgc=SEM_BGC, size=79aa
-   - FWK04_30240: bgc=SEM_BGC, size=1127aa
-   - FWK04_30245: bgc=SEM_BGC, size=183aa
-   - FWK04_30270: bgc=SEM_BGC, size=773aa
-   - FWK04_30275: bgc=SEM_BGC, size=92aa
-   - FWK04_30355: bgc=SEM_BGC, size=99aa
-   - FWK04_30370: bgc=SEM_BGC, size=111aa
-   - FWK04_30395: bgc=SEM_BGC, size=739aa
-   - FWK04_30400: bgc=SEM_BGC, size=449aa
-   - FWK04_30410: bgc=SEM_BGC, size=439aa
-   - FWK04_30420: bgc=SEM_BGC, size=768aa
-   - FWK04_30425: bgc=SEM_BGC, size=401aa
-   - FWK04_30435: bgc=SEM_BGC, size=76aa
-   - FWK04_30460: bgc=SEM_BGC, size=303aa
-   - FWK04_30495: bgc=SEM_BGC, size=162aa
-   - FWK04_30505: bgc=SEM_BGC, size=68aa
-   - FWK04_30545: bgc=SEM_BGC, size=78aa
-   - FWK04_30560: bgc=SEM_BGC, size=73aa
-   - FWK04_30570: bgc=SEM_BGC, size=78aa
-   - FWK04_30595: bgc=SEM_BGC, size=193aa
-   - FWK04_30620: bgc=SEM_BGC, size=647aa
-   - FWK04_30635: bgc=SEM_BGC, size=67aa
-   - FWK04_05630: bgc=SEM_BGC, size=68aa
-   - FWK04_05670: bgc=SEM_BGC, size=35aa
-   - FWK04_05720: bgc=SEM_BGC, size=102aa
-   - FWK04_05780: bgc=SEM_BGC, size=120aa
-   - FWK04_05840: bgc=SEM_BGC, size=78aa
-   - FWK04_05860: bgc=SEM_BGC, size=149aa
-   - FWK04_05880: bgc=SEM_BGC, size=215aa
-   - FWK04_05895: bgc=SEM_BGC, size=99aa
-   - FWK04_05905: bgc=SEM_BGC, size=94aa
-   - FWK04_06020: bgc=SEM_BGC, size=96aa
-   - FWK04_06045: bgc=SEM_BGC, size=78aa
-   - FWK04_06125: bgc=SEM_BGC, size=715aa
-   - FWK04_06150: bgc=SEM_BGC, size=300aa
-   - FWK04_06155: bgc=SEM_BGC, size=63aa
-   - FWK04_06170: bgc=SEM_BGC, size=105aa
-   - FWK04_06175: bgc=SEM_BGC, size=178aa
-   - FWK04_06180: bgc=SEM_BGC, size=188aa
-   - FWK04_06190: bgc=SEM_BGC, size=83aa
-   - FWK04_06245: bgc=SEM_BGC, size=229aa
-   - FWK04_06255: bgc=SEM_BGC, size=104aa
-   - FWK04_06260: bgc=SEM_BGC, size=86aa
-   - FWK04_06275: bgc=SEM_BGC, size=242aa
-   - FWK04_06335: bgc=SEM_BGC, size=298aa
-   - FWK04_06355: bgc=SEM_BGC, size=296aa
-   - FWK04_06365: bgc=SEM_BGC, size=452aa
-   - FWK04_06535: bgc=SEM_BGC, size=106aa
-   - FWK04_06540: bgc=SEM_BGC, size=76aa
-   - FWK04_06565: bgc=SEM_BGC, size=167aa
-   - FWK04_06575: bgc=SEM_BGC, size=73aa
-   - FWK04_06585: bgc=SEM_BGC, size=763aa
-   - FWK04_06590: bgc=SEM_BGC, size=478aa
-   - FWK04_06595: bgc=SEM_BGC, size=476aa
-   - FWK04_06600: bgc=SEM_BGC, size=78aa
-   - FWK04_06615: bgc=SEM_BGC, size=74aa
-   - FWK04_06685: bgc=SEM_BGC, size=201aa
-   - FWK04_06710: bgc=SEM_BGC, size=405aa
-   - FWK04_06745: bgc=SEM_BGC, size=207aa
-   - FWK04_06755: bgc=SEM_BGC, size=65aa
-   - FWK04_30685: bgc=SEM_BGC, size=120aa
-   - FWK04_30690: bgc=SEM_BGC, size=120aa
-   - FWK04_30735: bgc=SEM_BGC, size=437aa
-   - FWK04_30790: bgc=SEM_BGC, size=435aa
-   - FWK04_30800: bgc=SEM_BGC, size=279aa
-   - FWK04_30820: bgc=SEM_BGC, size=291aa
-   - FWK04_30850: bgc=SEM_BGC, size=60aa
-   - FWK04_30865: bgc=SEM_BGC, size=127aa
-   - FWK04_30875: bgc=SEM_BGC, size=83aa
-   - FWK04_30890: bgc=SEM_BGC, size=239aa
-   - FWK04_30915: bgc=SEM_BGC, size=645aa
-   - FWK04_30920: bgc=SEM_BGC, size=64aa
-   - FWK04_30930: bgc=SEM_BGC, size=204aa
-   - FWK04_30950: bgc=SEM_BGC, size=235aa
-   - FWK04_31010: bgc=SEM_BGC, size=108aa
-   - FWK04_31015: bgc=SEM_BGC, size=165aa
-   - FWK04_31030: bgc=SEM_BGC, size=91aa
-   - FWK04_31080: bgc=SEM_BGC, size=75aa
-   - FWK04_31125: bgc=SEM_BGC, size=372aa
-   - FWK04_31155: bgc=SEM_BGC, size=86aa
-   - FWK04_31165: bgc=SEM_BGC, size=99aa
-   - FWK04_31170: bgc=SEM_BGC, size=158aa
-   - FWK04_31195: bgc=SEM_BGC, size=73aa
-   - FWK04_31220: bgc=SEM_BGC, size=176aa
-   - FWK04_31255: bgc=SEM_BGC, size=260aa
-   - FWK04_31260: bgc=SEM_BGC, size=1279aa
-   - FWK04_31280: bgc=SEM_BGC, size=63aa
-   - FWK04_31310: bgc=SEM_BGC, size=70aa
-   - FWK04_31315: bgc=SEM_BGC, size=74aa
-   - FWK04_31380: bgc=SEM_BGC, size=140aa
-   - FWK04_31385: bgc=SEM_BGC, size=65aa
-   - FWK04_31390: bgc=SEM_BGC, size=69aa
-   - FWK04_31415: bgc=SEM_BGC, size=292aa
-   - FWK04_31435: bgc=SEM_BGC, size=63aa
-   - FWK04_31445: bgc=SEM_BGC, size=362aa
-   - FWK04_31450: bgc=SEM_BGC, size=83aa
-   - FWK04_31455: bgc=SEM_BGC, size=99aa
-   - FWK04_31460: bgc=SEM_BGC, size=232aa
-   - FWK04_31510: bgc=SEM_BGC, size=256aa
-   - FWK04_31535: bgc=SEM_BGC, size=454aa
-   - FWK04_31560: bgc=SEM_BGC, size=21aa
-   - FWK04_31625: bgc=SEM_BGC, size=124aa
-   - FWK04_31650: bgc=SEM_BGC, size=226aa
-   - FWK04_31670: bgc=SEM_BGC, size=145aa
-   - FWK04_31710: bgc=SEM_BGC, size=73aa
-   - FWK04_31730: bgc=SEM_BGC, size=552aa
-   - FWK04_31745: bgc=SEM_BGC, size=79aa
-   - FWK04_06765: bgc=SEM_BGC, size=141aa
-   - FWK04_07005: bgc=SEM_BGC, size=94aa
-   - FWK04_07040: bgc=SEM_BGC, size=548aa
-   - FWK04_07095: bgc=SEM_BGC, size=110aa
-   - FWK04_07115: bgc=SEM_BGC, size=168aa
-   - FWK04_07120: bgc=SEM_BGC, size=73aa
-   - FWK04_07130: bgc=SEM_BGC, size=178aa
-   - FWK04_07230: bgc=SEM_BGC, size=98aa
-   - FWK04_07240: bgc=SEM_BGC, size=134aa
-   - FWK04_07255: bgc=SEM_BGC, size=370aa
-   - FWK04_07475: bgc=SEM_BGC, size=60aa
-   - FWK04_07480: bgc=SEM_BGC, size=94aa
-   - FWK04_07530: bgc=SEM_BGC, size=223aa
-   - FWK04_07610: bgc=SEM_BGC, size=80aa
-   - FWK04_07635: bgc=SEM_BGC, size=265aa
-   - FWK04_07650: bgc=SEM_BGC, size=81aa
-   - FWK04_07655: bgc=SEM_BGC, size=93aa
-   - FWK04_07715: bgc=SEM_BGC, size=133aa
-   - FWK04_07720: bgc=SEM_BGC, size=61aa
-   - FWK04_07740: bgc=SEM_BGC, size=335aa
-   - FWK04_31805: bgc=SEM_BGC, size=153aa
-   - FWK04_31860: bgc=SEM_BGC, size=415aa
-   - FWK04_31875: bgc=SEM_BGC, size=217aa
-   - FWK04_31890: bgc=SEM_BGC, size=302aa
-   - FWK04_31900: bgc=SEM_BGC, size=559aa
-   - FWK04_31915: bgc=SEM_BGC, size=412aa
-   - FWK04_31990: bgc=SEM_BGC, size=65aa
-   - FWK04_31995: bgc=SEM_BGC, size=213aa
-   - FWK04_32000: bgc=SEM_BGC, size=448aa
-   - FWK04_32005: bgc=SEM_BGC, size=1278aa
-   - FWK04_32010: bgc=SEM_BGC, size=60aa
-   - FWK04_32015: bgc=SEM_BGC, size=69aa
-   - FWK04_32025: bgc=SEM_BGC, size=69aa
-   - FWK04_32035: bgc=SEM_BGC, size=91aa
-   - FWK04_32055: bgc=terpene, size=431aa
-   - FWK04_32130: bgc=SEM_BGC, size=85aa
-   - FWK04_32135: bgc=SEM_BGC, size=20aa
-   - FWK04_32145: bgc=SEM_BGC, size=286aa
-   - FWK04_32150: bgc=SEM_BGC, size=126aa
-   - FWK04_32155: bgc=SEM_BGC, size=72aa
-   - FWK04_32160: bgc=SEM_BGC, size=79aa
-   - FWK04_32180: bgc=SEM_BGC, size=1473aa
-   - FWK04_32185: bgc=SEM_BGC, size=75aa
-   - FWK04_32215: bgc=SEM_BGC, size=141aa
-   - FWK04_32280: bgc=SEM_BGC, size=33aa
-   - FWK04_32320: bgc=SEM_BGC, size=78aa
-   - FWK04_32340: bgc=SEM_BGC, size=174aa
-   - FWK04_32430: bgc=SEM_BGC, size=68aa
-   - FWK04_32485: bgc=SEM_BGC, size=161aa
-   - FWK04_32490: bgc=SEM_BGC, size=174aa
-   - FWK04_32515: bgc=SEM_BGC, size=296aa
-   - FWK04_32525: bgc=SEM_BGC, size=259aa
-   - FWK04_07765: bgc=SEM_BGC, size=389aa
-   - FWK04_07800: bgc=SEM_BGC, size=6aa
-   - FWK04_07835: bgc=SEM_BGC, size=155aa
-   - FWK04_07910: bgc=SEM_BGC, size=108aa
-   - FWK04_07920: bgc=SEM_BGC, size=106aa
-   - FWK04_07930: bgc=SEM_BGC, size=343aa
-   - FWK04_07945: bgc=SEM_BGC, size=207aa
-   - FWK04_07950: bgc=SEM_BGC, size=1346aa
-   - FWK04_07965: bgc=SEM_BGC, size=78aa
-   - FWK04_08015: bgc=SEM_BGC, size=62aa
-   - FWK04_08020: bgc=SEM_BGC, size=463aa
-   - FWK04_08025: bgc=SEM_BGC, size=74aa
-   - FWK04_08065: bgc=SEM_BGC, size=193aa
-   - FWK04_08075: bgc=SEM_BGC, size=372aa
-   - FWK04_08090: bgc=SEM_BGC, size=73aa
-   - FWK04_08095: bgc=SEM_BGC, size=601aa
-   - FWK04_08165: bgc=SEM_BGC, size=148aa
-   - FWK04_08230: bgc=SEM_BGC, size=214aa
-   - FWK04_08240: bgc=SEM_BGC, size=124aa
-   - FWK04_08245: bgc=SEM_BGC, size=94aa
-   - FWK04_08310: bgc=SEM_BGC, size=289aa
-   - FWK04_08345: bgc=SEM_BGC, size=370aa
-   - FWK04_08370: bgc=SEM_BGC, size=191aa
-   - FWK04_08380: bgc=SEM_BGC, size=524aa
-   - FWK04_08450: bgc=SEM_BGC, size=103aa
-   - FWK04_08475: bgc=SEM_BGC, size=106aa
-   - FWK04_08490: bgc=SEM_BGC, size=353aa
-   - FWK04_08510: bgc=SEM_BGC, size=201aa
-   - FWK04_08515: bgc=SEM_BGC, size=412aa
-   - FWK04_08535: bgc=SEM_BGC, size=61aa
-   - FWK04_08540: bgc=SEM_BGC, size=113aa
-   - FWK04_08550: bgc=SEM_BGC, size=94aa
-   - FWK04_08555: bgc=SEM_BGC, size=97aa
-   - FWK04_08560: bgc=SEM_BGC, size=86aa
-   - FWK04_08565: bgc=SEM_BGC, size=126aa
-   - FWK04_08570: bgc=SEM_BGC, size=75aa
-   - FWK04_08575: bgc=SEM_BGC, size=108aa
-   - FWK04_08580: bgc=SEM_BGC, size=129aa
-   - FWK04_08585: bgc=SEM_BGC, size=83aa
-   - FWK04_08590: bgc=SEM_BGC, size=118aa
-   - FWK04_08600: bgc=SEM_BGC, size=78aa
-   - FWK04_08605: bgc=SEM_BGC, size=71aa
-   - FWK04_08610: bgc=SEM_BGC, size=154aa
-   - FWK04_08615: bgc=SEM_BGC, size=224aa
-   - FWK04_08620: bgc=SEM_BGC, size=489aa
-   - FWK04_08625: bgc=SEM_BGC, size=64aa
-   - FWK04_08630: bgc=SEM_BGC, size=124aa
-   - FWK04_08635: bgc=SEM_BGC, size=188aa
-   - FWK04_08640: bgc=SEM_BGC, size=270aa
-   - FWK04_08645: bgc=SEM_BGC, size=664aa
-   - FWK04_08650: bgc=SEM_BGC, size=81aa
-   - FWK04_08655: bgc=SEM_BGC, size=225aa
-   - FWK04_08660: bgc=SEM_BGC, size=225aa
-   - FWK04_08665: bgc=SEM_BGC, size=83aa
-   - FWK04_08670: bgc=SEM_BGC, size=131aa
-   - FWK04_08675: bgc=SEM_BGC, size=523aa
-   - FWK04_08680: bgc=SEM_BGC, size=132aa
-   - FWK04_08685: bgc=SEM_BGC, size=185aa
-   - FWK04_08690: bgc=SEM_BGC, size=86aa
-   - FWK04_08695: bgc=SEM_BGC, size=60aa
-   - FWK04_08700: bgc=SEM_BGC, size=68aa
-   - FWK04_08710: bgc=SEM_BGC, size=84aa
-   - FWK04_08715: bgc=SEM_BGC, size=430aa
-   - FWK04_08720: bgc=SEM_BGC, size=82aa
-   - FWK04_08740: bgc=SEM_BGC, size=43aa
-   - FWK04_08750: bgc=SEM_BGC, size=55aa
-   - FWK04_08770: bgc=SEM_BGC, size=166aa
-   - FWK04_08780: bgc=SEM_BGC, size=152aa
-   - FWK04_32530: bgc=SEM_BGC, size=18aa
-   - FWK04_32560: bgc=SEM_BGC, size=87aa
-   - FWK04_32615: bgc=SEM_BGC, size=22aa
-   - FWK04_32680: bgc=SEM_BGC, size=141aa
-   - FWK04_32725: bgc=SEM_BGC, size=78aa
-   - FWK04_32730: bgc=SEM_BGC, size=190aa
-   - FWK04_32745: bgc=SEM_BGC, size=103aa
-   - FWK04_32755: bgc=SEM_BGC, size=23aa
-   - FWK04_08890: bgc=SEM_BGC, size=61aa
-   - FWK04_08920: bgc=SEM_BGC, size=584aa
-   - FWK04_08930: bgc=SEM_BGC, size=195aa
-   - FWK04_09060: bgc=SEM_BGC, size=66aa
-   - FWK04_09070: bgc=SEM_BGC, size=121aa
-   - FWK04_09090: bgc=SEM_BGC, size=62aa
-   - FWK04_09120: bgc=SEM_BGC, size=185aa
-   - FWK04_09135: bgc=SEM_BGC, size=82aa
-   - FWK04_09185: bgc=SEM_BGC, size=68aa
-   - FWK04_09250: bgc=SEM_BGC, size=162aa
-   - FWK04_09255: bgc=SEM_BGC, size=219aa
-   - FWK04_09285: bgc=SEM_BGC, size=65aa
-   - FWK04_09365: bgc=SEM_BGC, size=83aa
-   - FWK04_09370: bgc=SEM_BGC, size=288aa
-   - FWK04_09385: bgc=SEM_BGC, size=115aa
-   - FWK04_09390: bgc=SEM_BGC, size=1683aa
-   - FWK04_09430: bgc=SEM_BGC, size=66aa
-   - FWK04_09435: bgc=SEM_BGC, size=71aa
-   - FWK04_09465: bgc=SEM_BGC, size=97aa
-   - FWK04_09495: bgc=SEM_BGC, size=115aa
-   - FWK04_09520: bgc=SEM_BGC, size=1588aa
-   - FWK04_09565: bgc=SEM_BGC, size=280aa
-   - FWK04_09620: bgc=SEM_BGC, size=98aa
-   - FWK04_09655: bgc=SEM_BGC, size=415aa
-   - FWK04_09665: bgc=SEM_BGC, size=79aa
-   - FWK04_09675: bgc=SEM_BGC, size=184aa
-   - FWK04_09700: bgc=SEM_BGC, size=487aa
-   - FWK04_09710: bgc=SEM_BGC, size=317aa
-   - FWK04_09750: bgc=SEM_BGC, size=68aa
-   - FWK04_09770: bgc=SEM_BGC, size=63aa
-   - FWK04_09860: bgc=SEM_BGC, size=186aa
-   - FWK04_32780: bgc=SEM_BGC, size=105aa
-   - FWK04_09905: bgc=SEM_BGC, size=71aa
-   - FWK04_09930: bgc=SEM_BGC, size=147aa
-   - FWK04_09980: bgc=SEM_BGC, size=70aa
-   - FWK04_10020: bgc=SEM_BGC, size=246aa
-   - FWK04_10025: bgc=SEM_BGC, size=205aa
-   - FWK04_10070: bgc=SEM_BGC, size=142aa
-   - FWK04_10120: bgc=SEM_BGC, size=165aa
-   - FWK04_10150: bgc=SEM_BGC, size=408aa
-   - FWK04_10220: bgc=SEM_BGC, size=333aa
-   - FWK04_10245: bgc=SEM_BGC, size=175aa
-   - FWK04_10250: bgc=SEM_BGC, size=245aa
-   - FWK04_10315: bgc=SEM_BGC, size=728aa
-   - FWK04_10370: bgc=SEM_BGC, size=747aa
-   - FWK04_10405: bgc=SEM_BGC, size=124aa
-   - FWK04_10410: bgc=SEM_BGC, size=69aa
-   - FWK04_10435: bgc=SEM_BGC, size=117aa
-   - FWK04_10440: bgc=SEM_BGC, size=147aa
-   - FWK04_10465: bgc=SEM_BGC, size=86aa
-   - FWK04_10530: bgc=SEM_BGC, size=141aa
-   - FWK04_10640: bgc=SEM_BGC, size=64aa
-   - FWK04_10680: bgc=SEM_BGC, size=246aa
-   - FWK04_10760: bgc=SEM_BGC, size=230aa
-   - FWK04_10815: bgc=SEM_BGC, size=99aa
-   - FWK04_10845: bgc=SEM_BGC, size=113aa
-
-📈 BREAKDOWN POR BGC (FINAL - APÓS DEDUP + FILTRAGEM):
    - NRPS: 20 proteína(s)
    - NRPS-like: 10 proteína(s)
    - PKS-like: 4 proteína(s)
    - RRE-containing: 1 proteína(s)
+   - SEM_BGC: 1307 proteína(s)
    - T1PKS: 6 proteína(s)
    - T3PKS: 4 proteína(s)
-   - azole-containing-RiPP: 6 proteína(s)
+   - azole-containing-RiPP: 7 proteína(s)
    - cyanobactin: 4 proteína(s)
    - darobactin: 1 proteína(s)
    - hglE-KS: 14 proteína(s)
@@ -2689,9 +1459,41 @@
    - phosphonate: 2 proteína(s)
    - proteusin: 2 proteína(s)
    - redox-cofactor: 1 proteína(s)
-   - terpene: 18 proteína(s)
+   - terpene: 20 proteína(s)
    - terpene-precursor: 3 proteína(s)
    - transAT-PKS: 4 proteína(s)
 
-✨ RESULTADO FINAL: 122 proteína(s) (sem duplicatas e sem aparecer apenas 1x)
+======================================================================
+🔄 APLICANDO DEDUPLICAÇÃO...
+======================================================================
+
+✅ Deduplicação concluída:
+   Antes: 1432 proteínas
+   Depois: 1432 proteínas
+   Removido: 0 duplicatas
+
+📈 BREAKDOWN POR BGC (FINAL):
+   - NRPS: 20 proteína(s)
+   - NRPS-like: 10 proteína(s)
+   - PKS-like: 4 proteína(s)
+   - RRE-containing: 1 proteína(s)
+   - SEM_BGC: 1307 proteína(s)
+   - T1PKS: 6 proteína(s)
+   - T3PKS: 4 proteína(s)
+   - azole-containing-RiPP: 7 proteína(s)
+   - cyanobactin: 4 proteína(s)
+   - darobactin: 1 proteína(s)
+   - hglE-KS: 14 proteína(s)
+   - lanthipeptide-class-ii: 4 proteína(s)
+   - lanthipeptide-class-v: 32 proteína(s)
+   - microviridin: 7 proteína(s)
+   - mycosporine: 3 proteína(s)
+   - phosphonate: 2 proteína(s)
+   - proteusin: 2 proteína(s)
+   - redox-cofactor: 1 proteína(s)
+   - terpene: 20 proteína(s)
+   - terpene-precursor: 3 proteína(s)
+   - transAT-PKS: 4 proteína(s)
+
+✨ RESULTADO FINAL: 1432 proteína(s) (sem duplicatas)
 ======================================================================

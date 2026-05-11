@@ -312,7 +312,6 @@
                         </div>
                     </div>
 
-                    <!-- Painel de progresso por proteína (visível durante step 3) -->
                     <div id="analysis-timer-panel" class="analysis-timer-panel" style="display:none;">
                         <div class="timer-stats-row">
                             <div class="timer-stat">
@@ -337,6 +336,13 @@
 
                     <div class="loading-spinner">
                         <div class="spinner"></div>
+                    </div>
+
+                    <!-- Botão de cancelar (visível apenas durante análise InterProScan) -->
+                    <div id="cancel-analysis-container" style="display:none; text-align:center; margin-top: 24px;">
+                        <button class="btn btn-secondary" onclick="cancelAnalysis()" style="padding: 10px 24px; font-size: 0.95em;">
+                            ⛔ Cancelar e ver resultado parcial
+                        </button>
                     </div>
                 </div>
             </main>

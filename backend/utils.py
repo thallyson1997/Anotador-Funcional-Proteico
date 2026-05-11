@@ -361,8 +361,19 @@ def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
         if filename.endswith('.zip'):
             # Extrair GBK do ZIP
             with zipfile.ZipFile(io.BytesIO(file_content)) as zf:
-                gbk_files = [f for f in zf.namelist() if f.endswith('.gbk')]
-                
+                all_gbk_files = [f for f in zf.namelist() if f.endswith('.gbk')]
+
+                # O ZIP do antiSMASH contém:
+                #   - GBKs do genoma/contig completo (ex: genome.gbk, VRZE01.gbk)
+                #   - GBKs por região BGC (ex: genome.region001.gbk)
+                #
+                # Lemos APENAS os GBKs completos (não-região), pois eles contêm
+                # TODAS as proteínas hipotéticas com anotações BGC completas.
+                # Isso permite que o filtro "apenas clusters BGC" funcione corretamente.
+                # Se não houver GBK completo (ZIP incomum), cai nos region*.gbk.
+                genome_gbk_files = [f for f in all_gbk_files if not re.search(r'region\d+', f, re.IGNORECASE)]
+                gbk_files = genome_gbk_files if genome_gbk_files else all_gbk_files
+
                 for gbk_name in gbk_files:
                     gbk_bytes = zf.read(gbk_name)
                     proteins = parse_gbk_content(gbk_bytes, gbk_name)
@@ -443,42 +454,11 @@ def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
     debug_output.append(f"   Depois: {len(deduplicated)} proteínas")
     debug_output.append(f"   Removido: {len(all_proteins) - len(deduplicated)} duplicatas")
     
-    # ===== FILTRAGEM: Remover proteínas que aparecem APENAS 1x =====
-    debug_output.append("\n" + "="*70)
-    debug_output.append("🔎 FILTRAGEM: Removendo proteins que aparecem APENAS 1x...")
-    debug_output.append("="*70)
-    
-    # Manter apenas proteínas que FORAM duplicadas (apareceram 2+ vezes)
-    deduplicated_filtered = [
-        p for p in deduplicated 
-        if p.get('locus_tag', '') and tag_counts.get(p.get('locus_tag', ''), 0) > 1
-    ]
-    
-    debug_output.append(f"\n✅ Filtragem concluída:")
-    debug_output.append(f"   Antes (com 1x): {len(deduplicated)} proteínas")
-    debug_output.append(f"   Depois (sem 1x): {len(deduplicated_filtered)} proteínas")
-    debug_output.append(f"   Removido: {len(deduplicated) - len(deduplicated_filtered)} (proteínas que appeareceram 1x)")
-    
-    # Mostrar quais foram removidas
-    removed_proteins = [
-        p for p in deduplicated 
-        if p.get('locus_tag', '') and tag_counts.get(p.get('locus_tag', ''), 0) == 1
-    ]
-    if removed_proteins:
-        debug_output.append(f"\n⚠️ Proteínas removidas (aparecem APENAS 1x):")
-        for p in removed_proteins:
-            tag = p.get('locus_tag', 'N/A')
-            bgc_types_list = p.get('bgc_cluster_types', [])
-            bgc_str = ', '.join(bgc_types_list) if bgc_types_list else 'SEM_BGC'
-            size = len(p.get('sequence', ''))
-            debug_output.append(f"   - {tag}: bgc={bgc_str}, size={size}aa")
-    
-    # Novo breakdown após deduplicação E filtragem
-    debug_output.append(f"\n📈 BREAKDOWN POR BGC (FINAL - APÓS DEDUP + FILTRAGEM):")
+    # Breakdown final por BGC
+    debug_output.append(f"\n📈 BREAKDOWN POR BGC (FINAL):")
     bgc_types_dedup = {}
-    for p in deduplicated_filtered:
+    for p in deduplicated:
         bgc_types_list = p.get('bgc_cluster_types', [])
-        # Para cada cluster type (uma proteína pode estar em múltiplos clusters)
         for bgc_type in (bgc_types_list if bgc_types_list else ['SEM_BGC']):
             if bgc_type not in bgc_types_dedup:
                 bgc_types_dedup[bgc_type] = []
@@ -488,7 +468,7 @@ def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
         count = len(bgc_types_dedup[bgc_type])
         debug_output.append(f"   - {bgc_type}: {count} proteína(s)")
     
-    debug_output.append(f"\n✨ RESULTADO FINAL: {len(deduplicated_filtered)} proteína(s) (sem duplicatas e sem aparecer apenas 1x)")
+    debug_output.append(f"\n✨ RESULTADO FINAL: {len(deduplicated)} proteína(s) (sem duplicatas)")
     debug_output.append("="*70)
     
     # ===== SALVAR EM ARQUIVO =====
@@ -502,15 +482,13 @@ def extract_proteins_from_file(file_content: bytes, filename: str) -> list:
         print("🔍 DEBUG RESUMIDO")
         print("="*70)
         print(f"📊 Total extraído: {len(all_proteins)}")
-        print(f"⭐ Proteínas que aparecem SÓ 1x: {len(single_proteins)}")
         print(f"✅ Após dedup: {len(deduplicated)}")
-        print(f"🎯 FINAL (sem 1x): {len(deduplicated_filtered)}")
         print(f"\n📁 Detalhes COMPLETOS salvo em: {debug_filename}")
         print("="*70 + "\n")
     except Exception as e:
         print(f"⚠️ Erro ao salvar debug: {e}\n")
     
-    return deduplicated_filtered
+    return deduplicated
 
 # ===== VALIDAÇÃO DE SEQUÊNCIAS =====
 
