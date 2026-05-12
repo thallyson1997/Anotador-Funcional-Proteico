@@ -394,6 +394,10 @@ async function analyzeSelectedProteins() {
                 proteins_with_domains: mergedProteins.filter(p => p.domain_count > 0).length
             };
             resumePartialData = null;
+        } else if (!result && resumePartialData) {
+            // Cancelado sem analisar nenhuma proteína nova — usar resultado anterior
+            result = { ...resumePartialData, is_partial: true };
+            resumePartialData = null;
         }
 
         if (cancelContainer) cancelContainer.style.display = 'none';
