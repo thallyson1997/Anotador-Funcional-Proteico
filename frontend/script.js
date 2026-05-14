@@ -365,7 +365,12 @@ async function analyzeSelectedProteins() {
                 } else if (event.type === 'complete') {
                     result = event.result;
                 } else if (event.type === 'error') {
-                    throw new Error(event.message);
+                    // Erro de conexão (ex: ConnectionError no InterProScan).
+                    // Em vez de lançar exceção e perder tudo, interromper o loop
+                    // e montar resultado parcial com o que já foi analisado.
+                    cancelRequested = true;
+                    showNotification(`⚠️ Conexão interrompida: ${event.message}. Montando resultado parcial...`, 'warning', 8000);
+                    break;
                 }
             }
         }
