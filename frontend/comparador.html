@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de BGCs — BGC Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ===== NOTIFICAÇÃO ===== -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <span id="notification-message"></span>
+        </div>
+        <button class="notification-close" onclick="closeNotification()">✕</button>
+    </div>
+
+    <!-- ===== PÁGINA 1: INPUT ===== -->
+    <div id="page-input" class="page active">
+        <header class="header-hero">
+            <nav class="top-nav">
+                <a href="index.html" class="btn-back">← Início</a>
+            </nav>
+            <div class="header-content">
+                <h1 class="title">🔀 Comparador de BGCs</h1>
+                <p class="subtitle">Compare dois resultados antiSMASH e descubra quais clusters de biossíntese têm em comum</p>
+            </div>
+        </header>
+
+        <div class="container">
+            <main class="main-content">
+
+                <div class="compare-inputs">
+
+                    <!-- Organismo A -->
+                    <div class="compare-card" id="card-a">
+                        <div class="compare-card-header">
+                            <span class="compare-label label-a">Organismo A</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="name-a">Nome do organismo (opcional)</label>
+                            <input type="text" id="name-a" class="input-text" placeholder="Ex: Streptomyces sp. A">
+                        </div>
+                        <div class="form-group">
+                            <label>Arquivo antiSMASH</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="file-a" accept=".gbk,.zip" class="input-file">
+                                <label for="file-a" class="file-input-label">
+                                    <span class="file-icon">📁</span>
+                                    <span class="file-text" id="file-a-text">Clique para selecionar .gbk ou .zip</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="compare-vs">VS</div>
+
+                    <!-- Organismo B -->
+                    <div class="compare-card" id="card-b">
+                        <div class="compare-card-header">
+                            <span class="compare-label label-b">Organismo B</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="name-b">Nome do organismo (opcional)</label>
+                            <input type="text" id="name-b" class="input-text" placeholder="Ex: Streptomyces sp. B">
+                        </div>
+                        <div class="form-group">
+                            <label>Arquivo antiSMASH</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="file-b" accept=".gbk,.zip" class="input-file">
+                                <label for="file-b" class="file-input-label">
+                                    <span class="file-icon">📁</span>
+                                    <span class="file-text" id="file-b-text">Clique para selecionar .gbk ou .zip</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div style="text-align: center; margin-top: var(--spacing-xl);">
+                    <button class="btn btn-primary" id="btn-compare" onclick="submitComparison()"
+                            style="padding: 14px 48px; font-size: 1.05em;">
+                        🔀 Comparar BGCs
+                    </button>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== PÁGINA 2: RESULTADOS ===== -->
+    <div id="page-results" class="page">
+        <div class="container">
+            <header class="header-small">
+                <button class="btn-back" onclick="goToPage('page-input')">← Nova Comparação</button>
+                <h1>Resultado da Comparação</h1>
+            </header>
+            <main class="main-content">
+                <div id="results-content"></div>
+            </main>
+        </div>
+    </div>
+
+    <script src="comparador.js"></script>
+</body>
+</html>

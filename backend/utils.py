@@ -1219,3 +1219,103 @@ def get_placeholder_proteins(count: int = 5) -> list:
         proteins.append(protein)
     
     return proteins
+
+
+# ===== EXTRAÇÃO DE METADADOS BGC (para comparação) =====
+
+def _extract_bgc_types_from_gbk(gbk_content: bytes, source_name: str = '') -> dict:
+    """
+    Extrai tipos de BGC (protocluster/region) de um único arquivo GBK.
+    Retorna: cluster_types (list), region_count (int), organism (str).
+    """
+    from Bio import SeqIO
+
+    cluster_types = []
+    region_count = 0
+    organism = ''
+
+    try:
+        gbk_string = gbk_content.decode('utf-8') if isinstance(gbk_content, bytes) else gbk_content
+        records = list(SeqIO.parse(io.StringIO(gbk_string), "genbank"))
+
+        for record in records:
+            if not organism:
+                organism = getattr(record, 'description', '') or ''
+                annotations = getattr(record, 'annotations', {})
+                if not organism and annotations.get('organism'):
+                    organism = annotations['organism']
+
+            has_protoclusters = False
+            for feature in record.features:
+                if feature.type == "protocluster":
+                    has_protoclusters = True
+                    region_count += 1
+                    product = feature.qualifiers.get('product', ['Unknown'])[0]
+                    cluster_types.append(product.strip())
+
+            if not has_protoclusters:
+                for feature in record.features:
+                    if feature.type == "region":
+                        products = feature.qualifiers.get('product', ['Unknown'])
+                        if isinstance(products, list):
+                            for product in products:
+                                for t in product.split(','):
+                                    t = t.strip()
+                                    if t:
+                                        cluster_types.append(t)
+                                        region_count += 1
+                        else:
+                            cluster_types.append(str(products))
+                            region_count += 1
+
+    except Exception as e:
+        print(f"Erro ao extrair tipos de BGC de '{source_name}': {e}")
+
+    return {
+        'cluster_types': cluster_types,
+        'region_count': region_count,
+        'organism': organism,
+    }
+
+
+def extract_bgc_types_from_file(file_content: bytes, filename: str) -> dict:
+    """
+    Extrai metadados de BGC de um arquivo GBK ou ZIP antiSMASH.
+    Retorna unique_types (sorted list), bgc_count (int), organism (str).
+    """
+    all_cluster_types = []
+    total_regions = 0
+    organism = ''
+
+    try:
+        if filename.lower().endswith('.zip'):
+            with zipfile.ZipFile(io.BytesIO(file_content)) as zf:
+                all_gbk = [f for f in zf.namelist() if f.endswith('.gbk')]
+                genome_gbk = [f for f in all_gbk if not re.search(r'region\d+', f, re.IGNORECASE)]
+                gbk_files = genome_gbk if genome_gbk else all_gbk
+
+                for gbk_name in gbk_files:
+                    result = _extract_bgc_types_from_gbk(zf.read(gbk_name), gbk_name)
+                    all_cluster_types.extend(result['cluster_types'])
+                    total_regions += result['region_count']
+                    if not organism and result['organism']:
+                        organism = result['organism']
+        else:
+            result = _extract_bgc_types_from_gbk(file_content, filename)
+            all_cluster_types = result['cluster_types']
+            total_regions = result['region_count']
+            organism = result['organism']
+
+    except Exception as e:
+        print(f"Erro ao processar '{filename}': {e}")
+
+    unique_types = sorted(set(
+        t for t in all_cluster_types if t and t.lower() not in ('unknown', '')
+    ))
+
+    return {
+        'unique_types': unique_types,
+        'bgc_count': total_regions,
+        'organism': organism,
+    }
+

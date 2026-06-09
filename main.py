@@ -17,7 +17,9 @@ from backend.models import (
     SequenceAnalysisRequest, 
     SequenceAnalysisResponse,
     AntismashAnalysisResponse,
-    HealthResponse
+    HealthResponse,
+    BGCFileMetadata,
+    BGCComparisonResponse,
 )
 from backend.utils import (
     search_interproscan,
@@ -27,6 +29,7 @@ from backend.utils import (
     domains_to_protein,
     get_placeholder_proteins,
     extract_proteins_from_file,
+    extract_bgc_types_from_file,
 )
 
 
@@ -664,6 +667,66 @@ async def predict_domains(request: SequenceAnalysisRequest):
             status_code=500,
             detail=f"Erro ao processar sequência: {str(e)}"
         )
+# ===== COMPARADOR DE BGCs =====
+@app.post("/api/compare-bgc", response_model=BGCComparisonResponse)
+async def compare_bgc(
+    file_a: UploadFile = File(...),
+    file_b: UploadFile = File(...),
+):
+    """
+    Compara metadados de BGC de dois arquivos antiSMASH.
+    Calcula similaridade de Jaccard sobre os tipos de clusters presentes.
+    """
+    MAX_SIZE = 500 * 1024 * 1024
+    try:
+        content_a = await file_a.read()
+        content_b = await file_b.read()
+
+        if len(content_a) > MAX_SIZE or len(content_b) > MAX_SIZE:
+            raise HTTPException(status_code=413, detail="Arquivo muito grande (máximo 500 MB)")
+
+        for f in [file_a, file_b]:
+            if not f.filename.lower().endswith(('.gbk', '.zip')):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Arquivo '{f.filename}' deve ser .gbk ou .zip"
+                )
+
+        meta_a = extract_bgc_types_from_file(content_a, file_a.filename)
+        meta_b = extract_bgc_types_from_file(content_b, file_b.filename)
+
+        set_a = set(meta_a['unique_types'])
+        set_b = set(meta_b['unique_types'])
+        shared = sorted(set_a & set_b)
+        only_a = sorted(set_a - set_b)
+        only_b = sorted(set_b - set_a)
+        union = set_a | set_b
+        jaccard = len(shared) / len(union) if union else 0.0
+
+        return BGCComparisonResponse(
+            file_a=BGCFileMetadata(
+                filename=file_a.filename,
+                bgc_types=meta_a['unique_types'],
+                bgc_count=meta_a['bgc_count'],
+                organism=meta_a['organism'] or None,
+            ),
+            file_b=BGCFileMetadata(
+                filename=file_b.filename,
+                bgc_types=meta_b['unique_types'],
+                bgc_count=meta_b['bgc_count'],
+                organism=meta_b['organism'] or None,
+            ),
+            shared_types=shared,
+            only_in_a=only_a,
+            only_in_b=only_b,
+            jaccard_similarity=round(jaccard, 4),
+            similarity_percent=round(jaccard * 100, 1),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao comparar arquivos: {str(e)}")
 
 # ===== SERVIR FRONTEND ESTÁTICO (DEVE SER O ÚLTIMO!) =====
 # Mount StaticFiles por último para não interceptar as rotas da API

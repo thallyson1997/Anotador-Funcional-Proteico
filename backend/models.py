@@ -86,3 +86,19 @@ class SequenceAnalysisResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     version: str
+
+# ===== BGC COMPARISON =====
+class BGCFileMetadata(BaseModel):
+    filename: str
+    bgc_types: List[str]
+    bgc_count: int
+    organism: Optional[str] = None
+
+class BGCComparisonResponse(BaseModel):
+    file_a: BGCFileMetadata
+    file_b: BGCFileMetadata
+    shared_types: List[str]
+    only_in_a: List[str]
+    only_in_b: List[str]
+    jaccard_similarity: float
+    similarity_percent: float
