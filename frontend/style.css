@@ -1775,3 +1775,84 @@ details[open] > .sequence-summary::before {
     .proteins-table th:nth-child(4),
     .proteins-table td:nth-child(4) { display: none; }
 }
+
+/* ===== TOP NAV (voltar ao início no anotador) ===== */
+.header-hero .top-nav {
+    position: absolute;
+    top: var(--spacing-md);
+    left: var(--spacing-lg);
+    z-index: 2;
+}
+
+.header-hero .top-nav .btn-back {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.92);
+    display: inline-block;
+    text-decoration: none;
+}
+
+.header-hero .top-nav .btn-back:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+    transform: translateX(-2px);
+}
+
+/* ===== TOOL CARDS (landing page index.html) ===== */
+.tool-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-xl);
+    margin-top: var(--spacing-lg);
+}
+
+.tool-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.tool-card:hover {
+    border-color: var(--border-accent);
+    box-shadow: 0 4px 24px var(--accent-glow);
+    transform: translateY(-2px);
+}
+
+.tool-card .icon {
+    font-size: 2.5rem;
+}
+
+.tool-card h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.tool-card p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    flex: 1;
+}
+
+.card-footer {
+    color: var(--accent);
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-top: auto;
+}
+
+.tool-card-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}

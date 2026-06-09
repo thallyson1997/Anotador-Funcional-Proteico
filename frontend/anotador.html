@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anotador Proteico — Análise de Domínios em Proteínas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ===== NOTIFICAÇÃO DE ERRO ===== -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <span id="notification-message"></span>
+        </div>
+        <button class="notification-close" onclick="closeNotification()">✕</button>
+    </div>
+
+    <!-- ===== MODAL: SELEÇÃO DE PROTEÍNAS ===== -->
+    <div id="modal-proteins" class="modal">
+        <div class="modal-content modal-proteins-content">
+            <div class="modal-header">
+                <h2>Proteínas Hipotéticas Encontradas</h2>
+                <button class="modal-close" onclick="closeProteinModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p id="proteins-count-text"></p>
+                
+                <div id="proteins-table-container" class="proteins-table-container" style="display:none;">
+                    <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" style="font-size: 0.9em; padding: 8px 12px;" onclick="toggleAllProteinCheckboxes(true)">✓ Selecionar Todas</button>
+                        <button class="btn btn-secondary" style="font-size: 0.9em; padding: 8px 12px;" onclick="toggleAllProteinCheckboxes(false)">✕ Desselecionar Todas</button>
+                    </div>
+                    <table id="proteins-table" class="proteins-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">☑️</th>
+                                <th>Locus Tag</th>
+                                <th>Região</th>
+                                <th>Type</th>
+                                <th>Produto</th>
+                                <th>Tamanho (aa)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="proteins-tbody"></tbody>
+                    </table>
+                </div>
+                
+                
+                <div id="no-proteins-message" style="display:none; padding: 20px; text-align: center; color: var(--color-text-light);">
+                    <p>❌ Nenhuma proteína hipotética foi encontrada neste arquivo.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeProteinModal()">Cancelar</button>
+                <button id="btn-analyze-selected" class="btn btn-primary" onclick="analyzeSelectedProteins()" style="display:none;">
+                    Analisar Proteínas Selecionadas
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: DETALHES DO DOMÍNIO ===== -->
+    <div id="modal-domain-details" class="modal-overlay">
+        <div class="modal-domain-container">
+            <button class="modal-domain-close" onclick="closeDomainDetailsModal()" title="Fechar">✕</button>
+            <div id="domain-details-body" class="modal-domain-body">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-confidence-v2" class="modal-overlay">
+        <div class="modal-domain-container modal-confidence-container">
+            <button class="modal-domain-close" onclick="closeConfidenceV2Modal()" title="Fechar">✕</button>
+            <div id="confidence-v2-body" class="modal-domain-body modal-confidence-body">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PÁGINA 1: HOME/INICIAL ===== -->
+    <div id="page-home" class="page active">
+        <header class="header-hero">
+            <nav class="top-nav">
+                <a href="index.html" class="btn-back">← Início</a>
+            </nav>
+            <div class="header-content">
+                <h1 class="title">🧬 Anotador Proteico</h1>
+                <p class="subtitle">Análise automática de domínios funcionais em proteínas hipotéticas de clusters BGC</p>
+            </div>
+        </header>
+
+        <div class="container">
+            <main class="main-content">
+                <div class="welcome-section">
+                    <div class="cta-button-container">
+                        <button class="btn btn-primary btn-cta" onclick="goToPage('page-input')">
+                            Iniciar Análise
+                        </button>
+                    </div>
+
+                    <h2>Como Funciona</h2>
+                    
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <div class="icon">🔍</div>
+                            <h3>Identifica Domínios</h3>
+                            <p>Analisa sua sequência contra múltiplos bancos de dados (Pfam, SMART, PROSITE, PANTHER, Gene3D) para encontrar domínios e famílias proteicas conservadas</p>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="icon">⚡</div>
+                            <h3>Rápido & Flexível</h3>
+                            <p>Analise uma única sequência proteica ou carrregue arquivo completo do antiSMASH com múltiplas proteínas hipotéticas de clusters de biossíntese</p>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="icon">📈</div>
+                            <h3>Resultados Confiáveis</h3>
+                            <p>Receba relatórios detalhados com nível de confiança calculado automaticamente, localização dos domínios e quais bancos de dados os identificaram</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== PÁGINA 2: INPUT/ENTRADA ===== -->
+    <div id="page-input" class="page">
+        <div class="container">
+            <header class="header-small">
+                <button class="btn-back" onclick="goToPage('page-home')">← Voltar</button>
+                <h1>Escolha o Tipo de Análise</h1>
+            </header>
+
+            <main class="main-content">
+                <div class="input-options">
+                    <!-- OPÇÃO 1: Sequência Única -->
+                    <div class="option-section active" id="option-sequence">
+                        <div class="option-header">
+                            <input type="radio" name="input-type" value="sequence" id="radio-sequence" checked onchange="switchOption('sequence')">
+                            <label for="radio-sequence">
+                                <h2>⚡ Análise Rápida - Uma Sequência</h2>
+                                <p>Perfeito para análise de uma única proteína conhecida ou isolada</p>
+                            </label>
+                        </div>
+
+                        <div class="option-content">
+                            <div class="form-group">
+                                <label for="seq-id">ID da Proteína (opcional)</label>
+                                <input 
+                                    type="text" 
+                                    id="seq-id" 
+                                    placeholder="Ex: MEG4_ASPNID, minha_proteina_1, etc."
+                                    class="input-text"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="protein-sequence">Sequência Proteica (aminoácidos)</label>
+                                <textarea 
+                                    id="protein-sequence" 
+                                    placeholder="Cole aqui a sequência de aminoácidos. Pode ser em uma linha ou múltiplas linhas.&#10;&#10;Exemplo: MFSLYDKFKC LLFCLTLSIA YVALGLPDPD AAAAGEHLQH LQAKDQYGCG AASGEQ..."
+                                    class="input-textarea"
+                                    rows="8"
+                                ></textarea>
+                                <small>Aceita formato monolinha ou multilinha (espaços serão ignorados)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email-seq">Email para notificações</label>
+                                <input 
+                                    type="email" 
+                                    id="email-seq" 
+                                    placeholder="seu.email@instituicao.br"
+                                    class="input-text"
+                                    required
+                                >
+                                <small>Necessário para usar a API InterProScan</small>
+                            </div>
+
+                            <button class="btn btn-primary btn-block" onclick="submitSequence()">
+                                Analisar Sequência
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="divider">OU</div>
+
+                    <!-- OPÇÃO 2: Arquivo antiSMASH -->
+                    <div class="option-section" id="option-antismash">
+                        <div class="option-header">
+                            <input type="radio" name="input-type" value="antismash" id="radio-antismash" onchange="switchOption('antismash')">
+                            <label for="radio-antismash">
+                                <h2>📂 Análise Completa - antiSMASH</h2>
+                                <p>Analise múltiplas proteínas hipotéticas de um cluster de biossíntese</p>
+                            </label>
+                        </div>
+
+                        <div class="option-content">
+                            <div class="form-group">
+                                <label for="antismash-file">Arquivo antiSMASH</label>
+                                <div class="file-input-wrapper">
+                                    <input 
+                                        type="file" 
+                                        id="antismash-file" 
+                                        accept=".gbk,.zip"
+                                        class="input-file"
+                                    >
+                                    <label for="antismash-file" class="file-input-label">
+                                        <span class="file-icon">📁</span>
+                                        <span class="file-text">Clique para selecionar arquivo .gbk ou .zip</span>
+                                    </label>
+                                </div>
+                                <small>Aceita arquivos .region*.gbk ou .zip com múltiplos GBK</small>
+                            </div>
+
+                            <div id="file-info" class="file-info hidden"></div>
+
+                            <div class="form-group">
+                                <label for="email-antismash">Email para notificações</label>
+                                <input 
+                                    type="email" 
+                                    id="email-antismash" 
+                                    placeholder="seu.email@instituicao.br"
+                                    class="input-text"
+                                    required
+                                >
+                                <small>Necessário para usar a API InterProScan</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                    <input 
+                                        type="checkbox" 
+                                        id="filter-by-bgc" 
+                                        checked
+                                        style="width: 18px; height: 18px; cursor: pointer;"
+                                    >
+                                    <span>🧬 Filtrar apenas proteínas em clusters BGC (recomendado)</span>
+                                </label>
+                                <small style="display: block; margin-top: 5px; margin-left: 28px;">
+                                    ✓ Ativado: ~100-200 proteínas (rápido)  |  ✗ Desativado: ~1000+ proteínas (muito lento)
+                                </small>
+                            </div>
+
+                            <button class="btn btn-primary btn-block" onclick="submitAntismash()">
+                                Carregar e Analisar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== PÁGINA 3: LOADING/PROGRESSO ===== -->
+    <div id="page-loading" class="page">
+        <div class="container">
+            <header class="header-small">
+                <h1>Processando Análise</h1>
+            </header>
+
+            <main class="main-content loading-content">
+                <div class="progress-container">
+                    <div class="progress-title">
+                        <h2>Por favor aguarde...</h2>
+                        <p>Sua análise está sendo processada</p>
+                    </div>
+
+                    <div class="progress-bar-wrapper">
+                        <div class="progress-bar" id="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text">0%</span>
+                    </div>
+
+                    <div class="steps-progress">
+                        <div class="step-progress" id="step-1">
+                            <div class="step-number">1</div>
+                            <div class="step-info">
+                                <p class="step-label">Processando entrada</p>
+                                <p class="step-description" id="step-1-desc">Carregando arquivo...</p>
+                            </div>
+                            <div class="step-status" id="step-1-status">⏳</div>
+                        </div>
+
+                        <div class="step-progress" id="step-2">
+                            <div class="step-number">2</div>
+                            <div class="step-info">
+                                <p class="step-label">Identificando proteínas hipotéticas</p>
+                                <p class="step-description" id="step-2-desc">Aguardando conclusão da etapa anterior...</p>
+                            </div>
+                            <div class="step-status" id="step-2-status">⏳</div>
+                        </div>
+
+                        <div class="step-progress" id="step-3">
+                            <div class="step-number">3</div>
+                            <div class="step-info">
+                                <p class="step-label">Consultando bancos de dados</p>
+                                <p class="step-description" id="step-3-desc">Aguardando consulta ao InterProScan...</p>
+                            </div>
+                            <div class="step-status" id="step-3-status">⏳</div>
+                        </div>
+
+                        <div class="step-progress" id="step-4">
+                            <div class="step-number">4</div>
+                            <div class="step-info">
+                                <p class="step-label">Montando resultados</p>
+                                <p class="step-description" id="step-4-desc">Aguardando conclusão das análises...</p>
+                            </div>
+                            <div class="step-status" id="step-4-status">⏳</div>
+                        </div>
+                    </div>
+
+                    <div id="analysis-timer-panel" class="analysis-timer-panel" style="display:none;">
+                        <div class="timer-stats-row">
+                            <div class="timer-stat">
+                                <span class="timer-stat-label">⏱ Tempo decorrido</span>
+                                <span class="timer-stat-value" id="timer-elapsed">00:00</span>
+                            </div>
+                            <div class="timer-stat">
+                                <span class="timer-stat-label">⬇️ Mínimo estimado</span>
+                                <span class="timer-stat-value timer-stat-min" id="timer-min">--:--</span>
+                            </div>
+                            <div class="timer-stat">
+                                <span class="timer-stat-label">⬆️ Máximo estimado</span>
+                                <span class="timer-stat-value timer-stat-max" id="timer-max">--:--</span>
+                            </div>
+                        </div>
+                        <div class="timer-protein-row">
+                            <span class="timer-protein-label">Analisando:</span>
+                            <span class="timer-protein-id" id="timer-protein-current">—</span>
+                            <span class="timer-protein-count" id="timer-protein-count"></span>
+                        </div>
+                    </div>
+
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+
+                    <!-- Botão de cancelar (visível apenas durante análise InterProScan) -->
+                    <div id="cancel-analysis-container" style="display:none; text-align:center; margin-top: 24px;">
+                        <button class="btn btn-secondary" onclick="cancelAnalysis()" style="padding: 10px 24px; font-size: 0.95em;">
+                            ⛔ Cancelar e ver resultado parcial
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== PÁGINA 4: RESULTADOS ===== -->
+    <div id="page-results" class="page">
+        <div class="container">
+            <header class="header-small">
+                <button class="btn-back" onclick="goToPage('page-input')">← Nova Análise</button>
+                <h1>Resultados da Análise</h1>
+                <button class="btn-download" onclick="downloadResults()">⬇️ Baixar Resultados (.zip)</button>
+            </header>
+
+            <main class="main-content">
+                <div id="results-content">
+                    <!-- Será preenchido por JavaScript -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
