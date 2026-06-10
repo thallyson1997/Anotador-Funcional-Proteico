@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 # ===== DOMAIN MODEL =====
 class Domain(BaseModel):
@@ -88,11 +88,29 @@ class HealthResponse(BaseModel):
     version: str
 
 # ===== BGC COMPARISON =====
+class MIBiGHit(BaseModel):
+    region: str
+    bgc_id: str
+    compound: str
+    similarity: Optional[float] = None
+
+class MIBiGRow(BaseModel):
+    bgc_id: str
+    compound: str
+    in_a: bool
+    in_b: bool
+    similarity_a: Optional[float] = None
+    similarity_b: Optional[float] = None
+    regions_a: List[str] = []
+    regions_b: List[str] = []
+
 class BGCFileMetadata(BaseModel):
     filename: str
     bgc_types: List[str]
     bgc_count: int
     organism: Optional[str] = None
+    type_counts: Dict[str, int] = {}
+    mibig_hits: List[MIBiGHit] = []
 
 class BGCComparisonResponse(BaseModel):
     file_a: BGCFileMetadata
@@ -102,3 +120,4 @@ class BGCComparisonResponse(BaseModel):
     only_in_b: List[str]
     jaccard_similarity: float
     similarity_percent: float
+    mibig_rows: List[MIBiGRow] = []

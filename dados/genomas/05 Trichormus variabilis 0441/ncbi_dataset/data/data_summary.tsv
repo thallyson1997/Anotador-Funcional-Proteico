@@ -1,0 +1,3 @@
+Organism Scientific Name	Organism Common Name	Organism Qualifier	Taxonomy id	Assembly Name	Assembly Accession	Source	Annotation	Level	Contig N50	Size	Submission Date	Gene Count	BioProject	BioSample
+Trichormus variabilis 0441		strain: 0441	375899	ASM985660v1	GCA_009856605.1	GenBank	NCBI Prokaryotic Genome Annotation Pipeline (PGAP)	Complete Genome	6377767	7096012	2020-01-11	5924	PRJNA598299	SAMN13702813
+Trichormus variabilis 0441		strain: 0441	375899	ASM985660v1	GCF_009856605.1	RefSeq	GCF_009856605.1-RS_2026_05_22	Complete Genome	6377767	7096012	2020-01-11	5982	PRJNA598299	SAMN13702813

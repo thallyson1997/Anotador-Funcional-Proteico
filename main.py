@@ -20,6 +20,7 @@ from backend.models import (
     HealthResponse,
     BGCFileMetadata,
     BGCComparisonResponse,
+    MIBiGRow,
 )
 from backend.utils import (
     search_interproscan,
@@ -703,24 +704,74 @@ async def compare_bgc(
         union = set_a | set_b
         jaccard = len(shared) / len(union) if union else 0.0
 
+        # === Nível 3: MIBiG rows ===
+        from collections import defaultdict
+
+        def _build_hits_index(hits):
+            idx = defaultdict(lambda: {'compound': '', 'similarities': [], 'regions': []})
+            for h in hits:
+                d = idx[h['bgc_id']]
+                d['compound'] = h['compound']
+                d['regions'].append(h['region'])
+                if h['similarity'] is not None:
+                    d['similarities'].append(h['similarity'])
+            return idx
+
+        idx_a = _build_hits_index(meta_a.get('mibig_hits', []))
+        idx_b = _build_hits_index(meta_b.get('mibig_hits', []))
+
+        all_bgc_ids = sorted(set(idx_a) | set(idx_b))
+        mibig_rows = []
+        for bgc_id in all_bgc_ids:
+            in_a = bgc_id in idx_a
+            in_b = bgc_id in idx_b
+            compound = (idx_a[bgc_id]['compound'] if in_a else idx_b[bgc_id]['compound'])
+            sim_a = max(idx_a[bgc_id]['similarities']) if in_a and idx_a[bgc_id]['similarities'] else None
+            sim_b = max(idx_b[bgc_id]['similarities']) if in_b and idx_b[bgc_id]['similarities'] else None
+            mibig_rows.append(MIBiGRow(
+                bgc_id=bgc_id,
+                compound=compound,
+                in_a=in_a,
+                in_b=in_b,
+                similarity_a=sim_a,
+                similarity_b=sim_b,
+                regions_a=sorted(set(idx_a[bgc_id]['regions'])) if in_a else [],
+                regions_b=sorted(set(idx_b[bgc_id]['regions'])) if in_b else [],
+            ))
+        # Ordenar: compartilhados primeiro, depois exclusivo A, depois exclusivo B
+        mibig_rows.sort(key=lambda r: (0 if (r.in_a and r.in_b) else (1 if r.in_a else 2), r.bgc_id))
+
         return BGCComparisonResponse(
             file_a=BGCFileMetadata(
                 filename=file_a.filename,
                 bgc_types=meta_a['unique_types'],
                 bgc_count=meta_a['bgc_count'],
                 organism=meta_a['organism'] or None,
+                type_counts=meta_a.get('type_counts', {}),
+                mibig_hits=[
+                    {'region': h['region'], 'bgc_id': h['bgc_id'],
+                     'compound': h['compound'], 'similarity': h.get('similarity')}
+                    for h in meta_a.get('mibig_hits', [])
+                ],
             ),
             file_b=BGCFileMetadata(
                 filename=file_b.filename,
                 bgc_types=meta_b['unique_types'],
                 bgc_count=meta_b['bgc_count'],
                 organism=meta_b['organism'] or None,
+                type_counts=meta_b.get('type_counts', {}),
+                mibig_hits=[
+                    {'region': h['region'], 'bgc_id': h['bgc_id'],
+                     'compound': h['compound'], 'similarity': h.get('similarity')}
+                    for h in meta_b.get('mibig_hits', [])
+                ],
             ),
             shared_types=shared,
             only_in_a=only_a,
             only_in_b=only_b,
             jaccard_similarity=round(jaccard, 4),
             similarity_percent=round(jaccard * 100, 1),
+            mibig_rows=mibig_rows,
         )
 
     except HTTPException:

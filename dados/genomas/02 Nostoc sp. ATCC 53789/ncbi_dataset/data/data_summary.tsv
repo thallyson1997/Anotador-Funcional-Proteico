@@ -1,0 +1,3 @@
+Organism Scientific Name	Organism Common Name	Organism Qualifier	Taxonomy id	Assembly Name	Assembly Accession	Source	Annotation	Level	Contig N50	Size	Submission Date	Gene Count	BioProject	BioSample
+Nostoc sp. ATCC 53789		strain: ATCC 53789	76335	ASM987349v1	GCA_009873495.1	GenBank	NCBI Prokaryotic Genome Annotation Pipeline (PGAP)	Complete Genome	7340101	8653730	2020-01-14	7263	PRJNA588357	SAMN13242330
+Nostoc sp. ATCC 53789		strain: ATCC 53789	76335	ASM987349v1	GCF_009873495.1	RefSeq	GCF_009873495.1-RS_2024_06_03	Complete Genome	7340101	8653730	2020-01-14	7338	PRJNA588357	SAMN13242330

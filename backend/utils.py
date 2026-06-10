@@ -1223,16 +1223,95 @@ def get_placeholder_proteins(count: int = 5) -> list:
 
 # ===== EXTRAÇÃO DE METADADOS BGC (para comparação) =====
 
+def _parse_mibig_from_antismash_json(json_bytes: bytes) -> list:
+    """
+    Extrai hits do KnownClusterBlast do JSON principal do antiSMASH.
+    Para cada região, retorna o MELHOR hit (ranking[0]) com similarity %.
+    Retorna lista de dicts: {region, bgc_id, compound, similarity}.
+    """
+    import json as _json
+    hits = []
+    try:
+        data = _json.loads(json_bytes)
+        for record in data.get('records', []):
+            record_id = record.get('id', '?')
+            mods = record.get('modules', {})
+            cb = mods.get('antismash.modules.clusterblast', {})
+            known = cb.get('knowncluster', {})
+            for region_result in known.get('results', []):
+                region_num = region_result.get('region_number', '?')
+                region_label = f'{record_id} / Region {region_num}'
+                ranking = region_result.get('ranking', [])
+                # Pegar top hit por região (melhor similaridade)
+                for entry in ranking[:1]:
+                    if len(entry) < 2:
+                        continue
+                    cluster_info, score_info = entry[0], entry[1]
+                    bgc_id = str(cluster_info.get('accession', '')).strip()
+                    if not bgc_id:
+                        continue
+                    compound = str(cluster_info.get('description', bgc_id)).strip()
+                    similarity = score_info.get('similarity')
+                    hits.append({
+                        'region': region_label,
+                        'bgc_id': bgc_id.upper(),
+                        'compound': compound,
+                        'similarity': float(similarity) if similarity is not None else None,
+                    })
+    except Exception as e:
+        print(f'Erro ao parsear JSON antiSMASH para MIBiG: {e}')
+    return hits
+
+
+def _parse_kcb_entry(entry: str, region_label: str) -> dict:
+    """
+    Faz o parse de uma entrada do qualifier 'knownclusterblast' do antiSMASH.
+    Formatos suportados (variam entre versões do antiSMASH):
+      '1. BGC0001234\tSurfactin from Bacillus subtilis'
+      '1. BGC0001234\tSurfactin from Bacillus subtilis\n  (80% of genes show similarity)'
+    Retorna dict ou None se não for uma entrada válida.
+    """
+    text = str(entry)
+    bgc_match = re.search(r'(BGC\d+)', text, re.IGNORECASE)
+    if not bgc_match:
+        return None
+    bgc_id = bgc_match.group(1).upper()
+
+    # Percentual: '80%' ou '80 %'
+    pct_match = re.search(r'(\d+)\s*%', text)
+    similarity = float(pct_match.group(1)) if pct_match else None
+
+    # Nome do composto: parte após o BGC ID, antes de '\n' ou '('
+    parts = re.split(r'\t', text, maxsplit=2)
+    description = bgc_id  # fallback
+    for i, part in enumerate(parts):
+        if bgc_id.upper() in part.upper() and i + 1 < len(parts):
+            raw = parts[i + 1]
+            raw = re.sub(r'\s*\n.*', '', raw, flags=re.DOTALL).strip()
+            raw = re.sub(r'\s*\(.*$', '', raw).strip()
+            if raw:
+                description = raw
+            break
+
+    return {
+        'region': region_label,
+        'bgc_id': bgc_id,
+        'compound': description,
+        'similarity': similarity,
+    }
+
+
 def _extract_bgc_types_from_gbk(gbk_content: bytes, source_name: str = '') -> dict:
     """
     Extrai tipos de BGC (protocluster/region) de um único arquivo GBK.
-    Retorna: cluster_types (list), region_count (int), organism (str).
+    Retorna: cluster_types (list), region_count (int), organism (str), mibig_hits (list).
     """
     from Bio import SeqIO
 
     cluster_types = []
     region_count = 0
     organism = ''
+    mibig_hits = []
 
     try:
         gbk_string = gbk_content.decode('utf-8') if isinstance(gbk_content, bytes) else gbk_content
@@ -1268,6 +1347,20 @@ def _extract_bgc_types_from_gbk(gbk_content: bytes, source_name: str = '') -> di
                             cluster_types.append(str(products))
                             region_count += 1
 
+            # MIBiG hits: qualifier 'knownclusterblast' presente nos features 'region'
+            region_counter = 0
+            for feature in record.features:
+                if feature.type == 'region':
+                    region_counter += 1
+                    region_num = feature.qualifiers.get('region_number', [str(region_counter)])[0]
+                    region_label = f'Region {region_num}'
+                    kcb = feature.qualifiers.get('knownclusterblast', [])
+                    entries = kcb if isinstance(kcb, list) else [kcb]
+                    for entry in entries:
+                        hit = _parse_kcb_entry(str(entry), region_label)
+                        if hit:
+                            mibig_hits.append(hit)
+
     except Exception as e:
         print(f"Erro ao extrair tipos de BGC de '{source_name}': {e}")
 
@@ -1275,6 +1368,7 @@ def _extract_bgc_types_from_gbk(gbk_content: bytes, source_name: str = '') -> di
         'cluster_types': cluster_types,
         'region_count': region_count,
         'organism': organism,
+        'mibig_hits': mibig_hits,
     }
 
 
@@ -1286,6 +1380,7 @@ def extract_bgc_types_from_file(file_content: bytes, filename: str) -> dict:
     all_cluster_types = []
     total_regions = 0
     organism = ''
+    all_mibig_hits = []
 
     try:
         if filename.lower().endswith('.zip'):
@@ -1300,22 +1395,42 @@ def extract_bgc_types_from_file(file_content: bytes, filename: str) -> dict:
                     total_regions += result['region_count']
                     if not organism and result['organism']:
                         organism = result['organism']
+
+                # MIBiG: usar JSON principal do antiSMASH (tem similarity %)
+                json_files = sorted(
+                    [f for f in zf.namelist() if f.endswith('.json')
+                     and '/' not in f.strip('/')],  # apenas raiz do ZIP
+                    key=lambda f: zf.getinfo(f).file_size,
+                    reverse=True,
+                )
+                for json_name in json_files[:2]:
+                    try:
+                        json_hits = _parse_mibig_from_antismash_json(zf.read(json_name))
+                        if json_hits:
+                            all_mibig_hits.extend(json_hits)
+                            break
+                    except Exception:
+                        pass
         else:
             result = _extract_bgc_types_from_gbk(file_content, filename)
             all_cluster_types = result['cluster_types']
             total_regions = result['region_count']
             organism = result['organism']
+            all_mibig_hits = result.get('mibig_hits', [])  # fallback via qualifier GBK
 
     except Exception as e:
         print(f"Erro ao processar '{filename}': {e}")
 
-    unique_types = sorted(set(
-        t for t in all_cluster_types if t and t.lower() not in ('unknown', '')
-    ))
+    from collections import Counter
+    filtered = [t for t in all_cluster_types if t and t.lower() not in ('unknown', '')]
+    unique_types = sorted(set(filtered))
+    type_counts = dict(Counter(filtered))
 
     return {
         'unique_types': unique_types,
         'bgc_count': total_regions,
         'organism': organism,
+        'type_counts': type_counts,
+        'mibig_hits': all_mibig_hits,
     }
 

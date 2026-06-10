@@ -1,0 +1,3 @@
+Organism Scientific Name	Organism Common Name	Organism Qualifier	Taxonomy id	Assembly Name	Assembly Accession	Source	Annotation	Level	Contig N50	Size	Submission Date	Gene Count	BioProject	BioSample
+Nostoc punctiforme PCC 73102		strain: ATCC 29133; PCC 73102	63737	ASM2002v1	GCA_000020025.1	GenBank	Annotation submitted by US DOE Joint Genome Institute	Complete Genome	8234322	9059191	2008-04-24	7174	PRJNA216	SAMN02598449
+Nostoc punctiforme PCC 73102		strain: ATCC 29133; PCC 73102	63737	ASM2002v1	GCF_000020025.1	RefSeq	GCF_000020025.1-RS_2026_03_15	Complete Genome	8234322	9059191	2008-04-24	7724	PRJNA216	SAMN02598449

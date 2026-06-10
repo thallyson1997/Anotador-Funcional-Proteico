@@ -153,6 +153,10 @@ function renderResults(data) {
             </div>
         </div>
 
+        ${renderTypeCountTable(data, nameA, nameB)}
+
+        ${renderMIBiGSection(data, nameA, nameB)}
+
         <div class="compare-breakdown">
             <div class="breakdown-card">
                 <h3>🟢 BGCs em Comum</h3>
@@ -185,6 +189,146 @@ function renderResults(data) {
     `;
 
     document.getElementById('results-content').innerHTML = html;
+}
+
+function renderMIBiGSection(data, nameA, nameB) {
+    const rows = data.mibig_rows || [];
+    if (!rows.length) return '';
+
+    const tableRows = rows.map(row => {
+        let rowClass = '';
+        if (row.in_a && row.in_b) rowClass = 'row-shared';
+        else if (row.in_a)        rowClass = 'row-only-a';
+        else                      rowClass = 'row-only-b';
+
+        function simCell(present, sim, regions) {
+            if (!present) return '<td class="mibig-cell mibig-absent"><span class="presence-no">✗</span></td>';
+            const simHtml = sim != null
+                ? `<span class="mibig-sim">${sim.toFixed(0)}%</span>`
+                : '<span class="mibig-sim mibig-sim-na">N/D</span>';
+            const regionHtml = regions && regions.length
+                ? `<span class="mibig-region">${regions.map(r => escapeHtml(r)).join(', ')}</span>`
+                : '';
+            return `<td class="mibig-cell">${simHtml}${regionHtml}</td>`;
+        }
+
+        const mibigUrl = `https://mibig.secondarymetabolites.org/go/${escapeHtml(row.bgc_id)}`;
+        return `
+            <tr class="${rowClass}">
+                <td class="mibig-id-cell">
+                    <a href="${mibigUrl}" target="_blank" rel="noopener noreferrer"
+                       class="mibig-link">${escapeHtml(row.bgc_id)}</a>
+                </td>
+                <td class="type-name-cell">${escapeHtml(row.compound)}</td>
+                ${simCell(row.in_a, row.similarity_a, row.regions_a)}
+                ${simCell(row.in_b, row.similarity_b, row.regions_b)}
+            </tr>`;
+    }).join('');
+
+    return `
+        <div class="cluster-table-section mibig-section">
+            <div class="cluster-table-header">
+                <h3>🧪 Similaridade com MIBiG (KnownClusterBlast)</h3>
+                <a href="https://mibig.secondarymetabolites.org/" target="_blank"
+                   rel="noopener noreferrer" class="mibig-ref-link">O que é MIBiG?</a>
+            </div>
+            <div class="cluster-table-wrapper">
+                <table class="cluster-table mibig-table">
+                    <thead>
+                        <tr>
+                            <th>BGC ID</th>
+                            <th>Composto Previsto</th>
+                            <th><span class="compare-label label-a">A</span> ${escapeHtml(nameA)}</th>
+                            <th><span class="compare-label label-b">B</span> ${escapeHtml(nameB)}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </div>
+            <p class="mibig-note">
+                % = genes da região com hit no cluster de referência (KnownClusterBlast).
+                N/D = antiSMASH não reportou percentual neste arquivo.
+            </p>
+        </div>`;
+}
+
+function renderTypeCountTable(data, nameA, nameB) {
+    const countsA = data.file_a.type_counts || {};
+    const countsB = data.file_b.type_counts || {};
+    const allTypes = Array.from(
+        new Set([...Object.keys(countsA), ...Object.keys(countsB)])
+    ).sort();
+
+    if (!allTypes.length) return '';
+
+    function cell(n) {
+        const countHtml = n > 0 ? n : '<span class="count-zero">—</span>';
+        const presenceHtml = n > 0
+            ? '<span class="presence-yes">✓</span>'
+            : '<span class="presence-no">✗</span>';
+        return `<td class="count-cell">
+            <span class="val-count">${countHtml}</span>
+            <span class="val-presence">${presenceHtml}</span>
+        </td>`;
+    }
+
+    const rows = allTypes.map(type => {
+        const a = countsA[type] || 0;
+        const b = countsB[type] || 0;
+        let rowClass = '';
+        if (a > 0 && b > 0) rowClass = 'row-shared';
+        else if (a > 0)     rowClass = 'row-only-a';
+        else                rowClass = 'row-only-b';
+
+        return `
+            <tr class="${rowClass}">
+                <td class="type-name-cell">${escapeHtml(type)}</td>
+                ${cell(a)}
+                ${cell(b)}
+            </tr>`;
+    }).join('');
+
+    return `
+        <div class="cluster-table-section">
+            <div class="cluster-table-header">
+                <h3>📊 Clusters por Tipo</h3>
+                <div class="table-mode-toggle" role="group" aria-label="Modo de visualização">
+                    <button class="mode-btn mode-btn-active" onclick="setTableMode(this, 'count')">
+                        # Contagem
+                    </button>
+                    <button class="mode-btn" onclick="setTableMode(this, 'presence')">
+                        ✓✗ Presença
+                    </button>
+                </div>
+            </div>
+            <div class="cluster-table-wrapper">
+                <table class="cluster-table">
+                    <thead>
+                        <tr>
+                            <th>Tipo de BGC</th>
+                            <th><span class="compare-label label-a">A</span> ${escapeHtml(nameA)}</th>
+                            <th><span class="compare-label label-b">B</span> ${escapeHtml(nameB)}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                        <tr class="total-row">
+                            <td>Total de BGCs</td>
+                            <td class="count-cell total-count">${data.file_a.bgc_count}</td>
+                            <td class="count-cell total-count">${data.file_b.bgc_count}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+}
+
+function setTableMode(btn, mode) {
+    const section = btn.closest('.cluster-table-section');
+    const wrapper = section.querySelector('.cluster-table-wrapper');
+    section.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('mode-btn-active'));
+    btn.classList.add('mode-btn-active');
+    wrapper.classList.toggle('mode-presence', mode === 'presence');
 }
 
 function escapeHtml(text) {
