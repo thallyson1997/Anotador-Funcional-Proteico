@@ -21,6 +21,7 @@ class Domain(BaseModel):
 class ConfidenceV2Breakdown(BaseModel):
     unique_databases: int = 0
     total_hits: int = 0
+    evalue_hits: int = 0
     good_hits: int = 0
     strong_hits: int = 0
     interpro_hits: int = 0

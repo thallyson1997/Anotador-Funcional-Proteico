@@ -15,9 +15,9 @@ class InterProScanServiceError(Exception):
     """Erro ao comunicar ou obter resposta valida do InterProScan."""
 
 # ===== CONSTANTES DE BANCOS DE DADOS =====
-# 🔵 Domínios Funcionais (Azul) - 13 tipos
+# 🔵 Domínios Funcionais (Azul) - 15 tipos
 FUNCTIONAL_DOMAINS = [
-    'PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS',
+    'PFAM', 'SMART', 'PROSITE', 'PROSITE_PROFILES', 'PROSITE_PATTERNS', 'PANTHER', 'PRINTS',
     'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'
 ]
 
@@ -854,12 +854,14 @@ def classify_confidence_v2(domains: list) -> tuple:
     unique_dbs = len({(d.get('database') or '').upper().strip() for d in real_hits if d.get('database')})
 
     # Qualidade por e-value
+    numeric_evalue_hits = 0
     good_hits = 0
     strong_hits = 0
     for d in real_hits:
         evalue = _parse_evalue(d.get('evalue'))
         if evalue is None:
             continue
+        numeric_evalue_hits += 1
         if evalue <= 1e-5:
             good_hits += 1
         if evalue <= 1e-20:
@@ -878,7 +880,7 @@ def classify_confidence_v2(domains: list) -> tuple:
     consensus_ratio = clustered_hits / max(1, n_hits)
 
     db_score = min(unique_dbs / 5.0, 1.0) * 25.0
-    quality_ratio = (strong_hits + 0.5 * max(good_hits - strong_hits, 0)) / max(1, n_hits)
+    quality_ratio = (strong_hits + 0.5 * max(good_hits - strong_hits, 0)) / max(1, numeric_evalue_hits)
     quality_score = min(quality_ratio, 1.0) * 25.0
     interpro_score = (interpro_hits / max(1, n_hits)) * 25.0
     consensus_score = consensus_ratio * 25.0
@@ -895,12 +897,13 @@ def classify_confidence_v2(domains: list) -> tuple:
         level = "Nenhum"
 
     explainer = (
-        f"dbs={unique_dbs}, hits={n_hits}, e<=1e-5={good_hits}, "
+        f"dbs={unique_dbs}, hits={n_hits}, evalue_num={numeric_evalue_hits}, e<=1e-5={good_hits}, "
         f"IPR={interpro_hits}, consenso={round(consensus_ratio * 100, 1)}%"
     )
     breakdown = ConfidenceV2Breakdown(
         unique_databases=unique_dbs,
         total_hits=n_hits,
+        evalue_hits=numeric_evalue_hits,
         good_hits=good_hits,
         strong_hits=strong_hits,
         interpro_hits=interpro_hits,

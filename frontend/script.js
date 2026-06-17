@@ -35,6 +35,301 @@ let resumePartialData = null;       // proteínas já analisadas ao retomar de u
 let currentFilterByBGC = true;      // filtro BGC utilizado na última análise antiSMASH
 let currentInputFileForDownload = null; // arquivo original preservado para inclusão no ZIP de download
 
+const FUNCTIONAL_DOMAIN_DATABASES = [
+    'PFAM', 'SMART', 'PROSITE', 'PROSITE_PROFILES', 'PROSITE_PATTERNS', 'PANTHER', 'PRINTS',
+    'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'
+];
+const STRUCTURAL_DOMAIN_DATABASES = ['GENE3D', 'SUPERFAMILY'];
+const TOPOLOGY_DATABASES = ['PHOBIUS', 'TMHMM', 'SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE', 'SIGNALP_GRAM_NEGATIVE'];
+const STRUCTURAL_FEATURE_DATABASES = ['COILS', 'MOBIDB_LITE'];
+const REAL_DOMAIN_DATABASES = [...FUNCTIONAL_DOMAIN_DATABASES, ...STRUCTURAL_DOMAIN_DATABASES];
+
+function normalizeDatabaseName(database) {
+    return String(database || '').toUpperCase().trim();
+}
+
+function buildRawDomainsFromProteinDomains(domains) {
+    const rawDomains = [];
+
+    for (const domain of Array.isArray(domains) ? domains : []) {
+        const databases = Array.isArray(domain?.databases) && domain.databases.length > 0
+            ? domain.databases
+            : [domain?.database || 'UNKNOWN'];
+
+        for (const database of databases) {
+            const normalizedDatabase = normalizeDatabaseName(database);
+            if (!normalizedDatabase) continue;
+
+            rawDomains.push({
+                database: normalizedDatabase,
+                accession: domain?.accession || '',
+                name: domain?.name || domain?.description || 'Unknown domain',
+                description: domain?.description || '',
+                type: domain?.type || '',
+                evalue: domain?.evalue ?? null,
+                score: domain?.score ?? null,
+                start: Number.isInteger(domain?.start) ? domain.start : null,
+                end: Number.isInteger(domain?.end) ? domain.end : null,
+                interpro_accession: domain?.interpro_accession || '',
+                interpro_name: domain?.interpro_name || ''
+            });
+        }
+    }
+
+    return rawDomains;
+}
+
+function countConfidenceDatabasesFromRawDomains(rawDomains) {
+    const databases = rawDomains
+        .map(domain => normalizeDatabaseName(domain?.database))
+        .filter(database => REAL_DOMAIN_DATABASES.includes(database));
+
+    return new Set(databases).size;
+}
+
+function classifyConfidenceFromRawDomains(rawDomains) {
+    const uniqueDatabases = countConfidenceDatabasesFromRawDomains(rawDomains);
+
+    if (uniqueDatabases >= 5) return 'Alta';
+    if (uniqueDatabases >= 3) return 'Média';
+    if (uniqueDatabases >= 1) return 'Baixa';
+    return 'Nenhum';
+}
+
+function parseEvalue(value) {
+    if (value === null || value === undefined) return null;
+
+    const text = String(value).trim().toUpperCase();
+    if (!text || ['N/A', 'NA', 'NONE', 'NULL'].includes(text)) return null;
+
+    const parsed = Number(text);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function intervalsAreConcentrated(aStart, aEnd, bStart, bEnd) {
+    return Math.abs(aStart - bStart) <= 9 && Math.abs(aEnd - bEnd) <= 9;
+}
+
+function clusterPositionHits(realHits) {
+    const positioned = realHits
+        .map(hit => ({
+            start: Number.isInteger(hit?.start) ? hit.start : null,
+            end: Number.isInteger(hit?.end) ? hit.end : null,
+            name: hit?.name || hit?.description || 'UNKNOWN'
+        }))
+        .filter(hit => hit.start !== null && hit.end !== null && hit.start <= hit.end);
+
+    if (positioned.length === 0) {
+        return { clusterCount: 0, clusteredHits: 0 };
+    }
+
+    const parent = positioned.map((_, index) => index);
+
+    const find = (index) => {
+        let current = index;
+        while (parent[current] !== current) {
+            parent[current] = parent[parent[current]];
+            current = parent[current];
+        }
+        return current;
+    };
+
+    const unite = (a, b) => {
+        const rootA = find(a);
+        const rootB = find(b);
+        if (rootA !== rootB) {
+            parent[rootB] = rootA;
+        }
+    };
+
+    for (let indexA = 0; indexA < positioned.length; indexA += 1) {
+        for (let indexB = indexA + 1; indexB < positioned.length; indexB += 1) {
+            if (intervalsAreConcentrated(
+                positioned[indexA].start,
+                positioned[indexA].end,
+                positioned[indexB].start,
+                positioned[indexB].end
+            )) {
+                unite(indexA, indexB);
+            }
+        }
+    }
+
+    const clusters = new Map();
+    for (let index = 0; index < positioned.length; index += 1) {
+        const root = find(index);
+        const names = clusters.get(root) || [];
+        names.push(positioned[index].name);
+        clusters.set(root, names);
+    }
+
+    const validClusterSizes = [...clusters.values()]
+        .filter(names => names.length >= 2)
+        .map(names => names.length)
+        .sort((a, b) => b - a);
+
+    return {
+        clusterCount: validClusterSizes.length,
+        clusteredHits: validClusterSizes.reduce((sum, size) => sum + size, 0)
+    };
+}
+
+function classifyConfidenceV2FromRawDomains(rawDomains) {
+    const emptyBreakdown = {
+        unique_databases: 0,
+        total_hits: 0,
+        evalue_hits: 0,
+        good_hits: 0,
+        strong_hits: 0,
+        interpro_hits: 0,
+        cluster_count: 0,
+        clustered_hits: 0,
+        bucket_count: 0,
+        multi_support_buckets: 0,
+        consensus_percent: 0,
+        db_score: 0,
+        quality_score: 0,
+        interpro_score: 0,
+        consensus_score: 0
+    };
+
+    const realHits = rawDomains.filter(domain => REAL_DOMAIN_DATABASES.includes(normalizeDatabaseName(domain?.database)));
+    if (realHits.length === 0) {
+        return {
+            level: 'Nenhum',
+            score: 0,
+            explainer: 'Sem hits funcionais/estruturais',
+            breakdown: emptyBreakdown
+        };
+    }
+
+    const totalHits = realHits.length;
+    const uniqueDatabases = new Set(realHits.map(domain => normalizeDatabaseName(domain?.database))).size;
+
+    let numericEvalueHits = 0;
+    let goodHits = 0;
+    let strongHits = 0;
+    let interproHits = 0;
+
+    for (const domain of realHits) {
+        const evalue = parseEvalue(domain?.evalue);
+        if (evalue !== null) {
+            numericEvalueHits += 1;
+            if (evalue <= 1e-5) goodHits += 1;
+            if (evalue <= 1e-20) strongHits += 1;
+        }
+        if (String(domain?.interpro_accession || '').toUpperCase().trim().startsWith('IPR')) {
+            interproHits += 1;
+        }
+    }
+
+    const { clusterCount, clusteredHits } = clusterPositionHits(realHits);
+    const consensusRatio = clusteredHits / Math.max(1, totalHits);
+    const dbScore = Math.min(uniqueDatabases / 5, 1) * 25;
+    const qualityRatio = (strongHits + 0.5 * Math.max(goodHits - strongHits, 0)) / Math.max(1, numericEvalueHits);
+    const qualityScore = Math.min(qualityRatio, 1) * 25;
+    const interproScore = (interproHits / Math.max(1, totalHits)) * 25;
+    const consensusScore = consensusRatio * 25;
+    const finalScore = Math.round((dbScore + qualityScore + interproScore + consensusScore) * 10) / 10;
+
+    let level = 'Nenhum';
+    if (finalScore >= 75) level = 'Alta';
+    else if (finalScore >= 50) level = 'Média';
+    else if (finalScore > 0) level = 'Baixa';
+
+    return {
+        level,
+        score: finalScore,
+        explainer: `dbs=${uniqueDatabases}, hits=${totalHits}, evalue_num=${numericEvalueHits}, e<=1e-5=${goodHits}, IPR=${interproHits}, consenso=${Math.round(consensusRatio * 1000) / 10}%`,
+        breakdown: {
+            unique_databases: uniqueDatabases,
+            total_hits: totalHits,
+            evalue_hits: numericEvalueHits,
+            good_hits: goodHits,
+            strong_hits: strongHits,
+            interpro_hits: interproHits,
+            cluster_count: clusterCount,
+            clustered_hits: clusteredHits,
+            bucket_count: clusterCount,
+            multi_support_buckets: clusteredHits,
+            consensus_percent: Math.round(consensusRatio * 1000) / 10,
+            db_score: Math.round(dbScore * 10) / 10,
+            quality_score: Math.round(qualityScore * 10) / 10,
+            interpro_score: Math.round(interproScore * 10) / 10,
+            consensus_score: Math.round(consensusScore * 10) / 10
+        }
+    };
+}
+
+function extractTopologyFeaturesFromRawDomains(rawDomains) {
+    const topologyInfo = {
+        has_transmembrane: false,
+        has_signal_peptide: false,
+        has_coils: false,
+        has_mobidb: false,
+        topology_annotations: []
+    };
+
+    for (const domain of rawDomains) {
+        const database = normalizeDatabaseName(domain?.database);
+        const name = String(domain?.name || '').toLowerCase();
+
+        if (['PHOBIUS', 'TMHMM'].includes(database) && (name.includes('transmembrane') || name.includes('tm'))) {
+            topologyInfo.has_transmembrane = true;
+            topologyInfo.topology_annotations.push(`Transmembrana detectado (${database})`);
+        }
+
+        if (['SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE', 'SIGNALP_GRAM_NEGATIVE', 'PHOBIUS'].includes(database)
+            && (name.includes('signal') || name.includes('signal peptide'))) {
+            topologyInfo.has_signal_peptide = true;
+            topologyInfo.topology_annotations.push(`Peptídeo sinal detectado (${database})`);
+        }
+
+        if (database === 'COILS') {
+            topologyInfo.has_coils = true;
+            topologyInfo.topology_annotations.push('Regiões desorganizadas (COILS)');
+        }
+
+        if (database === 'MOBIDB_LITE') {
+            topologyInfo.has_mobidb = true;
+            topologyInfo.topology_annotations.push('Regiões móveis (MOBIDB_LITE)');
+        }
+    }
+
+    topologyInfo.topology_annotations = [...new Set(topologyInfo.topology_annotations)];
+    return topologyInfo;
+}
+
+function normalizeProteinForCurrentRules(protein) {
+    const rawDomains = buildRawDomainsFromProteinDomains(protein?.domains || []);
+    const realDomainCount = (Array.isArray(protein?.domains) ? protein.domains : []).filter(domain => {
+        const databases = Array.isArray(domain?.databases) ? domain.databases : [];
+        return databases.some(database => REAL_DOMAIN_DATABASES.includes(normalizeDatabaseName(database)));
+    }).length;
+    const topologyFeatures = extractTopologyFeaturesFromRawDomains(rawDomains);
+    const confidenceV2 = classifyConfidenceV2FromRawDomains(rawDomains);
+
+    return {
+        ...protein,
+        domain_count: realDomainCount,
+        confidence_level: classifyConfidenceFromRawDomains(rawDomains),
+        confidence_score: countConfidenceDatabasesFromRawDomains(rawDomains),
+        confidence_level_v2: confidenceV2.level,
+        confidence_score_v2: confidenceV2.score,
+        confidence_explainer_v2: confidenceV2.explainer,
+        confidence_breakdown_v2: confidenceV2.breakdown,
+        has_transmembrane: topologyFeatures.has_transmembrane,
+        has_signal_peptide: topologyFeatures.has_signal_peptide,
+        has_coils: topologyFeatures.has_coils,
+        has_mobidb: topologyFeatures.has_mobidb,
+        topology_annotations: topologyFeatures.topology_annotations
+    };
+}
+
+function normalizeAnalyzedProteins(proteins) {
+    return (Array.isArray(proteins) ? proteins : []).map(normalizeProteinForCurrentRules);
+}
+
 function normalizeApiErrorMessage(error) {
     const message = String(error?.message || error || '').trim();
     const lowerMessage = message.toLowerCase();
@@ -576,6 +871,7 @@ async function handleResultZipUpload(file, emailFromField) {
             originally_selected_indices,
             analyzed_proteins
         } = manifest;
+        const normalizedAnalyzedProteins = normalizeAnalyzedProteins(analyzed_proteins || []);
 
         // Pré-preencher email se o campo estiver vazio
         const emailField = document.getElementById('email-antismash');
@@ -589,9 +885,9 @@ async function handleResultZipUpload(file, emailFromField) {
             const result = {
                 type: 'antismash',
                 file_name: original_filename || file.name,
-                proteins_analyzed: analyzed_proteins.length,
-                proteins_with_domains: analyzed_proteins.filter(p => p.domain_count > 0).length,
-                proteins: analyzed_proteins,
+                proteins_analyzed: normalizedAnalyzedProteins.length,
+                proteins_with_domains: normalizedAnalyzedProteins.filter(p => p.domain_count > 0).length,
+                proteins: normalizedAnalyzedProteins,
                 is_partial: false
             };
             displayResults(result);
@@ -615,14 +911,14 @@ async function handleResultZipUpload(file, emailFromField) {
         currentFilterByBGC = !!filter_by_bgc;
 
         // Proteínas já analisadas
-        const analyzedLocusTags = new Set((analyzed_proteins || []).map(p => p.seq_id));
+        const analyzedLocusTags = new Set(normalizedAnalyzedProteins.map(p => p.seq_id));
         const originallySelectedSet = new Set(originally_selected_indices || []);
 
         // Guardar dados parciais para mesclar ao final
         resumePartialData = {
             type: 'antismash',
             file_name: original_filename,
-            proteins: analyzed_proteins || []
+            proteins: normalizedAnalyzedProteins
         };
 
         // Chamar endpoint para obter lista de proteínas do arquivo original
@@ -862,10 +1158,10 @@ function updateProgress(percentage, stepNumber, description, isDone = false) {
 // ===== DISPLAY RESULTS =====
 // ===== CATEGORIZAÇÃO DE DOMÍNIOS =====
 function getDatabaseCategory(database) {
-    const db = database.toUpperCase().trim();
+    const db = normalizeDatabaseName(database);
     
     // Domínios Funcionais
-    if (['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'].includes(db)) {
+    if (FUNCTIONAL_DOMAIN_DATABASES.includes(db)) {
         return {
             emoji: '🔵',
             category: 'Domínios Funcionais',
@@ -876,7 +1172,7 @@ function getDatabaseCategory(database) {
         };
     }
     // Domínios Estruturais
-    else if (['GENE3D', 'SUPERFAMILY'].includes(db)) {
+    else if (STRUCTURAL_DOMAIN_DATABASES.includes(db)) {
         return {
             emoji: '🔴',
             category: 'Domínios Estruturais',
@@ -887,7 +1183,7 @@ function getDatabaseCategory(database) {
         };
     }
     // Topologia/Localização
-    else if (['PHOBIUS', 'TMHMM', 'SIGNALP_EUK', 'SIGNALP_GRAM_POSITIVE', 'SIGNALP_GRAM_NEGATIVE'].includes(db)) {
+    else if (TOPOLOGY_DATABASES.includes(db)) {
         return {
             emoji: '🟢',
             category: 'Topologia/Localização',
@@ -898,7 +1194,7 @@ function getDatabaseCategory(database) {
         };
     }
     // Características Estruturais
-    else if (['COILS', 'MOBIDB_LITE'].includes(db)) {
+    else if (STRUCTURAL_FEATURE_DATABASES.includes(db)) {
         return {
             emoji: '🟡',
             category: 'Características Estruturais',
@@ -923,11 +1219,8 @@ function getDatabaseCategory(database) {
 
 // ===== VERIFICA SE BANCO PERTENCE A DOMÍNIOS FUNCIONAIS OU ESTRUTURAIS =====
 function isFunctionalOrStructuralDomain(database) {
-    const db = database.toUpperCase().trim();
-    const functionalDomains = ['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'];
-    const structuralDomains = ['GENE3D', 'SUPERFAMILY'];
-    
-    return functionalDomains.includes(db) || structuralDomains.includes(db);
+    const db = normalizeDatabaseName(database);
+    return REAL_DOMAIN_DATABASES.includes(db);
 }
 
 // ===== DETERMINA CATEGORIA PREDOMINANTE DE UM DOMÍNIO =====
@@ -1163,14 +1456,10 @@ function displayResults(data) {
         // Domains
         if (protein.domains && protein.domains.length > 0) {
             // Separar domínios reais (apenas funcionais e estruturais, não topologia nem não-categorizados)
-            const functionalDomains = ['PFAM', 'SMART', 'PROSITE', 'PANTHER', 'PRINTS', 'PIRSF', 'PIRSR', 'HAMAP', 'TIGERFAMS', 'SFLD', 'CDD', 'NCBIFAM', 'FUNFAM'];
-            const structuralDomains = ['GENE3D', 'SUPERFAMILY'];
-            const allRealDomains = [...functionalDomains, ...structuralDomains];
-            
             const realDomains = protein.domains.filter(d => {
                 if (!d.databases || d.databases.length === 0) return false;
                 // Contar apenas se tem pelo menos um banco em domínios funcionais/estruturais
-                return d.databases.some(db => allRealDomains.includes(db.toUpperCase()));
+                return d.databases.some(db => REAL_DOMAIN_DATABASES.includes(normalizeDatabaseName(db)));
             });
             
             // Contar bancos de dados únicos para domínios reais
@@ -1178,7 +1467,7 @@ function displayResults(data) {
             realDomains.forEach(domain => {
                 if (domain.databases && Array.isArray(domain.databases)) {
                     domain.databases.forEach(db => {
-                        if (allRealDomains.includes(db.toUpperCase())) {
+                        if (REAL_DOMAIN_DATABASES.includes(normalizeDatabaseName(db))) {
                             realDomainsDBs.add(db);
                         }
                     });
@@ -1585,6 +1874,7 @@ function showConfidenceV2Modal(proteinIndex) {
     }
 
     const totalHits = breakdown.total_hits || 0;
+    const evalueHits = breakdown.evalue_hits ?? totalHits;
     const uniqueDatabases = breakdown.unique_databases || 0;
     const goodHits = breakdown.good_hits || 0;
     const strongHits = breakdown.strong_hits || 0;
@@ -1611,7 +1901,7 @@ function showConfidenceV2Modal(proteinIndex) {
         <div class="confidence-modal-grid">
             <div class="confidence-modal-card">
                 <h3>Valores usados</h3>
-                <p>dbs=${uniqueDatabases}, hits=${totalHits}, e&lt;=1e-5=${goodHits}, e&lt;=1e-20=${strongHits}, IPR=${interproHits}, agrupamentos=${clusterCount}, hits agrupados=${clusteredHits}, consenso=${consensusPercent}%.</p>
+                <p>dbs=${uniqueDatabases}, hits=${totalHits}, hits com e-value numerico=${evalueHits}, e&lt;=1e-5=${goodHits}, e&lt;=1e-20=${strongHits}, IPR=${interproHits}, agrupamentos=${clusterCount}, hits agrupados=${clusteredHits}, consenso=${consensusPercent}%.</p>
             </div>
             <div class="confidence-modal-card">
                 <h3>Base do calculo</h3>
@@ -1630,7 +1920,7 @@ function showConfidenceV2Modal(proteinIndex) {
             </div>
             <div class="confidence-formula-item">
                 <strong>2. Qualidade por e-value</strong>
-                <code>min((strong_hits + 0.5 x (good_hits - strong_hits)) / hits, 1) x 25 = min((${strongHits} + 0.5 x (${goodHits} - ${strongHits})) / ${Math.max(totalHits, 1)}, 1) x 25 = ${qualityScore}</code>
+                <code>min((strong_hits + 0.5 x (good_hits - strong_hits)) / hits_com_evalue_numerico, 1) x 25 = min((${strongHits} + 0.5 x (${goodHits} - ${strongHits})) / ${Math.max(evalueHits, 1)}, 1) x 25 = ${qualityScore}</code>
             </div>
             <div class="confidence-formula-item">
                 <strong>3. Suporte InterPro</strong>
